@@ -19,12 +19,12 @@
 
 Use go get.
 ```bash
-    go get github.com/things-go/ormat
+    go get github.com/thinkgos/ormat
 ```
 
 Then import the modbus package into your own code.
 ```bash
-    import "github.com/things-go/ormat"
+    import "github.com/thinkgos/ormat"
 ```
 
 ### Example
