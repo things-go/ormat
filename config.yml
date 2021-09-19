@@ -22,8 +22,8 @@ database:
 #    time: time.Time
 
 # 只输出指定表
-tableNames:
-    - sys_user
+#tableNames:
+#    - sys_user
 
 #view:
 #  db 标签

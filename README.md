@@ -1,5 +1,6 @@
-# 
+# ormat
 
+database to golang struct
 
 [![GoDoc](https://godoc.org/github.com/thinkgos/ormat?status.svg)](https://godoc.org/github.com/thinkgos/ormat)
 [![Go.Dev reference](https://img.shields.io/badge/go.dev-reference-blue?logo=go&logoColor=white)](https://pkg.go.dev/github.com/thinkgos/ormat?tab=doc)
@@ -22,12 +23,37 @@ Use go get.
     go get github.com/thinkgos/ormat
 ```
 
-Then import the modbus package into your own code.
-```bash
-    import "github.com/thinkgos/ormat"
+### Help
+
+```shell
+$ ./ormat --help
+
+database to golang struct
+
+Usage:
+  ormat [flags]
+  ormat [command]
+
+Available Commands:
+  completion  generate the autocompletion script for the specified shell
+  help        Help about any command
+  init        generate config file
+  sql         generate create table sql
+  version     Get version info
+
+Flags:
+  -h, --help   help for ormat
+
+Use "ormat [command] --help" for more information about a command.
 ```
 
-### Example
+### Build
+
+```shell
+make linux
+make windows
+make mac
+```
 
 
 

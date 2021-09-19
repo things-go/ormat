@@ -16,7 +16,7 @@ platform = CGO_ENABLED=0
 # 编译选项,如tags,多个采用','分开 sqlite3,noswag
 opts = -trimpath -tags=sqlite3
 # 编译flags
-path = github.com/things-go/ormat/pkg/builder
+path = github.com/thinkgos/ormat/pkg/builder
 flags = -ldflags "-X '${path}.Name=${name}' \
     -X '${path}.Model=${model}' \
 	-X '${path}.Version=${version}' \
@@ -42,9 +42,9 @@ clear:
 	test ! -f ormat_windows.zip || rm ormat_windows.zip
 
 all: # 构建
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ${execveFile}.exe main.go
-	tar czvf ormat_windows.zip ormat.exe
-	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -o ${execveFile} main.go
-	tar czvf ormat_mac.zip ${execveFile}
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ${execveFile} main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ${opts} ${flags} -o ${execveFile} main.go
 	tar czvf ormat_linux.zip ${execveFile}
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build ${opts} ${flags} -o ${execveFile}.exe main.go
+	tar czvf ormat_windows.zip ormat.exe
+	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build ${opts} ${flags} -o ${execveFile} main.go
+	tar czvf ormat_mac.zip ${execveFile}
