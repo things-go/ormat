@@ -23,6 +23,33 @@ Use go get.
     go get github.com/thinkgos/ormat
 ```
 
+Example.
+
+```go
+// SysUser 用户表
+type SysUser struct {
+	ID        int64     `gorm:"column:id;type:bigint;autoIncrement;not null;primaryKey,priority:1" json:"id,omitempty"`
+	Username  string    `gorm:"column:username;type:varchar(64);not null;primaryKey,priority:2;uniqueIndex:uk_username" json:"username,omitempty"`
+	Password  string    `gorm:"column:password;type:varchar(255);not null" json:"password,omitempty"`
+	Nickname  string    `gorm:"column:nickname;type:varchar(64);not null" json:"nickname,omitempty"`
+	Phone     string    `gorm:"column:phone;type:varchar(16);not null" json:"phone,omitempty"`
+	Avatar    string    `gorm:"column:avatar;type:varchar(255);not null" json:"avatar,omitempty"`
+	Sex       int8      `gorm:"column:sex;type:tinyint;not null;default:3" json:"sex,omitempty"`
+	Email     string    `gorm:"column:email;type:varchar(32);not null" json:"email,omitempty"`
+	Status    string    `gorm:"column:status;type:varchar(1);not null;default:1" json:"status,omitempty"`
+	Remark    string    `gorm:"column:remark;type:varchar(255);not null" json:"remark,omitempty"`
+	Creator   string    `gorm:"column:creator;type:varchar(32);not null" json:"creator,omitempty"`
+	Updator   string    `gorm:"column:updator;type:varchar(32);not null" json:"updator,omitempty"`
+	CreatedAt time.Time `gorm:"column:created_at;type:datetime(3);not null" json:"created_at,omitempty"`
+	UpdatedAt time.Time `gorm:"column:updated_at;type:datetime(3);not null" json:"updated_at,omitempty"`
+}
+
+// TableName implement schema.Tabler interface
+func (*SysUser) TableName() string {
+	return "sys_user"
+}
+```
+
 ### Help
 
 ```shell
@@ -54,8 +81,6 @@ make linux
 make windows
 make mac
 ```
-
-
 
 ## References
 
