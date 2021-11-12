@@ -221,7 +221,7 @@ func (sf *MySQL) GetCreateTableSQL(db *gorm.DB, tbName string) (string, error) {
 func fixForeignKey(vs []mysqlForeignKey, columnName string) []view.ForeignKey {
 	result := make([]view.ForeignKey, 0, len(vs))
 	for _, v := range vs {
-		if strings.EqualFold(v.ColumnName, columnName) { // find it .找到了
+		if strings.EqualFold(v.ColumnName, columnName) {
 			result = append(result, view.ForeignKey{
 				TableName:  v.ReferencedTableName,
 				ColumnName: v.ReferencedColumnName,
@@ -273,16 +273,13 @@ var mysqlTypeDict = map[string]string{
 }
 
 func getMysqlGoDataType(dataType string) string {
-	// 优先匹配自定义类型
 	selfDefineTypeMqlDicMap := config.GetTypeDefine()
 	if v, ok := selfDefineTypeMqlDicMap[dataType]; ok {
 		return v
 	}
-
-	// Precise matching first
 	if v, ok := mysqlTypeDict[dataType]; ok {
 		return v
 	}
-
 	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/thinkgos/ormat/blob/master/view/model.go)", dataType))
+	return ""
 }

@@ -155,7 +155,7 @@ func (*SQLite) GetCreateTableSQL(db *gorm.DB, tbName string) (string, error) {
 func fixSqliteForeignKey(vs []sqliteForeignKey, columnName string) []view.ForeignKey {
 	var result []view.ForeignKey
 	for _, v := range vs {
-		if strings.EqualFold(v.ColumnName, columnName) { // find it .找到了
+		if strings.EqualFold(v.ColumnName, columnName) {
 			result = append(result, view.ForeignKey{
 				TableName:  v.ReferencedTableName,
 				ColumnName: v.ReferencedColumnName,
@@ -239,12 +239,10 @@ func getSqliteGoDataType(name, dataType string) string {
 
 func getSqliteDataType(dataType string) string {
 	dataType = strings.ToLower(dataType)
-	// 优先匹配自定义类型
 	selfDefineTypeMqlDicMap := config.GetTypeDefine()
 	if v, ok := selfDefineTypeMqlDicMap[dataType]; ok {
 		return v
 	}
-	// Precise matching first
 	if v, ok := sqliteTypeDict[dataType]; ok {
 		return v
 	}
@@ -259,4 +257,5 @@ func getSqliteDataType(dataType string) string {
 		}
 	}
 	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/thinkgos/ormat/blob/master/view/model.go)", dataType))
+	return ""
 }
