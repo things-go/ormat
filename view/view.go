@@ -243,6 +243,13 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag) {
 	for _, v := range webTags {
 		vv := ""
+		if v.Tag == "json" {
+			if vv = jsonTag(field.Comment); vv != "" {
+				field.AddTag(v.Tag, vv)
+				return
+			}
+		}
+
 		switch v.Kind {
 		case "smallCamelCase":
 			vv = extstr.SmallCamelCase(name)
@@ -257,6 +264,9 @@ func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag) {
 		if vv != "" {
 			if v.HasOmit {
 				vv += ",omitempty"
+			}
+			if v.Tag == "json" && affixJSONTag(field.Comment) {
+				vv += ",string"
 			}
 			field.AddTag(v.Tag, vv)
 		}

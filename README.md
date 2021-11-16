@@ -25,6 +25,11 @@ Use go get.
 
 Example.
 
+NOTE: 
+
+- database filed comment `[@jsontag: realjsontag]` will overwrite the filed json tags.
+- database filed comment `[@affix]` will append `,string` to the filed json tags.
+
 ```go
 // SysUser 用户表
 type SysUser struct {
