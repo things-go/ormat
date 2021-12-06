@@ -106,7 +106,11 @@ func (sf *View) getColumnFields(tables []Table, cols []Column) []ast.Field {
 
 		fieldName := extstr.CamelCase(v.Name)
 		fieldType := getFieldDataType(v.DataType, v.IsNullable, sf.DisableNull, sf.IsNullToPoint)
-		if fieldName == "DeletedAt" && v.DataType == "int64" {
+		if fieldName == "DeletedAt" &&
+			(v.DataType == "int64" ||
+				v.DataType == "uint64" ||
+				v.DataType == "uint" ||
+				v.DataType == "int") {
 			fieldType = "soft_delete.DeletedAt"
 		}
 		field.SetName(fieldName).

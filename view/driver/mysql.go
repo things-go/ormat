@@ -249,6 +249,7 @@ var mysqlTypeDictMatchList = []struct {
 	{`^(bigint)\b[(]\d+[)]`, "int64"},
 	{`^(int)\b[(]\d+[)] unsigned`, "uint"},
 	{`^(int)\b[(]\d+[)]`, "int"},
+	{`^(integer)\b[(]\d+[)] unsigned`, "uint"},
 	{`^(integer)\b[(]\d+[)]`, "int"},
 	{`^(float)\b[(]\d+,\d+[)] unsigned`, "float32"},
 	{`^(float)\b[(]\d+,\d+[)]`, "float32"},
