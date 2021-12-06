@@ -2,6 +2,7 @@ package driver
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -160,7 +161,7 @@ func (sf *MySQL) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttrib
 		ci := view.Column{
 			Name:            v.ColumnName,
 			OrdinalPosition: v.OrdinalPosition,
-			DataType:        getMysqlGoDataType(v.DataType),
+			DataType:        getMysqlGoDataType(v.ColumnType),
 			ColumnType:      v.ColumnType,
 			IsNullable:      strings.EqualFold(v.IsNullable, "YES"),
 			IsAutoIncrement: v.Extra == "auto_increment",
@@ -232,54 +233,60 @@ func fixForeignKey(vs []mysqlForeignKey, columnName string) []view.ForeignKey {
 }
 
 // MysqlTypeDict Accurate matching type
-var mysqlTypeDict = map[string]string{
-	"tinyint(1)":          "bool",
-	"tinyint(1) unsigned": "bool",
-	"tinyint":             "int8",
-	"tinyint unsigned":    "uint8",
-	"smallint":            "int16",
-	"smallint unsigned":   "uint16",
-	"mediumint":           "int32",
-	"mediumint unsigned":  "uint32",
-	"bigint":              "int64",
-	"bigint unsigned":     "uint64",
-	"int":                 "int",
-	"int unsigned":        "uint",
-	"integer":             "int",
-	"float":               "float32",
-	"float unsigned":      "float32",
-	"double":              "float64",
-	"double unsigned":     "float64",
-	"char":                "string",
-	"varchar":             "string",
-	"date":                "datatypes.Date",
-	"datetime":            "time.Time",
-	"time":                "time.Time",
-	"timestamp":           "time.Time",
-	"text":                "string",
-	"tinytext":            "string",
-	"mediumtext":          "string",
-	"longtext":            "string",
-	"blob":                "[]byte",
-	"tinyblob":            "[]byte",
-	"mediumblob":          "[]byte",
-	"longblob":            "[]byte",
-	"bit(1)":              "[]uint8",
-	"json":                "datatypes.JSON",
-	"enum":                "string",
-	"decimal":             "string",
-	"binary":              "[]byte",
-	"varbinary":           "[]byte",
+var mysqlTypeDictMatchList = []struct {
+	Key   string
+	Value string
+}{
+	{`^(tinyint)\b[(]1[)] unsigned`, "bool"},
+	{`^(tinyint)\b[(]1[)]`, "bool"},
+	{`^(tinyint)\b[(]\d+[)] unsigned`, "uint8"},
+	{`^(tinyint)\b[(]\d+[)]`, "int8"},
+	{`^(smallint)\b[(]\d+[)] unsigned`, "uint16"},
+	{`^(smallint)\b[(]\d+[)]`, "int16"},
+	{`^(mediumint)\b[(]\d+[)] unsigned`, "uint32"},
+	{`^(mediumint)\b[(]\d+[)]`, "int32"},
+	{`^(bigint)\b[(]\d+[)] unsigned`, "uint64"},
+	{`^(bigint)\b[(]\d+[)]`, "int64"},
+	{`^(int)\b[(]\d+[)] unsigned`, "uint"},
+	{`^(int)\b[(]\d+[)]`, "int"},
+	{`^(integer)\b[(]\d+[)]`, "int"},
+	{`^(float)\b[(]\d+,\d+[)] unsigned`, "float32"},
+	{`^(float)\b[(]\d+,\d+[)]`, "float32"},
+	{`^(double)\b[(]\d+,\d+[)] unsigned`, "float64"},
+	{`^(double)\b[(]\d+,\d+[)]`, "float64"},
+	{`^(char)\b[(]\d+[)]`, "string"},
+	{`^(varchar)\b[(]\d+[)]`, "string"},
+	{`^(datetime)\b([(]\d+[)])?`, "time.Time"},
+	{`^(date)\b([(]\d+[)])?`, "datatypes.Date"},
+	{`^(timestamp)\b([(]\d+[)])?`, "time.Time"},
+	{`^(time)\b([(]\d+[)])?`, "time.Time"},
+	{`^(text)\b([(]\d+[)])?`, "string"},
+	{`^(tinytext)\b([(]\d+[)])?`, "string"},
+	{`^(mediumtext)\b([(]\d+[)])?`, "string"},
+	{`^(longtext)\b([(]\d+[)])?`, "string"},
+	{`^(blob)\b([(]\d+[)])?`, "[]byte"},
+	{`^(tinyblob)\b([(]\d+[)])?`, "[]byte"},
+	{`^(mediumblob)\b([(]\d+[)])?`, "[]byte"},
+	{`^(longblob)\b([(]\d+[)])?`, "[]byte"},
+	{`^(bit)\b[(]\d+[)]`, "[]uint8"},
+	{`^(json)\b`, "datatypes.JSON"},
+	{`^(enum)\b[(](.)+[)]`, "string"},
+	{`^(decimal)\b[(]\d+,\d+[)]`, "string"},
+	{`^(binary)\b[(]\d+[)]`, "[]byte"},
+	{`^(varbinary)\b[(]\d+[)]`, "[]byte"},
 }
 
-func getMysqlGoDataType(dataType string) string {
+func getMysqlGoDataType(columnType string) string {
 	selfDefineTypeMqlDicMap := config.GetTypeDefine()
-	if v, ok := selfDefineTypeMqlDicMap[dataType]; ok {
+	if v, ok := selfDefineTypeMqlDicMap[columnType]; ok {
 		return v
 	}
-	if v, ok := mysqlTypeDict[dataType]; ok {
-		return v
+	for _, v := range mysqlTypeDictMatchList {
+		ok, _ := regexp.MatchString(v.Key, columnType)
+		if ok {
+			return v.Value
+		}
 	}
-	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/thinkgos/ormat/blob/master/view/model.go)", dataType))
+	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/thinkgos/ormat/blob/master/view/model.go)", columnType))
 	return ""
 }

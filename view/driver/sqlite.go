@@ -174,49 +174,6 @@ var sqliteTypeDict = map[string]string{
 	"blob":    "[]byte",
 }
 
-// sqliteTypeMatchList Fuzzy Matching Types
-var sqliteTypeMatchList = []struct {
-	Key   string
-	Value string
-}{
-
-	{`^(tinyint)[(]\d+[)] unsigned`, "uint8"},
-	{`^(tinyint)[(]\d+[)]`, "int8"},
-	{`^(smallint)[(]\d+[)] unsigned`, "uint16"},
-	{`^(smallint)[(]\d+[)]`, "int16"},
-	{`^(mediumint)[(]\d+[)] unsigned`, "uin32"},
-	{`^(mediumint)[(]\d+[)]`, "int32"},
-	{`^(bigint)[(]\d+[)] unsigned`, "uint64"},
-	{`^(bigint)[(]\d+[)]`, "int64"},
-	{`^(int)[(]\d+[)] unsigned`, "uint"},
-	{`^(int)[(]\d+[)]`, "int"},
-	{`^(integer)[(]\d+[)]`, "int"},
-	{`^(float)[(]\d+,\d+[)] unsigned`, "float32"},
-	{`^(float)[(]\d+,\d+[)]`, "float32"},
-	{`^(double)[(]\d+,\d+[)] unsigned`, "float64"},
-	{`^(double)[(]\d+,\d+[)]`, "float64"},
-	{`^(char)[(]\d+[)]`, "string"},
-	{`^(varchar)[(]\d+[)]`, "string"},
-	{`^(datetime)[(]\d+[)]`, "time.Time"},
-	// {`^(date)[(]\d+[)]`, "time.Time"},
-	{`^(time)[(]\d+[)]`, "time.Time"},
-	{`^(timestamp)[(]\d+[)]`, "time.Time"},
-	// {`^(text)[(]\d+[)]`, "string"},
-	// {`^(tinytext)[(]\d+[)]`, "string"},
-	// {`^(mediumtext)[(]\d+[)]`, "string"},
-	// {`^(longtext)[(]\d+[)]`, "string"},
-	// {`^(blob)[(]\d+[)]`, "[]byte"},
-	// {`^(tinyblob)[(]\d+[)]`, "[]byte"},
-	// {`^(mediumblob)[(]\d+[)]`, "[]byte"},
-	// {`^(longblob)[(]\d+[)]`, "[]byte"},
-	{`^(bit)[(]\d+[)]`, "[]uint8"},
-	{`json`, "datatypes.JSON"},
-	{`^(enum)[(](.)+[)]`, "string"},
-	{`^(decimal)[(]\d+,\d+[)]`, "string"},
-	{`^(binary)[(]\d+[)]`, "[]byte"},
-	{`^(varbinary)[(]\d+[)]`, "[]byte"},
-}
-
 func getSqliteGoDataType(name, dataType string) string {
 	dataType = getSqliteDataType(dataType)
 	// filter special type
@@ -246,11 +203,8 @@ func getSqliteDataType(dataType string) string {
 	if v, ok := sqliteTypeDict[dataType]; ok {
 		return v
 	}
-	if v, ok := mysqlTypeDict[dataType]; ok {
-		return v
-	}
 
-	for _, v := range sqliteTypeMatchList {
+	for _, v := range mysqlTypeDictMatchList {
 		ok, _ := regexp.MatchString(v.Key, dataType)
 		if ok {
 			return v.Value
