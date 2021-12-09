@@ -63,16 +63,30 @@ func (s *Struct) EnableOutSQL(b bool) *Struct {
 }
 
 func (s *Struct) BuildTableNameTemplate() string {
-	type Tpl struct {
+	type tpl struct {
 		TableName  string
 		StructName string
 	}
 
 	var buf strings.Builder
 
-	_ = TableNameTpl.Execute(&buf, Tpl{
+	_ = TableNameTpl.Execute(&buf, tpl{
 		TableName:  s.TableName,
 		StructName: s.Name,
+	})
+	return buf.String()
+}
+
+func (s *Struct) BuildColumnNameTemplate() string {
+	type tpl struct {
+		StructName string
+		Fields     []Field
+	}
+	var buf strings.Builder
+
+	_ = ColumnNameTpl.Execute(&buf, &tpl{
+		StructName: s.Name,
+		Fields:     s.Fields,
 	})
 	return buf.String()
 }

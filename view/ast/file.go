@@ -78,6 +78,8 @@ func (p *File) Build() string {
 		}
 		// add table name function
 		buf.WriteString(v.BuildTableNameTemplate() + delimLF)
+		buf.WriteString(delimLF)
+		buf.WriteString(v.BuildColumnNameTemplate())
 	}
 	return buf.String()
 }

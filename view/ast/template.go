@@ -1,8 +1,6 @@
 package ast
 
-import (
-	"text/template"
-)
+import "html/template"
 
 // interval
 const delimTab = "\t"
@@ -15,4 +13,18 @@ func (*{{.StructName}}) TableName() string {
 }
 `
 
-var TableNameTpl, _ = template.New("tableNameTpl").Parse(tableNameTpl)
+const columnNameTpl = `
+// {{.StructName}}Columns get sql column name
+var {{.StructName}}Columns = struct { 
+{{- range $field := .Fields}}
+	{{$field.Name}} string
+{{- end}}    
+}{
+{{- range $field := .Fields}}
+	{{$field.Name}}:"{{$field.ColumnName}}",  
+{{- end}}           
+	}
+`
+
+var TableNameTpl = template.Must(template.New("tableNameTpl").Parse(tableNameTpl))
+var ColumnNameTpl = template.Must(template.New("columnNameTpl").Parse(columnNameTpl))
