@@ -51,6 +51,7 @@ var cfg = Config{
 		IsNullToPoint: true,
 		IsOutSQL:      false,
 		IsForeignKey:  false,
+		IsCommentTag:  false,
 	},
 }
 

@@ -32,6 +32,7 @@ type Config struct {
 	IsNullToPoint bool     `yaml:"isNullToPoint" json:"isNullToPoint"` // 是否字段为null时输出指针类型
 	IsOutSQL      bool     `yaml:"isOutSQL" json:"isOutSQL"`           // 是否输出创建表的SQL
 	IsForeignKey  bool     `yaml:"isForeignKey" json:"isForeignKey"`   // 输出外键
+	IsCommentTag  bool     `yaml:"isCommentTag" json:"isCommentTag"`   // 注释同时放入tag标签中
 }
 
 // View information
@@ -238,8 +239,8 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 				field.AddTag(tagDb, vv)
 			}
 		}
-		if comment := field.GetComment(); comment != "" {
-			comment = strings.ReplaceAll(comment, ";", ",")
+		if sf.IsCommentTag && field.GetComment() != "" {
+			comment := strings.ReplaceAll(field.GetComment(), ";", ",")
 			comment = strings.ReplaceAll(comment, "`", "'")
 			comment = strings.ReplaceAll(comment, `"`, `\"`)
 			field.AddTag(tagDb, "comment:"+comment)
