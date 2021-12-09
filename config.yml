@@ -55,3 +55,7 @@ database:
 # 是否输出外键字段
 # 默认: 不输出
 #  isForeignKey: true
+
+# 是否注释在tag中
+# 默认: 不输出
+#  IsCommentTag: true
