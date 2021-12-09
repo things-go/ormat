@@ -238,6 +238,12 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 				field.AddTag(tagDb, vv)
 			}
 		}
+		if comment := field.GetComment(); comment != "" {
+			comment = strings.ReplaceAll(comment, ";", ",")
+			comment = strings.ReplaceAll(comment, "`", "'")
+			comment = strings.ReplaceAll(comment, `"`, `\"`)
+			field.AddTag(tagDb, "comment:"+comment)
+		}
 	}
 
 	// web tag
