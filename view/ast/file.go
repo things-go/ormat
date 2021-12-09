@@ -49,7 +49,7 @@ func (p *File) AddStruct(st Struct) *File {
 func (p *File) Build() string {
 	buf := strings.Builder{}
 
-	buf.WriteString("package" + _interval + p.PackageName + "\n")
+	buf.WriteString("package" + delimTab + p.PackageName + delimLF)
 
 	// auto add import
 	for _, v := range p.Structs {
@@ -64,20 +64,20 @@ func (p *File) Build() string {
 
 	// add imports
 	if len(p.Imports) > 0 {
-		buf.WriteString("import (" + "\n")
+		buf.WriteString("import (" + delimLF)
 		for _, v := range p.Imports {
-			buf.WriteString(v + "\n")
+			buf.WriteString(v + delimLF)
 		}
-		buf.WriteString(")" + "\n")
+		buf.WriteString(")" + delimLF)
 	}
 
 	// add struct
 	for _, v := range p.Structs {
 		for _, v1 := range v.BuildLines() {
-			buf.WriteString(v1 + "\n")
+			buf.WriteString(v1 + delimLF)
 		}
 		// add table name function
-		buf.WriteString(v.BuildTableNameTemplate() + "\n")
+		buf.WriteString(v.BuildTableNameTemplate() + delimLF)
 	}
 	return buf.String()
 }

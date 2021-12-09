@@ -5,7 +5,8 @@ import (
 )
 
 // interval
-const _interval = "\t"
+const delimTab = "\t"
+const delimLF = "\n"
 
 const tableNameTpl = `
 // TableName implement schema.Tabler interface

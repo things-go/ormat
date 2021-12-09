@@ -86,7 +86,7 @@ func (s *Struct) BuildLines() []string {
 			"/* sql",
 			s.CreateTableSQL,
 			"sql */",
-			"\n",
+			delimLF,
 		)
 	}
 

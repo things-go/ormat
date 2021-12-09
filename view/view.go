@@ -240,9 +240,12 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 			}
 		}
 		if sf.IsCommentTag && field.GetComment() != "" {
-			comment := strings.ReplaceAll(field.GetComment(), ";", ",")
+			comment := strings.TrimSpace(field.GetComment())
+			comment = strings.ReplaceAll(comment, ";", ",")
 			comment = strings.ReplaceAll(comment, "`", "'")
 			comment = strings.ReplaceAll(comment, `"`, `\"`)
+			comment = strings.ReplaceAll(comment, "\n", " ")
+			comment = strings.ReplaceAll(comment, "\r\n", " ")
 			field.AddTag(tagDb, "comment:"+comment)
 		}
 	}

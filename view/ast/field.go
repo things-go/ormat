@@ -70,11 +70,11 @@ func (e *Field) BuildLine() string {
 
 	// field name
 	buf.WriteString(e.Name)
-	buf.WriteString(_interval)
+	buf.WriteString(delimTab)
 
 	// field type
 	buf.WriteString(e.Type)
-	buf.WriteString(_interval)
+	buf.WriteString(delimTab)
 
 	// field tags
 	if len(e.Tags) > 0 {
