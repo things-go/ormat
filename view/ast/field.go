@@ -53,6 +53,18 @@ func (e *Field) AddTag(k string, v string) *Field {
 	return e
 }
 
+func (e *Field) RemoveTag(k, v string) *Field {
+	if e.Tags != nil {
+		tagsValues := e.Tags[k]
+		for i, vv := range tagsValues {
+			if vv == v {
+				e.Tags[k] = append(tagsValues[:i], tagsValues[i+1:]...)
+			}
+		}
+	}
+	return e
+}
+
 // SetColumnName set field column name
 func (e *Field) SetColumnName(name string) *Field {
 	e.ColumnName = name

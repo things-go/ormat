@@ -197,9 +197,11 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 	if tagDb != "" {
 		// not simple output
 		field.AddTag(tagDb, "column:"+ci.Name)
-		field.AddTag(tagDb, "type:"+ci.ColumnType)
+		columnType := "type:" + ci.ColumnType
+		field.AddTag(tagDb, columnType)
+
 		if ci.IsAutoIncrement {
-			field.AddTag(tagDb, "autoIncrement")
+			field.AddTag(tagDb, "autoIncrement:true")
 		}
 		if !ci.IsNullable {
 			field.AddTag(tagDb, "not null")
@@ -233,8 +235,17 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 				}
 			}
 			if vv != "" {
+				// NOTE: 主要是整型主键,gorm在自动迁移时没有在mysql上加上auto_increment
+				if vv == "primaryKey" && ci.IsAutoIncrement {
+					field.RemoveTag(tagDb, columnType)
+				}
 				if v1.IsMulti {
-					vv += ",priority:" + cast.ToString(v1.SeqInIndex)
+					if vv == "primaryKey" {
+						vv += ";"
+					} else {
+						vv += ","
+					}
+					vv += "priority:" + cast.ToString(v1.SeqInIndex)
 				}
 				field.AddTag(tagDb, vv)
 			}
