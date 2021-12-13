@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+const Version = "v0.0.1-rc6"
+
 // GetWd 获取当前工作目录
 func GetWd() string {
 	dir, _ := os.Getwd()
