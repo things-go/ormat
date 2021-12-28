@@ -6,9 +6,10 @@ import (
 	"path"
 	"strings"
 
-	"github.com/things-go/x/extos"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/thinkgos/ormat/pkg/infra"
 )
 
 // Config 数据库配置
@@ -34,7 +35,7 @@ func New(c Config, config *gorm.Config, dialectorNews ...func(c Config) gorm.Dia
 		if !strings.HasSuffix(dsn, ".db") {
 			dsn += ".db"
 		}
-		if !extos.IsExist(dsn) {
+		if !infra.IsExist(dsn) {
 			if err := os.MkdirAll(path.Dir(dsn), os.ModePerm); err != nil {
 				return nil, fmt.Errorf("database mkdir (%s), %+v", dsn, err)
 			}

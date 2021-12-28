@@ -70,7 +70,9 @@ type mysqlCreateTable struct {
 	SQL   string `gorm:"column:Create Table"`
 }
 
-type MySQL struct{}
+type MySQL struct {
+	EnableInt bool
+}
 
 // GetDatabase get database information
 func (sf *MySQL) GetDatabase(db *gorm.DB, dbName string, tbNames ...string) (*view.Database, error) {
@@ -161,7 +163,7 @@ func (sf *MySQL) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttrib
 		ci := view.Column{
 			Name:            v.ColumnName,
 			OrdinalPosition: v.OrdinalPosition,
-			DataType:        getMysqlGoDataType(v.ColumnType),
+			DataType:        getMysqlGoDataType(v.ColumnType, sf.EnableInt),
 			ColumnType:      v.ColumnType,
 			IsNullable:      strings.EqualFold(v.IsNullable, "YES"),
 			IsAutoIncrement: v.Extra == "auto_increment",
@@ -232,11 +234,41 @@ func fixForeignKey(vs []mysqlForeignKey, columnName string) []view.ForeignKey {
 	return result
 }
 
-// MysqlTypeDict Accurate matching type
-var mysqlTypeDictMatchList = []struct {
+func getMysqlGoDataType(columnType string, enableInt bool) string {
+	selfDefineTypeMqlDicMap := config.GetTypeDefine()
+	if v, ok := selfDefineTypeMqlDicMap[columnType]; ok {
+		return v
+	}
+	typeDictMatchList := getMysqlTypeMatchList(enableInt)
+	for _, v := range typeDictMatchList {
+		ok, _ := regexp.MatchString(v.Key, columnType)
+		if ok {
+			return v.Value
+		}
+	}
+	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/thinkgos/ormat/blob/master/view/model.go)", columnType))
+	return ""
+}
+
+type dictMatchKv struct {
 	Key   string
 	Value string
-}{
+}
+
+var typeIntDictMatchKv = []dictMatchKv{
+	{`^(int)\b[(]\d+[)] unsigned`, "uint"},
+	{`^(int)\b[(]\d+[)]`, "int"},
+	{`^(integer)\b[(]\d+[)] unsigned`, "uint"},
+	{`^(integer)\b[(]\d+[)]`, "int"},
+}
+var typeNoIntDictMatchKv = []dictMatchKv{
+	{`^(int)\b[(]\d+[)] unsigned`, "uint32"},
+	{`^(int)\b[(]\d+[)]`, "int32"},
+	{`^(integer)\b[(]\d+[)] unsigned`, "uint32"},
+	{`^(integer)\b[(]\d+[)]`, "int32"},
+}
+
+var typeCommonDictMatchKv = []dictMatchKv{
 	{`^(tinyint)\b[(]1[)] unsigned`, "bool"},
 	{`^(tinyint)\b[(]1[)]`, "bool"},
 	{`^(tinyint)\b[(]\d+[)] unsigned`, "uint8"},
@@ -247,10 +279,6 @@ var mysqlTypeDictMatchList = []struct {
 	{`^(mediumint)\b[(]\d+[)]`, "int32"},
 	{`^(bigint)\b[(]\d+[)] unsigned`, "uint64"},
 	{`^(bigint)\b[(]\d+[)]`, "int64"},
-	{`^(int)\b[(]\d+[)] unsigned`, "uint32"},
-	{`^(int)\b[(]\d+[)]`, "int32"},
-	{`^(integer)\b[(]\d+[)] unsigned`, "uint32"},
-	{`^(integer)\b[(]\d+[)]`, "int32"},
 	{`^(float)\b[(]\d+,\d+[)] unsigned`, "float32"},
 	{`^(float)\b[(]\d+,\d+[)]`, "float32"},
 	{`^(double)\b[(]\d+,\d+[)] unsigned`, "float64"},
@@ -277,17 +305,12 @@ var mysqlTypeDictMatchList = []struct {
 	{`^(varbinary)\b[(]\d+[)]`, "[]byte"},
 }
 
-func getMysqlGoDataType(columnType string) string {
-	selfDefineTypeMqlDicMap := config.GetTypeDefine()
-	if v, ok := selfDefineTypeMqlDicMap[columnType]; ok {
-		return v
+func getMysqlTypeMatchList(enableInt bool) []dictMatchKv {
+	list := make([]dictMatchKv, 0, len(typeCommonDictMatchKv)+len(typeNoIntDictMatchKv))
+	if enableInt {
+		list = append(list, typeIntDictMatchKv...)
+	} else {
+		list = append(list, typeNoIntDictMatchKv...)
 	}
-	for _, v := range mysqlTypeDictMatchList {
-		ok, _ := regexp.MatchString(v.Key, columnType)
-		if ok {
-			return v.Value
-		}
-	}
-	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/thinkgos/ormat/blob/master/view/model.go)", columnType))
-	return ""
+	return append(list, typeCommonDictMatchKv...)
 }

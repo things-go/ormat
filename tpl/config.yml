@@ -44,6 +44,10 @@ database:
 # 默认不禁用
 #  disableNull: false
 
+# 使能int32,uint32输出为int, uint
+# 默认采用int32, uint32
+#  EnableInt: true
+
 # 是否输出null为指针类型, 要求disable_null=false
 # 默认 输出null为指针类型
 #  isNullToPoint: false

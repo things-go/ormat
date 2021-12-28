@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/things-go/x/extos"
 
+	"github.com/thinkgos/ormat/pkg/infra"
 	"github.com/thinkgos/ormat/tpl"
 )
 
@@ -16,6 +16,6 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return extos.WriteFile("config.yml", b)
+		return infra.WriteFile("config.yml", b)
 	},
 }

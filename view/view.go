@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cast"
-	"github.com/things-go/x/extstr"
 	"gorm.io/gorm"
 
+	"github.com/thinkgos/ormat/pkg/infra"
 	"github.com/thinkgos/ormat/view/ast"
 )
 
@@ -29,6 +29,7 @@ type Config struct {
 	DbTag         string   `yaml:"dbTag" json:"dbTag"`                 // db标签, 默认gorm
 	WebTags       []WebTag `yaml:"webTags" json:"webTags"`             // web tags 标签列表
 	DisableNull   bool     `yaml:"disableNull" json:"disableNull"`     // 不输出字段为null指针或sql.Nullxxx类型
+	EnableInt     bool     `yaml:"enableInt" json:"enableInt"`         // 使能int32,uint32输出为int, uint
 	IsNullToPoint bool     `yaml:"isNullToPoint" json:"isNullToPoint"` // 是否字段为null时输出指针类型
 	IsOutSQL      bool     `yaml:"isOutSQL" json:"isOutSQL"`           // 是否输出创建表的SQL
 	IsForeignKey  bool     `yaml:"isForeignKey" json:"isForeignKey"`   // 输出外键
@@ -87,7 +88,7 @@ func (sf *View) GetTableStruct(tables []Table) []ast.Struct {
 	scts := make([]ast.Struct, 0, len(tables))
 	for _, tb := range tables {
 		sct := new(ast.Struct).
-			SetName(extstr.CamelCase(tb.Name)).
+			SetName(infra.CamelCase(tb.Name)).
 			SetComment(tb.Comment).
 			AddFields(sf.getColumnFields(tables, tb.Columns)...).
 			SetTableName(tb.Name).
@@ -105,11 +106,17 @@ func (sf *View) getColumnFields(tables []Table, cols []Column) []ast.Field {
 	for _, v := range cols {
 		var field ast.Field
 
-		fieldName := extstr.CamelCase(v.Name)
+		fieldName := infra.CamelCase(v.Name)
 		fieldType := getFieldDataType(v.DataType, v.IsNullable, sf.DisableNull, sf.IsNullToPoint)
 		if fieldName == "DeletedAt" &&
 			(v.DataType == "int64" ||
 				v.DataType == "uint64" ||
+				v.DataType == "uint32" ||
+				v.DataType == "int32" ||
+				v.DataType == "uint16" ||
+				v.DataType == "int16" ||
+				v.DataType == "uint8" ||
+				v.DataType == "int8" ||
 				v.DataType == "uint" ||
 				v.DataType == "int") {
 			fieldType = "soft_delete.DeletedAt"
@@ -144,7 +151,7 @@ func (sf *View) getForeignKeyField(tables []Table, col Column) (fks []ast.Field)
 		if found {
 			var field ast.Field
 
-			name := extstr.CamelCase(v.TableName)
+			name := infra.CamelCase(v.TableName)
 			if isMulti {
 				field.SetName(name + "List").
 					SetType("[]" + name)
@@ -277,13 +284,13 @@ func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag) {
 
 		switch v.Kind {
 		case "smallCamelCase":
-			vv = extstr.SmallCamelCase(name)
+			vv = infra.SmallCamelCase(name)
 		case "camelCase":
-			vv = extstr.CamelCase(name)
+			vv = infra.CamelCase(name)
 		case "snakeCase":
-			vv = extstr.SnakeCase(name)
+			vv = infra.SnakeCase(name)
 		case "kebab":
-			vv = extstr.Kebab(name)
+			vv = infra.Kebab(name)
 		}
 
 		if vv != "" {
