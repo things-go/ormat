@@ -72,12 +72,14 @@ func init() {
 // IDcom -> idcom
 // nameIDCom -> name_id_com
 // nameIDcom -> name_idcom
-func Recombine(str string, delimiter byte) string {
+func Recombine(str string, delimiter byte, enableLint bool) string {
 	str = strings.TrimSpace(str)
 	if str == "" {
 		return ""
 	}
-	str = defaultReplacer.Replace(str)
+	if enableLint {
+		str = defaultReplacer.Replace(str)
+	}
 
 	var isLastCaseUpper bool
 	var isCurrCaseUpper bool
@@ -122,7 +124,7 @@ func Recombine(str string, delimiter byte) string {
 // example: delimiter = '_'
 // 空字符 -> 空字符
 // hello_world -> HelloWorld
-func UnRecombine(str string, delimiter byte) string {
+func UnRecombine(str string, delimiter byte, enableLint bool) string {
 	str = strings.TrimSpace(str)
 	if str == "" {
 		return ""
@@ -141,10 +143,12 @@ func UnRecombine(str string, delimiter byte) string {
 	}
 
 	for i, word := range words {
-		u := strings.ToUpper(word)
-		if _, ok := commonInitialisms[u]; ok {
-			b.WriteString(u)
-			continue
+		if enableLint {
+			u := strings.ToUpper(word)
+			if _, ok := commonInitialisms[u]; ok {
+				b.WriteString(u)
+				continue
+			}
 		}
 
 		word = removeInvalidChars(word, i == 0) // on 0 remove first digits
@@ -175,8 +179,8 @@ func UnRecombine(str string, delimiter byte) string {
 // IDcom -> idcom
 // nameIDCom -> name_id_com
 // nameIDcom -> name_idcom
-func SnakeCase(str string) string {
-	return Recombine(str, '_')
+func SnakeCase(str string, enableLint bool) string {
+	return Recombine(str, '_', enableLint)
 }
 
 // Kebab 转换驼峰字符串为用'-'分隔的字符串,特殊字符由DefaultInitialisms决定取代
@@ -185,8 +189,8 @@ func SnakeCase(str string) string {
 // IDcom -> idcom
 // nameIDCom -> name-id-com
 // nameIDcom -> name-idcom
-func Kebab(str string) string {
-	return Recombine(str, '-')
+func Kebab(str string, enableLint bool) string {
+	return Recombine(str, '-', enableLint)
 }
 
 // CamelCase to camel case string
@@ -194,8 +198,8 @@ func Kebab(str string) string {
 // idcom -> Idcom
 // name_id_com -> NameIDCom
 // name_idcom -> NameIdcom
-func CamelCase(str string) string {
-	return UnRecombine(str, '_')
+func CamelCase(str string, enableLint bool) string {
+	return UnRecombine(str, '_', enableLint)
 }
 
 // SmallCamelCase to small camel case string
@@ -203,11 +207,13 @@ func CamelCase(str string) string {
 // idcom -> idcom
 // name_id_com -> nameIDCom
 // name_idcom -> nameIdcom
-func SmallCamelCase(fieldName string) string {
-	fieldName = CamelCase(fieldName)
-	for k := range commonInitialisms {
-		if strings.HasPrefix(fieldName, k) {
-			return strings.Replace(fieldName, k, strings.ToLower(k), 1)
+func SmallCamelCase(fieldName string, enableLint bool) string {
+	fieldName = CamelCase(fieldName, enableLint)
+	if enableLint {
+		for k := range commonInitialisms {
+			if strings.HasPrefix(fieldName, k) {
+				return strings.Replace(fieldName, k, strings.ToLower(k), 1)
+			}
 		}
 	}
 	return LowTitle(fieldName)

@@ -28,6 +28,7 @@ type WebTag struct {
 type Config struct {
 	DbTag         string   `yaml:"dbTag" json:"dbTag"`                 // db标签, 默认gorm
 	WebTags       []WebTag `yaml:"webTags" json:"webTags"`             // web tags 标签列表
+	EnableLint    bool     `yaml:"enableLint"`                         // 使能lint, id -> ID
 	DisableNull   bool     `yaml:"disableNull" json:"disableNull"`     // 不输出字段为null指针或sql.Nullxxx类型
 	EnableInt     bool     `yaml:"enableInt" json:"enableInt"`         // 使能int32,uint32输出为int, uint
 	IsNullToPoint bool     `yaml:"isNullToPoint" json:"isNullToPoint"` // 是否字段为null时输出指针类型
@@ -88,7 +89,7 @@ func (sf *View) GetTableStruct(tables []Table) []ast.Struct {
 	scts := make([]ast.Struct, 0, len(tables))
 	for _, tb := range tables {
 		sct := new(ast.Struct).
-			SetName(infra.CamelCase(tb.Name)).
+			SetName(infra.CamelCase(tb.Name, sf.EnableLint)).
 			SetComment(tb.Comment).
 			AddFields(sf.getColumnFields(tables, tb.Columns)...).
 			SetTableName(tb.Name).
@@ -106,7 +107,7 @@ func (sf *View) getColumnFields(tables []Table, cols []Column) []ast.Field {
 	for _, v := range cols {
 		var field ast.Field
 
-		fieldName := infra.CamelCase(v.Name)
+		fieldName := infra.CamelCase(v.Name, sf.EnableLint)
 		fieldType := getFieldDataType(v.DataType, v.IsNullable, sf.DisableNull, sf.IsNullToPoint, sf.EnableInt)
 		if fieldName == "DeletedAt" &&
 			(v.DataType == "int64" ||
@@ -151,7 +152,7 @@ func (sf *View) getForeignKeyField(tables []Table, col Column) (fks []ast.Field)
 		if found {
 			var field ast.Field
 
-			name := infra.CamelCase(v.TableName)
+			name := infra.CamelCase(v.TableName, sf.EnableLint)
 			if isMulti {
 				field.SetName(name + "List").
 					SetType("[]" + name)
@@ -163,7 +164,7 @@ func (sf *View) getForeignKeyField(tables []Table, col Column) (fks []ast.Field)
 				AddTag(tagDb, "joinForeignKey:"+col.Name).
 				AddTag(tagDb, "foreignKey:"+v.ColumnName)
 
-			fixFieldWebTags(&field, v.TableName, sf.WebTags)
+			fixFieldWebTags(&field, v.TableName, sf.WebTags, sf.EnableLint)
 			fks = append(fks, field)
 		}
 	}
@@ -269,10 +270,10 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 	}
 
 	// web tag
-	fixFieldWebTags(field, ci.Name, sf.WebTags)
+	fixFieldWebTags(field, ci.Name, sf.WebTags, sf.EnableInt)
 }
 
-func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag) {
+func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag, enableLint bool) {
 	for _, v := range webTags {
 		vv := ""
 		if v.Tag == "json" {
@@ -284,13 +285,13 @@ func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag) {
 
 		switch v.Kind {
 		case "smallCamelCase":
-			vv = infra.SmallCamelCase(name)
+			vv = infra.SmallCamelCase(name, enableLint)
 		case "camelCase":
-			vv = infra.CamelCase(name)
+			vv = infra.CamelCase(name, enableLint)
 		case "snakeCase":
-			vv = infra.SnakeCase(name)
+			vv = infra.SnakeCase(name, enableLint)
 		case "kebab":
-			vv = infra.Kebab(name)
+			vv = infra.Kebab(name, enableLint)
 		}
 
 		if vv != "" {

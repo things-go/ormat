@@ -47,6 +47,7 @@ var cfg = Config{
 	View: view.Config{
 		DbTag:         "gorm",
 		WebTags:       []view.WebTag{{Kind: "snakeCase", Tag: "json", HasOmit: true}},
+		EnableLint:    false,
 		DisableNull:   false,
 		EnableInt:     false,
 		IsNullToPoint: true,
