@@ -129,11 +129,13 @@ var nullToSQLNull = map[string]string{
 
 // getFieldDataType get go data type name
 func getFieldDataType(dataType string, isNull, disableNull, isNullToPointer, enableInt bool) string {
-	switch dataType {
-	case "uint32":
-		dataType = "uint"
-	case "int32":
-		dataType = "int"
+	if enableInt {
+		switch dataType {
+		case "uint32":
+			dataType = "uint"
+		case "int32":
+			dataType = "int"
+		}
 	}
 	if !disableNull && isNull {
 		cv := nullToSQLNull
