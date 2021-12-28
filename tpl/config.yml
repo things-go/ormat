@@ -39,7 +39,7 @@ database:
 #    - kind: snakeCase
 #      tag: yaml
 #      hasOmit: false
-#
+
 # 使能lint, 如id,pid,api -> ID,PID,API
 #  enableLint: true
 

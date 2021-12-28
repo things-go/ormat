@@ -40,6 +40,9 @@ database:
 #      tag: yaml
 #      hasOmit: false
 
+# 使能lint, 如id,pid,api -> ID,PID,API
+#  enableLint: true
+
 # 是否禁用null输出指针类型或sql.Nullxxx
 # 默认不禁用
 #  disableNull: false
