@@ -52,9 +52,7 @@ type sqliteForeignKey struct {
 	ReferencedColumnName  string `gorm:"column:referenced_column_name"`  // Which column of the affected table.该索引受影响的表的哪一列
 }
 
-type SQLite struct {
-	EnableInt bool
-}
+type SQLite struct{}
 
 // GetDbInfo get database info
 // 获取数据库信息
@@ -114,7 +112,7 @@ func (sf *SQLite) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttri
 		columnInfo := view.Column{
 			Name:            v.Name,
 			OrdinalPosition: v.Cid,
-			DataType:        getSqliteGoDataType(v.Name, v.Type, sf.EnableInt),
+			DataType:        getSqliteGoDataType(v.Name, v.Type),
 			ColumnType:      v.Type, // TODO: ??
 			IsNullable:      !v.NotNull,
 			IsAutoIncrement: false,
@@ -169,15 +167,15 @@ func fixSqliteForeignKey(vs []sqliteForeignKey, columnName string) []view.Foreig
 
 // sqliteTypeDict Accurate matching type
 var sqliteTypeDict = map[string]string{
-	"integer": "int",
+	"integer": "int64",
 	"text":    "string",
 	"real":    "float64",
 	"numeric": "string",
 	"blob":    "[]byte",
 }
 
-func getSqliteGoDataType(name, dataType string, enableInt bool) string {
-	dataType = getSqliteDataType(dataType, enableInt)
+func getSqliteGoDataType(name, dataType string) string {
+	dataType = getSqliteDataType(dataType)
 	// filter special type
 	switch name {
 	case "created_at", "updated_at":
@@ -195,7 +193,7 @@ func getSqliteGoDataType(name, dataType string, enableInt bool) string {
 	return dataType
 }
 
-func getSqliteDataType(dataType string, enableInt bool) string {
+func getSqliteDataType(dataType string) string {
 	dataType = strings.ToLower(dataType)
 	selfDefineTypeMqlDicMap := config.GetTypeDefine()
 	if v, ok := selfDefineTypeMqlDicMap[dataType]; ok {
@@ -205,7 +203,6 @@ func getSqliteDataType(dataType string, enableInt bool) string {
 		return v
 	}
 
-	typeDictMatchList := getMysqlTypeMatchList(enableInt)
 	for _, v := range typeDictMatchList {
 		ok, _ := regexp.MatchString(v.Key, dataType)
 		if ok {

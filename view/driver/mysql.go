@@ -70,9 +70,7 @@ type mysqlCreateTable struct {
 	SQL   string `gorm:"column:Create Table"`
 }
 
-type MySQL struct {
-	EnableInt bool
-}
+type MySQL struct{}
 
 // GetDatabase get database information
 func (sf *MySQL) GetDatabase(db *gorm.DB, dbName string, tbNames ...string) (*view.Database, error) {
@@ -163,7 +161,7 @@ func (sf *MySQL) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttrib
 		ci := view.Column{
 			Name:            v.ColumnName,
 			OrdinalPosition: v.OrdinalPosition,
-			DataType:        getMysqlGoDataType(v.ColumnType, sf.EnableInt),
+			DataType:        getMysqlGoDataType(v.ColumnType),
 			ColumnType:      v.ColumnType,
 			IsNullable:      strings.EqualFold(v.IsNullable, "YES"),
 			IsAutoIncrement: v.Extra == "auto_increment",
@@ -234,12 +232,11 @@ func fixForeignKey(vs []mysqlForeignKey, columnName string) []view.ForeignKey {
 	return result
 }
 
-func getMysqlGoDataType(columnType string, enableInt bool) string {
+func getMysqlGoDataType(columnType string) string {
 	selfDefineTypeMqlDicMap := config.GetTypeDefine()
 	if v, ok := selfDefineTypeMqlDicMap[columnType]; ok {
 		return v
 	}
-	typeDictMatchList := getMysqlTypeMatchList(enableInt)
 	for _, v := range typeDictMatchList {
 		ok, _ := regexp.MatchString(v.Key, columnType)
 		if ok {
@@ -255,20 +252,7 @@ type dictMatchKv struct {
 	Value string
 }
 
-var typeIntDictMatchKv = []dictMatchKv{
-	{`^(int)\b[(]\d+[)] unsigned`, "uint"},
-	{`^(int)\b[(]\d+[)]`, "int"},
-	{`^(integer)\b[(]\d+[)] unsigned`, "uint"},
-	{`^(integer)\b[(]\d+[)]`, "int"},
-}
-var typeNoIntDictMatchKv = []dictMatchKv{
-	{`^(int)\b[(]\d+[)] unsigned`, "uint32"},
-	{`^(int)\b[(]\d+[)]`, "int32"},
-	{`^(integer)\b[(]\d+[)] unsigned`, "uint32"},
-	{`^(integer)\b[(]\d+[)]`, "int32"},
-}
-
-var typeCommonDictMatchKv = []dictMatchKv{
+var typeDictMatchList = []dictMatchKv{
 	{`^(tinyint)\b[(]1[)] unsigned`, "bool"},
 	{`^(tinyint)\b[(]1[)]`, "bool"},
 	{`^(tinyint)\b[(]\d+[)] unsigned`, "uint8"},
@@ -277,6 +261,10 @@ var typeCommonDictMatchKv = []dictMatchKv{
 	{`^(smallint)\b[(]\d+[)]`, "int16"},
 	{`^(mediumint)\b[(]\d+[)] unsigned`, "uint32"},
 	{`^(mediumint)\b[(]\d+[)]`, "int32"},
+	{`^(int)\b[(]\d+[)] unsigned`, "uint32"},
+	{`^(int)\b[(]\d+[)]`, "int32"},
+	{`^(integer)\b[(]\d+[)] unsigned`, "uint32"},
+	{`^(integer)\b[(]\d+[)]`, "int32"},
 	{`^(bigint)\b[(]\d+[)] unsigned`, "uint64"},
 	{`^(bigint)\b[(]\d+[)]`, "int64"},
 	{`^(float)\b[(]\d+,\d+[)] unsigned`, "float32"},
@@ -303,14 +291,4 @@ var typeCommonDictMatchKv = []dictMatchKv{
 	{`^(decimal)\b[(]\d+,\d+[)]`, "string"},
 	{`^(binary)\b[(]\d+[)]`, "[]byte"},
 	{`^(varbinary)\b[(]\d+[)]`, "[]byte"},
-}
-
-func getMysqlTypeMatchList(enableInt bool) []dictMatchKv {
-	list := make([]dictMatchKv, 0, len(typeCommonDictMatchKv)+len(typeNoIntDictMatchKv))
-	if enableInt {
-		list = append(list, typeIntDictMatchKv...)
-	} else {
-		list = append(list, typeNoIntDictMatchKv...)
-	}
-	return append(list, typeCommonDictMatchKv...)
 }

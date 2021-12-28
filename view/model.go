@@ -128,17 +128,23 @@ var nullToSQLNull = map[string]string{
 }
 
 // getFieldDataType get go data type name
-func getFieldDataType(name string, isNull, disableNull, isNullToPointer bool) string {
+func getFieldDataType(dataType string, isNull, disableNull, isNullToPointer, enableInt bool) string {
+	switch dataType {
+	case "uint32":
+		dataType = "uint"
+	case "int32":
+		dataType = "int"
+	}
 	if !disableNull && isNull {
 		cv := nullToSQLNull
 		if isNullToPointer {
 			cv = nullToPointer
 		}
-		if v, ok := cv[name]; ok {
+		if v, ok := cv[dataType]; ok {
 			return v
 		}
 	}
-	return name
+	return dataType
 }
 
 var rJSONTag = regexp.MustCompile(`^.*?\[@.*?(?i:jsontag+):\s*(.*)\].*?`)

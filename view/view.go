@@ -107,7 +107,7 @@ func (sf *View) getColumnFields(tables []Table, cols []Column) []ast.Field {
 		var field ast.Field
 
 		fieldName := infra.CamelCase(v.Name)
-		fieldType := getFieldDataType(v.DataType, v.IsNullable, sf.DisableNull, sf.IsNullToPoint)
+		fieldType := getFieldDataType(v.DataType, v.IsNullable, sf.DisableNull, sf.IsNullToPoint, sf.EnableInt)
 		if fieldName == "DeletedAt" &&
 			(v.DataType == "int64" ||
 				v.DataType == "uint64" ||
