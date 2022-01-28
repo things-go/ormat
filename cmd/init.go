@@ -12,10 +12,10 @@ var initCmd = &cobra.Command{
 	Short:   "generate config file",
 	Example: "ormat init",
 	RunE: func(*cobra.Command, []string) error {
-		b, err := tpl.Static.ReadFile("config.yml")
+		b, err := tpl.Static.ReadFile("ormat.yml")
 		if err != nil {
 			return err
 		}
-		return infra.WriteFile("config.yml", b)
+		return infra.WriteFile(".ormat.yml", b)
 	},
 }

@@ -58,7 +58,7 @@ var cfg = Config{
 }
 
 func LoadConfig() error {
-	viper.SetConfigName("config")
+	viper.SetConfigName(".ormat")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(infra.GetExecutableDir())
 	viper.AddConfigPath(infra.GetWd())

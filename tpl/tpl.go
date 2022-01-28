@@ -4,5 +4,5 @@ import (
 	"embed"
 )
 
-//go:embed config.yml
+//go:embed ormat.yml
 var Static embed.FS
