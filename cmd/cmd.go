@@ -43,7 +43,7 @@ func initConfig() {
 	zapl.ReplaceGlobals(zapl.New(zapl.Config{Level: "info", Format: "console"}).Sugar())
 	err := config.LoadConfig()
 	if err != nil {
-		zapl.Fatalf("load config failed(please run 'ormat init' generate a config.yml): ", err.Error())
+		zapl.Fatalf("load config failed(please run 'ormat init' generate a .ormat.yml): %s", err.Error())
 		return
 	}
 	c := config.GetConfig()
