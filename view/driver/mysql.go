@@ -252,6 +252,7 @@ type dictMatchKv struct {
 	Value string
 }
 
+// \b([(]\d+[)])? 匹配0个或1个(\d+)
 var typeDictMatchList = []dictMatchKv{
 	{`^(tinyint)\b[(]1[)] unsigned`, "bool"},
 	{`^(tinyint)\b[(]1[)]`, "bool"},

@@ -15,22 +15,22 @@ import (
 
 // Config custom config struct
 type Config struct {
-	Deploy     string            `yaml:"deploy" binding:"required,oneof=local dev debug uat prod"` // 布署环境
-	Database   Database          `yaml:"database"`                                                 // 数据库连接信息
-	OutDir     string            `yaml:"outDir"`                                                   // 输出路径
-	TypeDefine map[string]string `yaml:"typeDefine"`                                               // 自定义类型
-	TableNames []string          `yaml:"tableNames"`                                               // 指定表
-	View       view.Config
+	Deploy     string            `yaml:"deploy" json:"deploy" binding:"required,oneof=local dev debug uat prod"` // 布署环境
+	Database   Database          `yaml:"database" json:"database"`                                               // 数据库连接信息
+	OutDir     string            `yaml:"outDir" json:"outDir"`                                                   // 输出路径
+	TypeDefine map[string]string `yaml:"typeDefine" json:"typeDefine"`                                           // 自定义类型
+	TableNames []string          `yaml:"tableNames" json:"tableNames"`                                           // 指定表
+	View       view.Config       `yaml:"view" json:"view"`
 }
 
 // Database information
 type Database struct {
-	Dialect  string `binding:"required,oneof=mysql sqlite3"` // mysql, sqlite3
-	Host     string // Host. 地址
-	Port     int    // Port 端口号
-	Username string // Username 用户名
-	Password string // Password 密码
-	Db       string `binding:"required"` // Database 数据库名
+	Dialect  string `yaml:"dialect" json:"dialect" binding:"required,oneof=mysql sqlite3"` // mysql, sqlite3
+	Host     string `yaml:"host" json:"host"`                                              // Host. 地址
+	Port     int    `yaml:"port" json:"port"`                                              // Port 端口号
+	Username string `yaml:"username" json:"username"`                                      // Username 用户名
+	Password string `yaml:"password" json:"password"`                                      // Password 密码
+	Db       string `yaml:"db" json:"db" binding:"required"`                               // Database 数据库名
 }
 
 var cfg = Config{
