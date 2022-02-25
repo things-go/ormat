@@ -47,9 +47,12 @@ database:
 # 默认不禁用
 #  disableNull: false
 
-# 使能int32,uint32输出为int, uint
-# 默认采用int32, uint32
+# 使能int8,uint8,int16,uint16,int32,uint32输出为int, uint
+# 默认采用对应类型
 #  enableInt: true
+
+# 使能int32,uint32输出为int, uint
+#  enableIntegerInt: true
 
 # 是否输出null为指针类型, 要求disable_null=false
 # 默认 输出null为指针类型

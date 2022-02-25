@@ -26,15 +26,16 @@ type WebTag struct {
 }
 
 type Config struct {
-	DbTag         string   `yaml:"dbTag" json:"dbTag"`                 // db标签, 默认gorm
-	WebTags       []WebTag `yaml:"webTags" json:"webTags"`             // web tags 标签列表
-	EnableLint    bool     `yaml:"enableLint" json:"enableLint"`       // 使能lint, id -> ID
-	DisableNull   bool     `yaml:"disableNull" json:"disableNull"`     // 不输出字段为null指针或sql.Nullxxx类型
-	EnableInt     bool     `yaml:"enableInt" json:"enableInt"`         // 使能int32,uint32输出为int, uint
-	IsNullToPoint bool     `yaml:"isNullToPoint" json:"isNullToPoint"` // 是否字段为null时输出指针类型
-	IsOutSQL      bool     `yaml:"isOutSQL" json:"isOutSQL"`           // 是否输出创建表的SQL
-	IsForeignKey  bool     `yaml:"isForeignKey" json:"isForeignKey"`   // 输出外键
-	IsCommentTag  bool     `yaml:"isCommentTag" json:"isCommentTag"`   // 注释同时放入tag标签中
+	DbTag            string   `yaml:"dbTag" json:"dbTag"`                       // db标签, 默认gorm
+	WebTags          []WebTag `yaml:"webTags" json:"webTags"`                   // web tags 标签列表
+	EnableLint       bool     `yaml:"enableLint" json:"enableLint"`             // 使能lint, id -> ID
+	DisableNull      bool     `yaml:"disableNull" json:"disableNull"`           // 不输出字段为null指针或sql.Nullxxx类型
+	EnableInt        bool     `yaml:"enableInt" json:"enableInt"`               // 使能int8,uint8,int16,uint16,int32,uint32输出为int, uint
+	EnableIntegerInt bool     `yaml:"enableIntegerInt" json:"enableIntegerInt"` // 使能int32,uint32输出为int, uint
+	IsNullToPoint    bool     `yaml:"isNullToPoint" json:"isNullToPoint"`       // 是否字段为null时输出指针类型
+	IsOutSQL         bool     `yaml:"isOutSQL" json:"isOutSQL"`                 // 是否输出创建表的SQL
+	IsForeignKey     bool     `yaml:"isForeignKey" json:"isForeignKey"`         // 输出外键
+	IsCommentTag     bool     `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
 }
 
 // View information
@@ -108,7 +109,7 @@ func (sf *View) getColumnFields(tables []Table, cols []Column) []ast.Field {
 		var field ast.Field
 
 		fieldName := infra.CamelCase(v.Name, sf.EnableLint)
-		fieldType := getFieldDataType(v.DataType, v.IsNullable, sf.DisableNull, sf.IsNullToPoint, sf.EnableInt)
+		fieldType := getFieldDataType(v.DataType, v.IsNullable, sf.DisableNull, sf.IsNullToPoint, sf.EnableInt, sf.EnableIntegerInt)
 		if fieldName == "DeletedAt" &&
 			(v.DataType == "int64" ||
 				v.DataType == "uint64" ||
@@ -270,7 +271,7 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 	}
 
 	// web tag
-	fixFieldWebTags(field, ci.Name, sf.WebTags, sf.EnableInt)
+	fixFieldWebTags(field, ci.Name, sf.WebTags, sf.EnableLint)
 }
 
 func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag, enableLint bool) {

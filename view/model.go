@@ -128,8 +128,16 @@ var nullToSQLNull = map[string]string{
 }
 
 // getFieldDataType get go data type name
-func getFieldDataType(dataType string, isNull, disableNull, isNullToPointer, enableInt bool) string {
+func getFieldDataType(dataType string, isNull, disableNull, isNullToPointer, enableInt, enableIntegerInt bool) string {
 	if enableInt {
+		switch dataType {
+		case "uint8", "uint16", "uint32":
+			dataType = "uint"
+		case "int8", "int16", "int32":
+			dataType = "int"
+		}
+	}
+	if enableIntegerInt {
 		switch dataType {
 		case "uint32":
 			dataType = "uint"
