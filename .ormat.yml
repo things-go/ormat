@@ -54,6 +54,9 @@ database:
 # 使能int32,uint32输出为int, uint
 #  enableIntegerInt: true
 
+# 使能bool输出为int
+#  enableBoolInt: true
+
 # 是否输出null为指针类型, 要求disable_null=false
 # 默认 输出null为指针类型
 #  isNullToPoint: false
