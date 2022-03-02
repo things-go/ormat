@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const Version = "v0.0.1-rc11"
+const Version = "v0.0.1-rc12"
 
 // GetWd 获取当前工作目录
 func GetWd() string {
