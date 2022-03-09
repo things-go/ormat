@@ -2,13 +2,13 @@
 
 database to golang struct
 
-[![GoDoc](https://godoc.org/github.com/thinkgos/ormat?status.svg)](https://godoc.org/github.com/thinkgos/ormat)
-[![Go.Dev reference](https://img.shields.io/badge/go.dev-reference-blue?logo=go&logoColor=white)](https://pkg.go.dev/github.com/thinkgos/ormat?tab=doc)
-[![codecov](https://codecov.io/gh/thinkgos/ormat/branch/main/graph/badge.svg)](https://codecov.io/gh/thinkgos/ormat)
-![Action Status](https://github.com/thinkgos/ormat/workflows/Go/badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/thinkgos/ormat)](https://goreportcard.com/report/github.com/thinkgos/ormat)
-[![Licence](https://img.shields.io/github/license/thinkgos/ormat)](https://raw.githubusercontent.com/thinkgos/ormat/main/LICENSE)
-[![Tag](https://img.shields.io/github/v/tag/thinkgos/ormat)](https://github.com/thinkgos/ormat/tags)
+[![GoDoc](https://godoc.org/github.com/things-go/ormat?status.svg)](https://godoc.org/github.com/things-go/ormat)
+[![Go.Dev reference](https://img.shields.io/badge/go.dev-reference-blue?logo=go&logoColor=white)](https://pkg.go.dev/github.com/things-go/ormat?tab=doc)
+[![codecov](https://codecov.io/gh/things-go/ormat/branch/main/graph/badge.svg)](https://codecov.io/gh/things-go/ormat)
+![Action Status](https://github.com/things-go/ormat/workflows/Go/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/things-go/ormat)](https://goreportcard.com/report/github.com/things-go/ormat)
+[![Licence](https://img.shields.io/github/license/things-go/ormat)](https://raw.githubusercontent.com/things-go/ormat/main/LICENSE)
+[![Tag](https://img.shields.io/github/v/tag/things-go/ormat)](https://github.com/things-go/ormat/tags)
 
 
 ## Features
@@ -20,9 +20,12 @@ database to golang struct
 
 Use go get.
 ```bash
-    go get github.com/thinkgos/ormat
+    go get github.com/things-go/ormat
 ```
-
+or 
+```bash
+    go install github.com/things-go/ormat@latest
+```
 Example.
 
 NOTE: 
@@ -88,6 +91,11 @@ make mac
 ```
 
 ## References
+
+### JetBrains OS licenses
+go-modbus had been being developed with GoLand under the free JetBrains Open Source license(s) granted by JetBrains s.r.o., hence I would like to express my thanks here.
+
+<a href="https://www.jetbrains.com/?from=things-go/go-modbus" target="_blank"><img src="https://github.com/thinkgos/thinkgos/blob/master/asserts/jetbrains-variant-4.svg" width="200" align="middle"/></a>
 
 
 ## License

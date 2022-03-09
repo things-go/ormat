@@ -3,7 +3,7 @@ package ast
 import (
 	"strings"
 
-	"github.com/thinkgos/ormat/pkg/infra"
+	"github.com/things-go/ormat/pkg/infra"
 )
 
 // File a file

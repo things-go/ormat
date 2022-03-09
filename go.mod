@@ -1,4 +1,4 @@
-module github.com/thinkgos/ormat
+module github.com/things-go/ormat
 
 go 1.17
 

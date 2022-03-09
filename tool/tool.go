@@ -10,13 +10,13 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/thinkgos/ormat/config"
-	"github.com/thinkgos/ormat/pkg/database"
-	"github.com/thinkgos/ormat/pkg/env"
-	"github.com/thinkgos/ormat/pkg/infra"
-	"github.com/thinkgos/ormat/pkg/zapl"
-	"github.com/thinkgos/ormat/view"
-	"github.com/thinkgos/ormat/view/driver"
+	"github.com/things-go/ormat/config"
+	"github.com/things-go/ormat/pkg/database"
+	"github.com/things-go/ormat/pkg/env"
+	"github.com/things-go/ormat/pkg/infra"
+	"github.com/things-go/ormat/pkg/zapl"
+	"github.com/things-go/ormat/view"
+	"github.com/things-go/ormat/view/driver"
 )
 
 // Execute exe the cmd

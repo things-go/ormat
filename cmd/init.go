@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/thinkgos/ormat/pkg/infra"
-	"github.com/thinkgos/ormat/tpl"
+	"github.com/things-go/ormat/pkg/infra"
+	"github.com/things-go/ormat/tpl"
 )
 
 var initCmd = &cobra.Command{

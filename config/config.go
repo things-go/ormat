@@ -7,10 +7,10 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 
-	"github.com/thinkgos/ormat/pkg/env"
-	"github.com/thinkgos/ormat/pkg/infra"
-	"github.com/thinkgos/ormat/pkg/zapl"
-	"github.com/thinkgos/ormat/view"
+	"github.com/things-go/ormat/pkg/env"
+	"github.com/things-go/ormat/pkg/infra"
+	"github.com/things-go/ormat/pkg/zapl"
+	"github.com/things-go/ormat/view"
 )
 
 // Config custom config struct

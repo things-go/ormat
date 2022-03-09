@@ -7,10 +7,10 @@ import (
 	validator "github.com/go-playground/validator/v10"
 	"github.com/spf13/cobra"
 
-	"github.com/thinkgos/ormat/config"
-	"github.com/thinkgos/ormat/pkg/env"
-	"github.com/thinkgos/ormat/pkg/zapl"
-	"github.com/thinkgos/ormat/tool"
+	"github.com/things-go/ormat/config"
+	"github.com/things-go/ormat/pkg/env"
+	"github.com/things-go/ormat/pkg/zapl"
+	"github.com/things-go/ormat/tool"
 )
 
 var validate = validator.New()
