@@ -5,6 +5,7 @@ import (
 	stdlog "log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -42,13 +43,10 @@ func Execute() {
 		path := cfg.OutDir + "/" + v.GetName()
 		_ = infra.WriteFile(path, []byte(v.Build()))
 
-		zapl.Info("run goimports")
 		cmd, _ := exec.Command("goimports", "-l", "-w", path).Output()
-		zapl.Info(string(cmd))
+		zapl.Info(strings.TrimSuffix(string(cmd), "\n"))
 
-		zapl.Info("run gofmt")
-		cmd, _ = exec.Command("gofmt", "-l", "-w", path).Output()
-		zapl.Info(string(cmd))
+		_, _ = exec.Command("gofmt", "-l", "-w", path).Output()
 	}
 
 	zapl.Info("generate success !!!")

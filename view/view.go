@@ -207,15 +207,11 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 
 	// 输出db标签
 	if tagDb != "" {
-		columnType := ""
 		// not simple output
 		field.AddTag(tagDb, "column:"+ci.Name)
-		switch ci.Name {
-		case "updated_at": // fix 从 gorm: v1.23.1, updated_at 的 type: datetime 会引起传时间戳
-		default:
-			columnType = "type:" + ci.ColumnType
-			field.AddTag(tagDb, columnType)
-		}
+		columnType := "type:" + ci.ColumnType
+		field.AddTag(tagDb, columnType)
+
 		if ci.IsAutoIncrement {
 			field.AddTag(tagDb, "autoIncrement:true")
 		}
