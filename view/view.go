@@ -11,6 +11,13 @@ import (
 	"github.com/things-go/ormat/view/ast"
 )
 
+const (
+	WebTagSmallCamelCase = "smallCamelCase"
+	WebTagCamelCase      = "camelCase"
+	WebTagSnakeCase      = "snakeCase"
+	WebTagKebab          = "kebab"
+)
+
 // DBModel Implement the interface to acquire database information.
 type DBModel interface {
 	GetDatabase(db *gorm.DB, dbName string, tbNames ...string) (*Database, error)
@@ -20,7 +27,7 @@ type DBModel interface {
 }
 
 type WebTag struct {
-	Kind    string `yaml:"kind" json:"kind"`
+	Kind    string `yaml:"kind" json:"kind"` // support smallCamelCase, camelCase, snakeCase, kebab
 	Tag     string `yaml:"tag" json:"tag"`
 	HasOmit bool   `yaml:"hasOmit" json:"hasOmit"`
 }
@@ -288,13 +295,13 @@ func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag, enableLint
 		}
 
 		switch v.Kind {
-		case "smallCamelCase":
+		case WebTagSmallCamelCase:
 			vv = utils.SmallCamelCase(name, enableLint)
-		case "camelCase":
+		case WebTagCamelCase:
 			vv = utils.CamelCase(name, enableLint)
-		case "snakeCase":
+		case WebTagSnakeCase:
 			vv = utils.SnakeCase(name, enableLint)
-		case "kebab":
+		case WebTagKebab:
 			vv = utils.Kebab(name, enableLint)
 		}
 

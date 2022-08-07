@@ -247,7 +247,6 @@ func (sf *MySQL) getGoDataType(columnType string) string {
 		}
 	}
 	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/things-go/ormat/blob/master/view/model.go)", columnType))
-	return ""
 }
 
 type dictMatchKv struct {

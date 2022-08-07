@@ -101,10 +101,10 @@ func GetDbAndViewModel() (*gorm.DB, view.DBModel, error) {
 	switch cfg.GetDatabase().Dialect {
 	case "mysql": // mysql
 		db, err := database.New(database.Config{Dialect: "mysql", Dsn: dsn}, gc)
-		return db, &driver.MySQL{cfg.GetTypeDefine()}, err
+		return db, &driver.MySQL{CustomDefineType: cfg.GetTypeDefine()}, err
 	case "sqlite3": // sqlite3
 		db, err := database.New(database.Config{Dialect: "sqlite3", Dsn: dsn}, gc)
-		return db, &driver.SQLite{cfg.GetTypeDefine()}, err
+		return db, &driver.SQLite{CustomDefineType: cfg.GetTypeDefine()}, err
 	default:
 		return nil, nil, errors.New("database not fund: please check database.dialect (mysql, sqlite3, mssql)")
 	}

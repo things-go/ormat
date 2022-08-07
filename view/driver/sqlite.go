@@ -213,5 +213,4 @@ func getSqliteDataType(customDefineType map[string]string, dataType string) stri
 		}
 	}
 	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/things-go/ormat/blob/master/view/model.go)", dataType))
-	return ""
 }

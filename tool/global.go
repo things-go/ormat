@@ -23,7 +23,7 @@ var cfg = config.Config{
 	TypeDefine: make(map[string]string),
 	View: view.Config{
 		DbTag:           "gorm",
-		WebTags:         []view.WebTag{{Kind: "snakeCase", Tag: "json", HasOmit: true}},
+		WebTags:         []view.WebTag{{Kind: view.WebTagSnakeCase, Tag: "json", HasOmit: true}},
 		EnableLint:      false,
 		DisableNull:     false,
 		EnableInt:       false,
