@@ -8,10 +8,11 @@ import (
 
 // File a file
 type File struct {
-	Name        string            // file name
-	PackageName string            // package name
-	Imports     map[string]string // import package
-	Structs     []Struct          // struct list
+	Name            string            // file name
+	PackageName     string            // package name
+	Imports         map[string]string // import package
+	Structs         []Struct          // struct list
+	IsOutColumnName bool              // 是否输出表的列名
 }
 
 // SetName set file name
@@ -38,6 +39,12 @@ func (p *File) AddImport(imp string) *File {
 		p.Imports = make(map[string]string)
 	}
 	p.Imports[imp] = imp
+	return p
+}
+
+// SetOutColumnName set out column name
+func (p *File) SetOutColumnName(b bool) *File {
+	p.IsOutColumnName = b
 	return p
 }
 
@@ -82,8 +89,10 @@ func (p *File) Build() string {
 		}
 		// add table name function
 		buf.WriteString(v.BuildTableNameTemplate() + delimLF)
-		buf.WriteString(delimLF)
-		buf.WriteString(v.BuildColumnNameTemplate())
+		if p.IsOutColumnName {
+			buf.WriteString(delimLF)
+			buf.WriteString(v.BuildColumnNameTemplate())
+		}
 	}
 	return buf.String()
 }

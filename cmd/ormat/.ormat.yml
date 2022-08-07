@@ -65,6 +65,10 @@ database:
 # 默认: 不输出
 #  isOutSql: true
 
+# 是否输出表的列名
+# 默认: 不输出
+#  isOutColumnName: true
+
 # 是否输出外键字段
 # 默认: 不输出
 #  isForeignKey: true

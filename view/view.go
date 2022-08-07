@@ -35,6 +35,7 @@ type Config struct {
 	EnableBoolInt    bool     `yaml:"enableBoolInt" json:"enableBoolInt"`       // 使能bool输出int
 	IsNullToPoint    bool     `yaml:"isNullToPoint" json:"isNullToPoint"`       // 是否字段为null时输出指针类型
 	IsOutSQL         bool     `yaml:"isOutSQL" json:"isOutSQL"`                 // 是否输出创建表的SQL
+	IsOutColumnName  bool     `yaml:"isOutColumnName" json:"isOutColumnName"`   // 是否输出表的列名, 默认不输出
 	IsForeignKey     bool     `yaml:"isForeignKey" json:"isForeignKey"`         // 输出外键
 	IsCommentTag     bool     `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
 }
@@ -65,6 +66,7 @@ func (sf *View) GetDbFile(pkgName string) ([]ast.File, error) {
 		file := new(ast.File).
 			SetName(sct.GetTableName() + ".go").
 			SetPackageName(pkgName).
+			SetOutColumnName(sf.IsOutColumnName).
 			AddStruct(sct)
 
 		files = append(files, *file)
