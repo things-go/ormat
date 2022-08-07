@@ -1,12 +1,10 @@
-package infra
+package utils
 
 import (
 	"os"
 	"path/filepath"
 	"strings"
 )
-
-const Version = "v0.0.1-rc12"
 
 // GetWd 获取当前工作目录
 func GetWd() string {

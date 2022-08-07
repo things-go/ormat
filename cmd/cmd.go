@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	validator "github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10"
 	"github.com/spf13/cobra"
 
-	"github.com/things-go/ormat/config"
-	"github.com/things-go/ormat/pkg/env"
-	"github.com/things-go/ormat/pkg/zapl"
-	"github.com/things-go/ormat/tool"
+	"github.com/thinkgos/ormat/deploy"
+	"github.com/thinkgos/ormat/log"
+	"github.com/thinkgos/ormat/tool"
 )
 
 var validate = validator.New()
@@ -40,21 +39,21 @@ func Execute() {
 
 // initConfig reads in config file.
 func initConfig() {
-	zapl.ReplaceGlobals(zapl.New(zapl.Config{Level: "info", Format: "console"}).Sugar())
-	err := config.LoadConfig()
+	log.ReplaceGlobals(log.New(log.Config{Level: "info", Format: "console"}).Sugar())
+	err := tool.LoadConfig()
 	if err != nil {
-		zapl.Fatalf("load config failed(please run 'ormat init' generate a .ormat.yml): %s", err.Error())
+		log.Fatalf("load config failed(please run 'ormat init' generate a .ormat.yml): %s", err.Error())
 		return
 	}
-	c := config.GetConfig()
+	c := tool.GetConfig()
 	err = validate.Struct(c)
 	if err != nil {
-		zapl.Info("config validate failed: use（-h, --help) to get more info")
-		zapl.Error(err)
+		log.Info("config validate failed: use（-h, --help) to get more info")
+		log.Error(err)
 		os.Exit(1)
 		return
 	}
-	env.SetDeploy(c.Deploy)
+	deploy.Set(c.Deploy)
 	fmt.Println("using config:")
-	zapl.JSON(c)
+	log.JSON(c)
 }

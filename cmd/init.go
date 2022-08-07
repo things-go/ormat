@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/things-go/ormat/pkg/infra"
-	"github.com/things-go/ormat/tpl"
+	"github.com/thinkgos/ormat/cmd/tpl"
+	"github.com/thinkgos/ormat/utils"
 )
 
 var initCmd = &cobra.Command{
@@ -16,6 +16,6 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return infra.WriteFile(".ormat.yml", b)
+		return utils.WriteFile(".ormat.yml", b)
 	},
 }

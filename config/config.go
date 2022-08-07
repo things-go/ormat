@@ -1,29 +1,14 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/viper"
-
-	"github.com/things-go/ormat/pkg/env"
-	"github.com/things-go/ormat/pkg/infra"
-	"github.com/things-go/ormat/pkg/zapl"
-	"github.com/things-go/ormat/view"
+	"github.com/thinkgos/ormat/view"
 )
 
-// Config custom config struct
-type Config struct {
-	Deploy     string            `yaml:"deploy" json:"deploy" binding:"required,oneof=local dev debug uat prod"` // 布署环境
-	Database   Database          `yaml:"database" json:"database"`                                               // 数据库连接信息
-	OutDir     string            `yaml:"outDir" json:"outDir"`                                                   // 输出路径
-	TypeDefine map[string]string `yaml:"typeDefine" json:"typeDefine"`                                           // 自定义类型
-	TableNames []string          `yaml:"tableNames" json:"tableNames"`                                           // 指定表
-	View       view.Config       `yaml:"view" json:"view"`
-}
-
-// Database information
+// Database connect information
 type Database struct {
 	Dialect  string `yaml:"dialect" json:"dialect" binding:"required,oneof=mysql sqlite3"` // mysql, sqlite3
 	Host     string `yaml:"host" json:"host"`                                              // Host. 地址
@@ -31,73 +16,42 @@ type Database struct {
 	Username string `yaml:"username" json:"username"`                                      // Username 用户名
 	Password string `yaml:"password" json:"password"`                                      // Password 密码
 	Db       string `yaml:"db" json:"db" binding:"required"`                               // Database 数据库名
+	Options  string `yaml:"options" json:"options"`                                        // Options ?号后面, 如果为空, 则为 charset=utf8&parseTime=True&loc=Local&interpolateParams=True
 }
 
-var cfg = Config{
-	Deploy: env.DeployProd,
-	Database: Database{
-		Host:     "127.0.0.1",
-		Port:     3306,
-		Username: "root",
-		Password: "root",
-		Db:       "test",
-	},
-	OutDir:     "./model",
-	TypeDefine: make(map[string]string),
-	View: view.Config{
-		DbTag:           "gorm",
-		WebTags:         []view.WebTag{{Kind: "snakeCase", Tag: "json", HasOmit: true}},
-		EnableLint:      false,
-		DisableNull:     false,
-		EnableInt:       false,
-		IsNullToPoint:   true,
-		IsOutSQL:        false,
-		IsOutColumnName: false,
-		IsForeignKey:    false,
-		IsCommentTag:    false,
-	},
+// Config custom config
+type Config struct {
+	Deploy     string            `yaml:"deploy" json:"deploy" binding:"oneof=local dev debug uat prod"` // 布署环境
+	Database   Database          `yaml:"database" json:"database"`                                      // 数据库连接信息
+	OutDir     string            `yaml:"outDir" json:"outDir" binding:"required"`                       // 文件输出路径
+	TypeDefine map[string]string `yaml:"typeDefine" json:"typeDefine"`                                  // 自定义数据类型
+	TableNames []string          `yaml:"tableNames" json:"tableNames"`                                  // 指定输出表
+	View       view.Config       `yaml:"view" json:"view"`
 }
 
-func LoadConfig() error {
-	viper.SetConfigName(".ormat")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(infra.GetExecutableDir())
-	viper.AddConfigPath(infra.GetWd())
-	err := viper.ReadInConfig()
-	if err != nil {
-		return err
-	}
-	return viper.Unmarshal(&cfg, func(c *mapstructure.DecoderConfig) { c.TagName = "yaml" })
-}
+// GetDatabase Get database configuration.
+func (c *Config) GetDatabase() *Database { return &c.Database }
 
-// GetDbInfo Get configuration information
-func GetDbInfo() Database {
-	return cfg.Database
-}
+// GetTypeDefine 获取自定义字段映射.
+func (c *Config) GetTypeDefine() map[string]string { return c.TypeDefine }
 
-// GetConfig get config
-func GetConfig() Config {
-	return cfg
-}
-
-// GetTypeDefine 获取自定义字段映射
-func GetTypeDefine() map[string]string {
-	return cfg.TypeDefine
-}
-
-func GetDatabaseDSNAndDbName() (dsn string, db string) {
-	c := cfg.Database
-	switch c.Dialect {
+func (c *Config) GetDbDSNAndDbName() (dsn, db string, err error) {
+	cc := c.Database
+	switch cc.Dialect {
 	case "mysql":
-		return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True&loc=Local&interpolateParams=True",
-			c.Username, c.Password, c.Host, c.Port, c.Db), c.Db
-	case "sqlite3":
-		_, dbName := filepath.Split(c.Db)
-		if dbName == "" {
-			panic("sqlite3: invalid db name")
+		if cc.Options == "" {
+			cc.Options = "charset=utf8&parseTime=True&loc=Local&interpolateParams=True"
 		}
-		return c.Db, dbName
+		return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s",
+			cc.Username, cc.Password, cc.Host, cc.Port, cc.Db, cc.Options), cc.Db, nil
+	case "sqlite3":
+		_, dbName := filepath.Split(cc.Db)
+		if dbName != "" {
+			return cc.Db, dbName, nil
+		}
+		err = errors.New("empty sqlite3 db name")
+	default:
+		err = errors.New("database not found, please check database.dialect (mysql, sqlite3, mssql)")
 	}
-	zapl.Fatal("database not found: please check database.dialect (mysql, sqlite3, mssql)")
-	return "", ""
+	return "", "", err
 }

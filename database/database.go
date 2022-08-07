@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/things-go/ormat/pkg/infra"
+	"github.com/thinkgos/ormat/utils"
 )
 
 // Config 数据库配置
@@ -35,7 +35,7 @@ func New(c Config, config *gorm.Config, dialectorNews ...func(c Config) gorm.Dia
 		if !strings.HasSuffix(dsn, ".db") {
 			dsn += ".db"
 		}
-		if !infra.IsExist(dsn) {
+		if !utils.IsExist(dsn) {
 			if err := os.MkdirAll(path.Dir(dsn), os.ModePerm); err != nil {
 				return nil, fmt.Errorf("database mkdir (%s), %+v", dsn, err)
 			}

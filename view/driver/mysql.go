@@ -8,8 +8,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/things-go/ormat/config"
-	"github.com/things-go/ormat/view"
+	"github.com/thinkgos/ormat/view"
 )
 
 const Primary = "PRIMARY"
@@ -52,8 +51,9 @@ type mysqlKey struct {
 
 // mysqlForeignKey Foreign key of db table info . 表的外键信息
 // sql: SELECT table_schema, table_name, column_name, referenced_table_schema, referenced_table_name, referenced_column_name
-//		FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-//		WHERE table_schema={db_name} AND REFERENCED_TABLE_NAME IS NOT NULL AND TABLE_NAME={table_name}
+//
+//	FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+//	WHERE table_schema={db_name} AND REFERENCED_TABLE_NAME IS NOT NULL AND TABLE_NAME={table_name}
 type mysqlForeignKey struct {
 	TableSchema           string `gorm:"column:table_schema"`            // Database of column.
 	TableName             string `gorm:"column:table_name"`              // Data table of column.
@@ -70,7 +70,9 @@ type mysqlCreateTable struct {
 	SQL   string `gorm:"column:Create Table"`
 }
 
-type MySQL struct{}
+type MySQL struct {
+	CustomDefineType map[string]string
+}
 
 // GetDatabase get database information
 func (sf *MySQL) GetDatabase(db *gorm.DB, dbName string, tbNames ...string) (*view.Database, error) {
@@ -161,7 +163,7 @@ func (sf *MySQL) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttrib
 		ci := view.Column{
 			Name:            v.ColumnName,
 			OrdinalPosition: v.OrdinalPosition,
-			DataType:        getMysqlGoDataType(v.ColumnType),
+			DataType:        sf.getGoDataType(v.ColumnType),
 			ColumnType:      v.ColumnType,
 			IsNullable:      strings.EqualFold(v.IsNullable, "YES"),
 			IsAutoIncrement: v.Extra == "auto_increment",
@@ -232,10 +234,11 @@ func fixForeignKey(vs []mysqlForeignKey, columnName string) []view.ForeignKey {
 	return result
 }
 
-func getMysqlGoDataType(columnType string) string {
-	selfDefineTypeMqlDicMap := config.GetTypeDefine()
-	if v, ok := selfDefineTypeMqlDicMap[columnType]; ok {
-		return v
+func (sf *MySQL) getGoDataType(columnType string) string {
+	if len(sf.CustomDefineType) != 0 {
+		if v, ok := sf.CustomDefineType[columnType]; ok {
+			return v
+		}
 	}
 	for _, v := range typeDictMatchList {
 		ok, _ := regexp.MatchString(v.Key, columnType)
@@ -243,7 +246,7 @@ func getMysqlGoDataType(columnType string) string {
 			return v.Value
 		}
 	}
-	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/things-go/ormat/blob/master/view/model.go)", columnType))
+	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/thinkgos/ormat/blob/master/view/model.go)", columnType))
 	return ""
 }
 

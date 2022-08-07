@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/things-go/ormat/pkg/infra"
+	"github.com/thinkgos/ormat/consts"
 )
 
 var versionCmd = &cobra.Command{
@@ -13,7 +13,7 @@ var versionCmd = &cobra.Command{
 	Short:   "Get version info",
 	Example: "ormat version",
 	RunE: func(*cobra.Command, []string) error {
-		fmt.Println("ormat " + infra.Version)
+		fmt.Println("ormat " + consts.Version)
 		return nil
 	},
 }

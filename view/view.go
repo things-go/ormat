@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
 
-	"github.com/things-go/ormat/pkg/infra"
-	"github.com/things-go/ormat/view/ast"
+	"github.com/thinkgos/ormat/utils"
+	"github.com/thinkgos/ormat/view/ast"
 )
 
 // DBModel Implement the interface to acquire database information.
@@ -35,7 +35,6 @@ type Config struct {
 	EnableBoolInt    bool     `yaml:"enableBoolInt" json:"enableBoolInt"`       // 使能bool输出int
 	IsNullToPoint    bool     `yaml:"isNullToPoint" json:"isNullToPoint"`       // 是否字段为null时输出指针类型
 	IsOutSQL         bool     `yaml:"isOutSQL" json:"isOutSQL"`                 // 是否输出创建表的SQL
-	IsOutColumnName  bool     `yaml:"isOutColumnName" json:"isOutColumnName"`   // 是否输出表的列名, 默认不输出
 	IsForeignKey     bool     `yaml:"isForeignKey" json:"isForeignKey"`         // 输出外键
 	IsCommentTag     bool     `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
 }
@@ -66,7 +65,6 @@ func (sf *View) GetDbFile(pkgName string) ([]ast.File, error) {
 		file := new(ast.File).
 			SetName(sct.GetTableName() + ".go").
 			SetPackageName(pkgName).
-			SetOutColumnName(sf.IsOutColumnName).
 			AddStruct(sct)
 
 		files = append(files, *file)
@@ -93,7 +91,7 @@ func (sf *View) GetTableStruct(tables []Table) []ast.Struct {
 	scts := make([]ast.Struct, 0, len(tables))
 	for _, tb := range tables {
 		sct := new(ast.Struct).
-			SetName(infra.CamelCase(tb.Name, sf.EnableLint)).
+			SetName(utils.CamelCase(tb.Name, sf.EnableLint)).
 			SetComment(tb.Comment).
 			AddFields(sf.getColumnFields(tables, tb.Columns)...).
 			SetTableName(tb.Name).
@@ -111,7 +109,7 @@ func (sf *View) getColumnFields(tables []Table, cols []Column) []ast.Field {
 	for _, v := range cols {
 		var field ast.Field
 
-		fieldName := infra.CamelCase(v.Name, sf.EnableLint)
+		fieldName := utils.CamelCase(v.Name, sf.EnableLint)
 		fieldType := getFieldDataType(v.DataType, v.IsNullable, sf.DisableNull, sf.IsNullToPoint, sf.EnableInt, sf.EnableIntegerInt, sf.EnableBoolInt)
 		if fieldName == "DeletedAt" &&
 			(v.DataType == "int64" ||
@@ -156,7 +154,7 @@ func (sf *View) getForeignKeyField(tables []Table, col Column) (fks []ast.Field)
 		if found {
 			var field ast.Field
 
-			name := infra.CamelCase(v.TableName, sf.EnableLint)
+			name := utils.CamelCase(v.TableName, sf.EnableLint)
 			if isMulti {
 				field.SetName(name + "List").
 					SetType("[]" + name)
@@ -248,7 +246,7 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 			}
 			if vv != "" {
 				// NOTE: 主要是整型主键,gorm在自动迁移时没有在mysql上加上auto_increment
-				if vv == "primaryKey" && ci.IsAutoIncrement && columnType != "" {
+				if vv == "primaryKey" && ci.IsAutoIncrement {
 					field.RemoveTag(tagDb, columnType)
 				}
 				if v1.IsMulti {
@@ -289,13 +287,13 @@ func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag, enableLint
 
 		switch v.Kind {
 		case "smallCamelCase":
-			vv = infra.SmallCamelCase(name, enableLint)
+			vv = utils.SmallCamelCase(name, enableLint)
 		case "camelCase":
-			vv = infra.CamelCase(name, enableLint)
+			vv = utils.CamelCase(name, enableLint)
 		case "snakeCase":
-			vv = infra.SnakeCase(name, enableLint)
+			vv = utils.SnakeCase(name, enableLint)
 		case "kebab":
-			vv = infra.Kebab(name, enableLint)
+			vv = utils.Kebab(name, enableLint)
 		}
 
 		if vv != "" {

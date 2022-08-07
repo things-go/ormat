@@ -8,9 +8,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/things-go/ormat/view"
-
-	"github.com/things-go/ormat/config"
+	"github.com/thinkgos/ormat/view"
 )
 
 // sqliteTable info
@@ -53,7 +51,9 @@ type sqliteForeignKey struct {
 	ReferencedColumnName  string `gorm:"column:referenced_column_name"`  // Which column of the affected table.该索引受影响的表的哪一列
 }
 
-type SQLite struct{}
+type SQLite struct {
+	CustomDefineType map[string]string
+}
 
 // GetDbInfo get database info
 // 获取数据库信息
@@ -113,7 +113,7 @@ func (sf *SQLite) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttri
 		columnInfo := view.Column{
 			Name:            v.Name,
 			OrdinalPosition: v.Cid,
-			DataType:        getSqliteGoDataType(v.Name, v.Type),
+			DataType:        sf.getGoDataType(v.Name, v.Type),
 			ColumnType:      v.Type, // TODO: ??
 			IsNullable:      !v.NotNull,
 			IsAutoIncrement: false,
@@ -175,8 +175,8 @@ var sqliteTypeDict = map[string]string{
 	"blob":    "[]byte",
 }
 
-func getSqliteGoDataType(name, dataType string) string {
-	dataType = getSqliteDataType(dataType)
+func (sf *SQLite) getGoDataType(name, dataType string) string {
+	dataType = getSqliteDataType(sf.CustomDefineType, dataType)
 	// filter special type
 	switch name {
 	case "created_at", "updated_at":
@@ -194,12 +194,14 @@ func getSqliteGoDataType(name, dataType string) string {
 	return dataType
 }
 
-func getSqliteDataType(dataType string) string {
+func getSqliteDataType(customDefineType map[string]string, dataType string) string {
 	dataType = strings.ToLower(dataType)
-	selfDefineTypeMqlDicMap := config.GetTypeDefine()
-	if v, ok := selfDefineTypeMqlDicMap[dataType]; ok {
-		return v
+	if len(customDefineType) != 0 {
+		if v, ok := customDefineType[dataType]; ok {
+			return v
+		}
 	}
+
 	if v, ok := sqliteTypeDict[dataType]; ok {
 		return v
 	}
@@ -210,6 +212,6 @@ func getSqliteDataType(dataType string) string {
 			return v.Value
 		}
 	}
-	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/things-go/ormat/blob/master/view/model.go)", dataType))
+	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/thinkgos/ormat/blob/master/view/model.go)", dataType))
 	return ""
 }
