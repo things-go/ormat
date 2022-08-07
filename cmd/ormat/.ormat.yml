@@ -1,0 +1,74 @@
+# 布署环境
+# 默认 prod
+#deploy: prod
+
+# 数据库连接信息
+# dialect 支持mysql, sqlite3
+database:
+    dialect: mysql
+    host: 127.0.0.1
+    port: 3306
+    username: root
+    password: things
+    db: goadmin-dev
+
+# 输出模型的路径
+# 默认: ./model
+#outDir: ./model
+
+# 自定义数据类型
+#typeDefine:
+#    datetime: time.Time
+#    time: time.Time
+
+# 只输出指定表
+#tableNames:
+#    - sys_user
+
+#view:
+#  db 标签
+#  默认输出gorm
+#  dbTag: gorm
+
+# 其它标签, kind支持 smallCamelCase, camelCase, snakeCase, kebab
+# 默认: 输出 snakeCase 的 json标签, 默认输出 omitempty
+#  webTags:
+#    - kind: smallCamelCase
+#      tag: json
+#      hasOmit: false
+#    - kind: snakeCase
+#      tag: yaml
+#      hasOmit: false
+
+# 使能lint, 如id,pid,api -> ID,PID,API
+#  enableLint: true
+
+# 是否禁用null输出指针类型或sql.Nullxxx
+# 默认不禁用
+#  disableNull: false
+
+# 使能int8,uint8,int16,uint16,int32,uint32输出为int, uint
+# 默认采用对应类型
+#  enableInt: true
+
+# 使能int32,uint32输出为int, uint
+#  enableIntegerInt: true
+
+# 使能bool输出为int
+#  enableBoolInt: true
+
+# 是否输出null为指针类型, 要求disable_null=false
+# 默认 输出null为指针类型
+#  isNullToPoint: false
+
+# 是否输出创建表的SQL
+# 默认: 不输出
+#  isOutSql: true
+
+# 是否输出外键字段
+# 默认: 不输出
+#  isForeignKey: true
+
+# 是否注释在tag中
+# 默认: 不输出
+#  IsCommentTag: true
