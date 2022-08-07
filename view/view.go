@@ -81,7 +81,7 @@ func (sf *View) GetDBCreateTableSQLContent() ([]byte, error) {
 
 	buf := &bytes.Buffer{}
 	for _, vv := range tbSqls {
-		buf.WriteString("# " + vv.Name + " " + vv.Comment + "\n" + vv.CreateTableSQL + "\n\n")
+		buf.WriteString("# " + vv.Name + " " + strings.ReplaceAll(vv.Comment, "\n", "\n# ") + "\n" + vv.CreateTableSQL + ";\n\n")
 	}
 	return buf.Bytes(), nil
 }
