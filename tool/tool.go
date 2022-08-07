@@ -5,17 +5,18 @@ import (
 	stdlog "log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/thinkgos/ormat/database"
-	"github.com/thinkgos/ormat/deploy"
-	"github.com/thinkgos/ormat/log"
-	"github.com/thinkgos/ormat/utils"
-	"github.com/thinkgos/ormat/view"
-	"github.com/thinkgos/ormat/view/driver"
+	"github.com/things-go/ormat/database"
+	"github.com/things-go/ormat/deploy"
+	"github.com/things-go/ormat/log"
+	"github.com/things-go/ormat/utils"
+	"github.com/things-go/ormat/view"
+	"github.com/things-go/ormat/view/driver"
 )
 
 // Execute exe the cmd
@@ -46,13 +47,10 @@ func Execute() {
 		path := cfg.OutDir + "/" + v.GetName()
 		_ = utils.WriteFile(path, []byte(v.Build()))
 
-		log.Info("run goimports")
 		cmd, _ := exec.Command("goimports", "-l", "-w", path).Output()
-		log.Info(string(cmd))
+		log.Info(strings.TrimSuffix(string(cmd), "\n"))
 
-		log.Info("run gofmt")
-		cmd, _ = exec.Command("gofmt", "-l", "-w", path).Output()
-		log.Info(string(cmd))
+		_, _ = exec.Command("gofmt", "-l", "-w", path).Output()
 	}
 
 	log.Info("generate success !!!")

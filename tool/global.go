@@ -4,10 +4,10 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 
-	"github.com/thinkgos/ormat/config"
-	"github.com/thinkgos/ormat/deploy"
-	"github.com/thinkgos/ormat/utils"
-	"github.com/thinkgos/ormat/view"
+	"github.com/things-go/ormat/config"
+	"github.com/things-go/ormat/deploy"
+	"github.com/things-go/ormat/utils"
+	"github.com/things-go/ormat/view"
 )
 
 var cfg = config.Config{

@@ -8,7 +8,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/thinkgos/ormat/view"
+	"github.com/things-go/ormat/view"
 )
 
 // sqliteTable info
@@ -212,6 +212,6 @@ func getSqliteDataType(customDefineType map[string]string, dataType string) stri
 			return v.Value
 		}
 	}
-	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/thinkgos/ormat/blob/master/view/model.go)", dataType))
+	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/things-go/ormat/blob/master/view/model.go)", dataType))
 	return ""
 }

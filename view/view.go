@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
 
-	"github.com/thinkgos/ormat/utils"
-	"github.com/thinkgos/ormat/view/ast"
+	"github.com/things-go/ormat/utils"
+	"github.com/things-go/ormat/view/ast"
 )
 
 // DBModel Implement the interface to acquire database information.

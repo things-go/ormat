@@ -8,7 +8,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/thinkgos/ormat/view"
+	"github.com/things-go/ormat/view"
 )
 
 const Primary = "PRIMARY"
@@ -246,7 +246,7 @@ func (sf *MySQL) getGoDataType(columnType string) string {
 			return v.Value
 		}
 	}
-	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/thinkgos/ormat/blob/master/view/model.go)", columnType))
+	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/things-go/ormat/blob/master/view/model.go)", columnType))
 	return ""
 }
 

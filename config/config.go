@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/thinkgos/ormat/view"
+	"github.com/things-go/ormat/view"
 )
 
 // Database connect information
