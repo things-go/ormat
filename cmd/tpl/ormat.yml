@@ -75,4 +75,4 @@ database:
 
 # 是否注释在tag中
 # 默认: 不输出
-#  IsCommentTag: true
+#  isCommentTag: true

@@ -26,9 +26,29 @@ var {{.StructName}}Columns = struct {
 }
 `
 
-const protobufTpl = `
-/*
+const helperTpl = `
+/* protobuf and gorm field helper
 {{- $tableName := .TableName}}
+{{- $abbrTableName := .AbbrTableName}}
+// {{.StructName}}Columns get sql column name
+var {{.StructName}}Columns = []string {
+{{- range $field := .Fields}}
+	"{{$field.ColumnName}}",  
+{{- end}}
+}
+// {{.StructName}}ColumnsWithTable get sql column name with table prefix
+var {{.StructName}}ColumnsWithTable = []string {
+{{- range $field := .Fields}}
+	"{{$tableName}}.{{$field.ColumnName}} AS {{$tableName}}_{{$field.ColumnName}}",  
+{{- end}}
+}
+// {{.StructName}}ColumnsWithAbbrTable get sql column name with abbr table prefix
+var {{.StructName}}ColumnsWithAbbrTable = []string {
+{{- range $field := .Fields}}
+	"{{$abbrTableName}}.{{$field.ColumnName}} AS {{$abbrTableName}}_{{$field.ColumnName}}",  
+{{- end}}
+}
+
 // {{.StructName}} {{.StructComment}}
 message {{.StructName}} { 
 {{- range $index, $field := .Fields}}
@@ -47,11 +67,18 @@ message {{.StructName}}WithTable {
 	{{$field.ColumnDataType}} {{$tableName}}_{{$field.ColumnName}} = {{$index}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
 {{- end}}    
 }
+// {{.StructName}}WithAbbrTable {{.StructComment}}
+message {{.StructName}}WithAbbrTable { 
+{{- range $index, $field := .Fields}}
+    {{- if $field.ColumnComment}} 
+	// {{$field.ColumnComment}} 
+	{{- end}}
+	{{$field.ColumnDataType}} {{$abbrTableName}}_{{$field.ColumnName}} = {{$index}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
+{{- end}}    
+}
 */
 `
 
-// {{$combine := (printf "%s_%s" $field.TableName $field.ColumnName)}}
-// {{ $combine }}
 var TableNameTpl = template.Must(template.New("tableNameTpl").Parse(tableNameTpl))
 var ColumnNameTpl = template.Must(template.New("columnNameTpl").Parse(columnNameTpl))
-var ProtobufTpl = template.Must(template.New("protobufTpl").Parse(protobufTpl))
+var HelperTpl = template.Must(template.New("helperTpl").Parse(helperTpl))

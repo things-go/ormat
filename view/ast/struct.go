@@ -95,6 +95,7 @@ type ProtobufMessage struct {
 	StructName    string
 	StructComment string
 	TableName     string
+	AbbrTableName string
 	Fields        []ProtobufField
 }
 
@@ -108,26 +109,16 @@ type ProtobufField struct {
 func (s *Struct) BuildProtobufTemple() string {
 	var buf strings.Builder
 
-	_ = ProtobufTpl.Execute(&buf, s.intoProtobufMessage())
+	_ = HelperTpl.Execute(&buf, s.intoProtobufMessage())
 	return buf.String()
 }
 
 func (s *Struct) intoProtobufMessage() *ProtobufMessage {
-	tbName := s.TableName
-	ss := strings.Split(s.TableName, "_")
-	if len(ss) > 1 {
-		tbName = ""
-		for _, vv := range ss {
-			if len(vv) > 0 {
-				tbName += string(vv[0])
-			}
-		}
-	}
-
 	pm := &ProtobufMessage{
 		StructName:    s.StructName,
 		StructComment: s.StructComment,
-		TableName:     tbName,
+		TableName:     s.TableName,
+		AbbrTableName: intoAbbrTableName(s.TableName),
 		Fields:        make([]ProtobufField, 0, len(s.StructFields)),
 	}
 
@@ -166,4 +157,17 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 		})
 	}
 	return pm
+}
+
+func intoAbbrTableName(tableName string) string {
+	ss := strings.Split(tableName, "_")
+	if len(ss) > 1 {
+		tableName = ""
+		for _, vv := range ss {
+			if len(vv) > 0 {
+				tableName += string(vv[0])
+			}
+		}
+	}
+	return tableName
 }
