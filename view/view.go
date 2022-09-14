@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cast"
-	"gorm.io/gorm"
 
 	"github.com/things-go/ormat/utils"
 	"github.com/things-go/ormat/view/ast"
@@ -20,10 +19,10 @@ const (
 
 // DBModel Implement the interface to acquire database information.
 type DBModel interface {
-	GetDatabase(db *gorm.DB, dbName string, tbNames ...string) (*Database, error)
-	GetTables(db *gorm.DB, dbName string, tbNames ...string) ([]TableAttribute, error)
-	GetTableColumns(db *gorm.DB, dbName string, tb TableAttribute) (*Table, error)
-	GetCreateTableSQL(db *gorm.DB, tbName string) (string, error)
+	GetDatabase(dbName string, tbNames ...string) (*Database, error)
+	GetTables(dbName string, tbNames ...string) ([]TableAttribute, error)
+	GetTableColumns(dbName string, tb TableAttribute) (*Table, error)
+	GetCreateTableSQL(tbName string) (string, error)
 }
 
 type WebTag struct {
@@ -51,99 +50,98 @@ type Config struct {
 type View struct {
 	Config
 	DBModel
-	db      *gorm.DB
 	dbName  string
 	tbNames []string
 }
 
 // New view instance
-func New(db *gorm.DB, m DBModel, c Config, dbName string, tbNames ...string) *View {
-	return &View{c, m, db, dbName, tbNames}
+func New(m DBModel, c Config, dbName string, tbNames ...string) *View {
+	return &View{c, m, dbName, tbNames}
 }
 
 // GetDbFile ast file
-func (sf *View) GetDbFile(pkgName string) ([]ast.File, error) {
-	dbInfo, err := sf.GetDatabase(sf.db, sf.dbName, sf.tbNames...)
+func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
+	dbInfo, err := sf.GetDatabase(sf.dbName, sf.tbNames...)
 	if err != nil {
 		return nil, err
 	}
 
-	files := make([]ast.File, 0, len(dbInfo.Tables))
+	files := make([]*ast.File, 0, len(dbInfo.Tables))
 	for _, sct := range sf.GetTableStruct(dbInfo.Tables) {
-		file := new(ast.File).
-			SetName(sct.GetTableName() + ".go").
-			SetPackageName(pkgName).
-			SetOutColumnName(sf.IsOutColumnName).
-			AddStruct(sct)
-
-		files = append(files, *file)
+		files = append(files, &ast.File{
+			Filename:        sct.TableName,
+			PackageName:     pkgName,
+			Imports:         make(map[string]string),
+			Structs:         []ast.Struct{*sct},
+			IsOutColumnName: sf.IsOutColumnName,
+		})
 	}
 	return files, nil
 }
 
 // GetDBCreateTableSQLContent get all table's create table sql content
 func (sf *View) GetDBCreateTableSQLContent() ([]byte, error) {
-	tbSqls, err := sf.GetTables(sf.db, sf.dbName, sf.tbNames...)
+	tbSqls, err := sf.GetTables(sf.dbName, sf.tbNames...)
 	if err != nil {
 		return nil, err
 	}
 
 	buf := &bytes.Buffer{}
 	for _, vv := range tbSqls {
-		buf.WriteString("# " + vv.Name + " " + strings.ReplaceAll(vv.Comment, "\n", "\n# ") + "\n" + vv.CreateTableSQL + ";\n\n")
+		buf.WriteString("-- " + vv.Name + " " + strings.ReplaceAll(vv.Comment, "\n", "\n-- ") + "\n" + vv.CreateTableSQL + ";\n\n")
 	}
 	return buf.Bytes(), nil
 }
 
 // GetTableStruct get table struct
-func (sf *View) GetTableStruct(tables []Table) []ast.Struct {
-	scts := make([]ast.Struct, 0, len(tables))
+func (sf *View) GetTableStruct(tables []Table) []*ast.Struct {
+	structs := make([]*ast.Struct, 0, len(tables))
 	for _, tb := range tables {
-		sct := new(ast.Struct).
-			SetName(utils.CamelCase(tb.Name, sf.EnableLint)).
-			SetComment(tb.Comment).
-			AddFields(sf.getColumnFields(tables, tb.Columns)...).
-			SetTableName(tb.Name).
-			SetCreatTableSQL(tb.CreateTableSQL).
-			EnableOutSQL(sf.IsOutSQL)
-
-		scts = append(scts, *sct)
+		structs = append(structs, &ast.Struct{
+			StructName:     utils.CamelCase(tb.Name, sf.EnableLint),
+			StructComment:  tb.Comment,
+			StructFields:   sf.getColumnFields(tables, tb.Columns),
+			TableName:      tb.Name,
+			CreateTableSQL: tb.CreateTableSQL,
+		})
 	}
-	return scts
+	return structs
 }
 
 // getColumnFields Get table column's field
 func (sf *View) getColumnFields(tables []Table, cols []Column) []ast.Field {
 	fields := make([]ast.Field, 0, len(cols))
-	for _, v := range cols {
-		var field ast.Field
-
-		fieldName := utils.CamelCase(v.Name, sf.EnableLint)
-		fieldType := getFieldDataType(v.DataType, v.IsNullable, sf.DisableNull, sf.IsNullToPoint, sf.EnableInt, sf.EnableIntegerInt, sf.EnableBoolInt)
+	for _, col := range cols {
+		fieldName := utils.CamelCase(col.Name, sf.EnableLint)
+		fieldType := getFieldDataType(col.DataType, col.IsNullable, sf.DisableNull, sf.IsNullToPoint, sf.EnableInt, sf.EnableIntegerInt, sf.EnableBoolInt)
 		if fieldName == "DeletedAt" &&
-			(v.DataType == "int64" ||
-				v.DataType == "uint64" ||
-				v.DataType == "uint32" ||
-				v.DataType == "int32" ||
-				v.DataType == "uint16" ||
-				v.DataType == "int16" ||
-				v.DataType == "uint8" ||
-				v.DataType == "int8" ||
-				v.DataType == "uint" ||
-				v.DataType == "int") {
+			(col.DataType == "int64" ||
+				col.DataType == "uint64" ||
+				col.DataType == "uint32" ||
+				col.DataType == "int32" ||
+				col.DataType == "uint16" ||
+				col.DataType == "int16" ||
+				col.DataType == "uint8" ||
+				col.DataType == "int8" ||
+				col.DataType == "uint" ||
+				col.DataType == "int") {
 			fieldType = "soft_delete.DeletedAt"
 		}
-		field.SetName(fieldName).
-			SetType(fieldType).
-			SetComment(v.Comment).
-			SetColumnName(v.Name)
 
-		sf.fixFieldTags(&field, v)
+		field := ast.Field{
+			FieldName:      fieldName,
+			FieldType:      fieldType,
+			FieldComment:   col.Comment,
+			FieldTags:      make(map[string][]string),
+			ColumnDataType: col.DataType,
+			ColumnName:     col.Name,
+		}
+		sf.fixFieldTags(&field, col)
 
 		fields = append(fields, field)
 
-		if sf.IsForeignKey && len(v.ForeignKeys) > 0 {
-			fks := sf.getForeignKeyField(tables, v)
+		if sf.IsForeignKey && len(col.ForeignKeys) > 0 {
+			fks := sf.getForeignKeyField(tables, col)
 			fields = append(fields, fks...)
 		}
 	}
@@ -165,15 +163,15 @@ func (sf *View) getForeignKeyField(tables []Table, col Column) (fks []ast.Field)
 
 			name := utils.CamelCase(v.TableName, sf.EnableLint)
 			if isMulti {
-				field.SetName(name + "List").
-					SetType("[]" + name)
+				field.FieldName = name + "List"
+				field.FieldType = "[]" + name
 			} else {
-				field.SetName(name).
-					SetType(name)
+				field.FieldName = name
+				field.FieldType = name
 			}
-			field.SetComment(comment).
-				AddTag(tagDb, "joinForeignKey:"+col.Name).
-				AddTag(tagDb, "foreignKey:"+v.ColumnName)
+			field.FieldComment = comment
+			field.AddFieldTag(tagDb, "joinForeignKey:"+col.Name).
+				AddFieldTag(tagDb, "foreignKey:"+v.ColumnName)
 
 			fixFieldWebTags(&field, v.TableName, sf.WebTags, sf.EnableLint)
 			fks = append(fks, field)
@@ -215,15 +213,15 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 	// 输出db标签
 	if tagDb != "" {
 		// not simple output
-		field.AddTag(tagDb, "column:"+ci.Name)
+		field.AddFieldTag(tagDb, "column:"+ci.Name)
 		columnType := "type:" + ci.ColumnType
-		field.AddTag(tagDb, columnType)
+		field.AddFieldTag(tagDb, columnType)
 
 		if ci.IsAutoIncrement {
-			field.AddTag(tagDb, "autoIncrement:true")
+			field.AddFieldTag(tagDb, "autoIncrement:true")
 		}
 		if !ci.IsNullable {
-			field.AddTag(tagDb, "not null")
+			field.AddFieldTag(tagDb, "not null")
 		}
 		// default tag
 		if ci.Default != nil {
@@ -231,7 +229,7 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 			if *ci.Default != "" {
 				dflt = "default:" + *ci.Default
 			}
-			field.AddTag(tagDb, dflt)
+			field.AddFieldTag(tagDb, dflt)
 		}
 
 		for _, v1 := range ci.Index {
@@ -256,7 +254,7 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 			if vv != "" {
 				// NOTE: 主要是整型主键,gorm在自动迁移时没有在mysql上加上auto_increment
 				if vv == "primaryKey" && ci.IsAutoIncrement {
-					field.RemoveTag(tagDb, columnType)
+					field.RemoveFieldTag(tagDb, columnType)
 				}
 				if v1.IsMulti {
 					if vv == "primaryKey" {
@@ -266,17 +264,17 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 					}
 					vv += "priority:" + cast.ToString(v1.SeqInIndex)
 				}
-				field.AddTag(tagDb, vv)
+				field.AddFieldTag(tagDb, vv)
 			}
 		}
-		if sf.IsCommentTag && field.GetComment() != "" {
-			comment := strings.TrimSpace(field.GetComment())
+		if sf.IsCommentTag && field.FieldComment != "" {
+			comment := strings.TrimSpace(field.FieldComment)
 			comment = strings.ReplaceAll(comment, ";", ",")
 			comment = strings.ReplaceAll(comment, "`", "'")
 			comment = strings.ReplaceAll(comment, `"`, `\"`)
 			comment = strings.ReplaceAll(comment, "\n", " ")
 			comment = strings.ReplaceAll(comment, "\r\n", " ")
-			field.AddTag(tagDb, "comment:"+comment)
+			field.AddFieldTag(tagDb, "comment:"+comment)
 		}
 	}
 
@@ -288,8 +286,8 @@ func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag, enableLint
 	for _, v := range webTags {
 		vv := ""
 		if v.Tag == "json" {
-			if vv = jsonTag(field.Comment); vv != "" {
-				field.AddTag(v.Tag, vv)
+			if vv = jsonTag(field.FieldComment); vv != "" {
+				field.AddFieldTag(v.Tag, vv)
 				return
 			}
 		}
@@ -309,10 +307,10 @@ func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag, enableLint
 			if v.HasOmit {
 				vv += ",omitempty"
 			}
-			if v.Tag == "json" && affixJSONTag(field.Comment) {
+			if v.Tag == "json" && affixJSONTag(field.FieldComment) {
 				vv += ",string"
 			}
-			field.AddTag(v.Tag, vv)
+			field.AddFieldTag(v.Tag, vv)
 		}
 	}
 }

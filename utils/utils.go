@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-// GetWd 获取当前工作目录
-func GetWd() string {
+// WorkDir 获取当前工作目录
+func WorkDir() string {
 	dir, _ := os.Getwd()
 	return strings.ReplaceAll(dir, "\\", "/")
 }
 
-func GetExecutableDir() string {
+func ExecutableDir() string {
 	dir, _ := os.Executable()
 	exPath := filepath.Dir(dir)
 	return strings.ReplaceAll(exPath, "\\", "/")

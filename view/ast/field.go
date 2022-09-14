@@ -6,74 +6,35 @@ import (
 	"strings"
 )
 
-// Field of a var
+// Field of a struct
 type Field struct {
-	Name       string              // field name
-	Type       string              // field type
-	Comment    string              // field comment
-	Tags       map[string][]string // field tags
-	ColumnName string              // field column name in database
+	FieldName      string              // field name
+	FieldType      string              // field type
+	FieldComment   string              // field comment
+	FieldTags      map[string][]string // field tags
+	ColumnDataType string              // field column go type.
+	ColumnName     string              // field column name in database
 }
 
-// SetName set field name
-func (e *Field) SetName(name string) *Field {
-	e.Name = name
-	return e
-}
-
-// GetName get field name
-func (e *Field) GetName() string {
-	return e.Name
-}
-
-// SetType set field type
-func (e *Field) SetType(tp string) *Field {
-	e.Type = tp
-	return e
-}
-
-// GetType get field type
-func (e *Field) GetType() string { return e.Type }
-
-// SetComment set field comment
-func (e *Field) SetComment(comment string) *Field {
-	e.Comment = comment
-	return e
-}
-
-// GetComment get field comment
-func (e *Field) GetComment() string { return e.Comment }
-
-// AddTag Add a tag
-func (e *Field) AddTag(k string, v string) *Field {
-	if e.Tags == nil {
-		e.Tags = make(map[string][]string)
+// AddFieldTag Add a tag
+func (e *Field) AddFieldTag(k string, v string) *Field {
+	if e.FieldTags == nil {
+		e.FieldTags = make(map[string][]string)
 	}
-	e.Tags[k] = append(e.Tags[k], v)
+	e.FieldTags[k] = append(e.FieldTags[k], v)
 	return e
 }
 
-func (e *Field) RemoveTag(k, v string) *Field {
-	if e.Tags != nil {
-		tagsValues := e.Tags[k]
+func (e *Field) RemoveFieldTag(k, v string) *Field {
+	if e.FieldTags != nil {
+		tagsValues := e.FieldTags[k]
 		for i, vv := range tagsValues {
 			if vv == v {
-				e.Tags[k] = append(tagsValues[:i], tagsValues[i+1:]...)
+				e.FieldTags[k] = append(tagsValues[:i], tagsValues[i+1:]...)
 			}
 		}
 	}
 	return e
-}
-
-// SetColumnName set field column name
-func (e *Field) SetColumnName(name string) *Field {
-	e.ColumnName = name
-	return e
-}
-
-// GetColumnName get field column name
-func (e *Field) GetColumnName() string {
-	return e.ColumnName
 }
 
 // BuildLine build a field line
@@ -81,24 +42,24 @@ func (e *Field) BuildLine() string {
 	var buf strings.Builder
 
 	// field name
-	buf.WriteString(e.Name)
+	buf.WriteString(e.FieldName)
 	buf.WriteString(delimTab)
 
 	// field type
-	buf.WriteString(e.Type)
+	buf.WriteString(e.FieldType)
 	buf.WriteString(delimTab)
 
 	// field tags
-	if len(e.Tags) > 0 {
-		ks := make([]string, 0, len(e.Tags))
-		for k := range e.Tags {
+	if len(e.FieldTags) > 0 {
+		ks := make([]string, 0, len(e.FieldTags))
+		for k := range e.FieldTags {
 			ks = append(ks, k)
 		}
 		sort.Strings(ks)
 
 		buf.WriteString("`")
 		for i, v := range ks {
-			buf.WriteString(fmt.Sprintf(`%v:"%v"`, v, strings.Join(e.Tags[v], ";")))
+			buf.WriteString(fmt.Sprintf(`%v:"%v"`, v, strings.Join(e.FieldTags[v], ";")))
 			if i != len(ks)-1 {
 				buf.WriteString(" ")
 			}
@@ -106,9 +67,9 @@ func (e *Field) BuildLine() string {
 		buf.WriteString("`")
 	}
 
-	comment := strings.ReplaceAll(e.Comment, "\n", ",")
+	comment := strings.ReplaceAll(e.FieldComment, "\n", ",")
 	if comment != "" {
-		buf.WriteString("// " + e.Comment)
+		buf.WriteString("// " + e.FieldComment)
 	}
 	return buf.String()
 }

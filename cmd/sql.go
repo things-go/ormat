@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/things-go/ormat/tool"
+	"github.com/things-go/ormat/cmd/tool"
 )
 
 var sqlCmd = &cobra.Command{

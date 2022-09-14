@@ -1,46 +1,78 @@
+//go:generate stringer -type=Deploy -linecomment
 package deploy
 
-// 运行工作模式,布署
-const (
-	Local = "local" // 本地
-	Dev   = "dev"   // 开发
-	Debug = "debug" // 调试
-	Uat   = "uat"   // 预发布
-	Prod  = "prod"  // 生产
+import (
+	"log"
 )
 
-var deploy = Prod
+type Deploy int
 
-// Set 设置布署模式
-func Set(m string) {
+const (
+	None Deploy = iota // none
+	Dev                // dev
+	Test               // test
+	Uat                // uat
+	Prod               // prod
+)
+
+var deploy = None
+
+// Convert m to Deploy
+func Convert(m string) Deploy {
 	switch m {
-	case Local, Dev, Debug, Uat, Prod:
-		deploy = m
+	case Test.String():
+		return Test
+	case Dev.String():
+		return Dev
+	case Uat.String():
+		return Uat
+	case Prod.String():
+		return Prod
 	default:
-		deploy = Prod
+		return None
 	}
 }
 
+// Set 设置布署模式
+func Set(m Deploy) {
+	deploy = m
+}
+
 // Get 获取当前的布署模式
-func Get() string { return deploy }
-
-// IsTest 测试: 本地,开发或者调试
-func IsTest() bool { return IsLocal() || IsDev() || IsDebug() }
-
-// IsRelease 预发或者生产环境
-func IsRelease() bool { return IsProd() || IsUat() }
-
-// IsLocal 是否本地模式
-func IsLocal() bool { return deploy == Local }
+func Get() Deploy { return deploy }
 
 // IsDev 是否开发模式
 func IsDev() bool { return deploy == Dev }
 
-// IsDebug 是否调试模式
-func IsDebug() bool { return deploy == Debug }
+// IsTest 是否测试模式
+func IsTest() bool { return deploy == Test }
 
 // IsUat 是否预发布模式
 func IsUat() bool { return deploy == Uat }
 
-// IsProd 是否生产模式
-func IsProd() bool { return deploy == Prod }
+// IsProduction 是否生产模式
+func IsProduction() bool { return deploy == Prod }
+
+// IsTesting 测试, 开发或者调试
+func IsTesting() bool { return IsDev() || IsTest() }
+
+// IsRelease 发布, 预发或者生产环境
+func IsRelease() bool { return IsUat() || IsProduction() }
+
+// MustSetDeploy 设置布署模式, 不得为 None 模式, 否则panic
+func MustSetDeploy(m string) {
+	Set(Convert(m))
+	CheckMustDeploy()
+}
+
+// GetDeploy 获取当前的布署模式
+func GetDeploy() string {
+	return Get().String()
+}
+
+// CheckMustDeploy 校验当前的布署环境必须设置非 unknown 模式, 否则panic
+func CheckMustDeploy() {
+	if deploy == None {
+		log.Fatalf("Please set deploy mode first, must be one of dev, test, uat, prod")
+	}
+}

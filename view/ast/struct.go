@@ -6,59 +6,16 @@ import (
 
 // Struct define a struct
 type Struct struct {
-	Name           string  // struct name
-	Comment        string  // struct comment
-	Fields         []Field // struct field list
+	StructName     string  // struct name
+	StructComment  string  // struct comment
+	StructFields   []Field // struct field list
 	TableName      string  // table name
 	CreateTableSQL string  // create table SQL
-	outSQL         bool
 }
 
-// SetName set the  name
-func (s *Struct) SetName(name string) *Struct {
-	s.Name = name
-	return s
-}
-
-// GetName get the struct name
-func (s *Struct) GetName() string { return s.Name }
-
-// SetComment set the comment
-func (s *Struct) SetComment(comment string) *Struct {
-	s.Comment = comment
-	return s
-}
-
-// SetComment set the comment
-func (s *Struct) GetComment() string { return s.Comment }
-
-// AddFields Add one or more fields
-func (s *Struct) AddFields(e ...Field) *Struct {
-	s.Fields = append(s.Fields, e...)
-	return s
-}
-
-// SetTableName set the table name in database
-func (s *Struct) SetTableName(name string) *Struct {
-	s.TableName = name
-	return s
-}
-
-// GetTableName get the table name in database
-func (s *Struct) GetTableName() string { return s.TableName }
-
-// SetCreatTableSQL set create table sql
-func (s *Struct) SetCreatTableSQL(sql string) *Struct {
-	s.CreateTableSQL = sql
-	return s
-}
-
-// GetCreatTableSQL get create table sql
-func (s *Struct) GetCreatTableSQL() string { return s.CreateTableSQL }
-
-// EnableOutSQL enable out sql
-func (s *Struct) EnableOutSQL(b bool) *Struct {
-	s.outSQL = b
+// AddStructFields Add one or more fields
+func (s *Struct) AddStructFields(e ...Field) *Struct {
+	s.StructFields = append(s.StructFields, e...)
 	return s
 }
 
@@ -72,7 +29,7 @@ func (s *Struct) BuildTableNameTemplate() string {
 
 	_ = TableNameTpl.Execute(&buf, tpl{
 		TableName:  s.TableName,
-		StructName: s.Name,
+		StructName: s.StructName,
 	})
 	return buf.String()
 }
@@ -85,46 +42,128 @@ func (s *Struct) BuildColumnNameTemplate() string {
 	var buf strings.Builder
 
 	_ = ColumnNameTpl.Execute(&buf, &tpl{
-		StructName: s.Name,
-		Fields:     s.Fields,
+		StructName: s.StructName,
+		Fields:     s.StructFields,
 	})
 	return buf.String()
 }
 
-// BuildLines Get the result data.获取结果数据
-func (s *Struct) BuildLines() []string {
-	var lines []string
+// Build Get the struct data.
+func (s *Struct) Build() string {
+	buf := &strings.Builder{}
 
-	if s.outSQL {
-		lines = append(lines,
-			"/* sql",
-			s.CreateTableSQL,
-			"sql */",
-			delimLF,
-		)
-	}
-
-	comment := s.Comment
+	comment := s.StructComment
 	if comment != "" {
 		comment = strings.ReplaceAll(strings.TrimSpace(comment), "\n", "\r\n// ")
 	} else {
 		comment = "..."
 	}
-	comment = "// " + s.Name + " " + comment
-	lines = append(lines,
-		comment,
-		"type\t"+s.Name+"\tstruct {",
-	)
+	// comment
+	buf.WriteString("// " + s.StructName + " " + comment + delimLF)
+	buf.WriteString("type\t" + s.StructName + "\tstruct {" + delimLF)
 
 	// field every line
-	mp := make(map[string]struct{}, len(s.Fields))
-	for _, v := range s.Fields {
-		name := v.GetName()
-		if _, ok := mp[name]; !ok {
-			mp[name] = struct{}{}
-			lines = append(lines, "\t\t"+v.BuildLine())
+	mp := make(map[string]struct{}, len(s.StructFields))
+	for _, field := range s.StructFields {
+		if _, ok := mp[field.FieldName]; !ok {
+			mp[field.FieldName] = struct{}{}
+			buf.WriteString("\t\t" + field.BuildLine() + delimLF)
 		}
 	}
-	lines = append(lines, "}")
-	return lines
+	buf.WriteString("}" + delimLF)
+
+	return buf.String()
+}
+
+func (s *Struct) BuildSQL() string {
+	buf := &strings.Builder{}
+
+	comment := s.StructComment
+	if comment != "" {
+		comment = strings.ReplaceAll(strings.TrimSpace(comment), "\n", "\r\n// ")
+	} else {
+		comment = "..."
+	}
+	// comment
+	buf.WriteString("-- " + s.StructName + " " + comment + delimLF)
+	// sql
+	buf.WriteString(s.CreateTableSQL + ";" + delimLF)
+	return buf.String()
+}
+
+type ProtobufMessage struct {
+	StructName    string
+	StructComment string
+	TableName     string
+	Fields        []ProtobufField
+}
+
+type ProtobufField struct {
+	ColumnComment  string
+	ColumnDataType string
+	ColumnName     string
+	Annotation     string
+}
+
+func (s *Struct) BuildProtobufTemple() string {
+	var buf strings.Builder
+
+	_ = ProtobufTpl.Execute(&buf, s.intoProtobufMessage())
+	return buf.String()
+}
+
+func (s *Struct) intoProtobufMessage() *ProtobufMessage {
+	tbName := s.TableName
+	ss := strings.Split(s.TableName, "_")
+	if len(ss) > 1 {
+		tbName = ""
+		for _, vv := range ss {
+			if len(vv) > 0 {
+				tbName += string(vv[0])
+			}
+		}
+	}
+
+	pm := &ProtobufMessage{
+		StructName:    s.StructName,
+		StructComment: s.StructComment,
+		TableName:     tbName,
+		Fields:        make([]ProtobufField, 0, len(s.StructFields)),
+	}
+
+	for _, field := range s.StructFields {
+		var tmpAnnotations []string
+		dataType := field.ColumnDataType
+		switch dataType {
+		case "time.Time":
+			dataType = "google.protobuf.Timestamp"
+			tmpAnnotations = append(tmpAnnotations, `(gogoproto.stdtime) = true`, `(gogoproto.nullable) = false`)
+
+		case "uint16", "uint8", "uint":
+			dataType = "uint32"
+		case "int16", "int8", "int":
+			dataType = "int32"
+		case "float64":
+			dataType = "double"
+		case "float32":
+			dataType = "float"
+		case "[]byte":
+			dataType = "bytes"
+		case "int64", "uint64":
+			tmpAnnotations = append(tmpAnnotations,
+				`(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
+		}
+		annotation := ""
+		if len(tmpAnnotations) > 0 {
+			annotation = "[" + strings.Join(tmpAnnotations, ", ") + "]"
+		}
+
+		pm.Fields = append(pm.Fields, ProtobufField{
+			ColumnComment:  field.FieldComment,
+			ColumnDataType: dataType,
+			ColumnName:     field.ColumnName,
+			Annotation:     annotation,
+		})
+	}
+	return pm
 }

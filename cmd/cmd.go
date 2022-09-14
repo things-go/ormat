@@ -1,15 +1,16 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/cobra"
+	"github.com/things-go/log"
 
+	"github.com/things-go/ormat/cmd/tool"
 	"github.com/things-go/ormat/deploy"
-	"github.com/things-go/ormat/log"
-	"github.com/things-go/ormat/tool"
 )
 
 var validate = validator.New()
@@ -39,7 +40,8 @@ func Execute() {
 
 // initConfig reads in config file.
 func initConfig() {
-	log.ReplaceGlobals(log.New(log.Config{Level: "info", Format: "console"}).Sugar())
+	log.ReplaceGlobals(log.NewLogger(log.WithConfig(log.Config{Level: "info", Format: "console"})))
+
 	err := tool.LoadConfig()
 	if err != nil {
 		log.Fatalf("load config failed(please run 'ormat init' generate a .ormat.yml): %s", err.Error())
@@ -53,7 +55,14 @@ func initConfig() {
 		os.Exit(1)
 		return
 	}
-	deploy.Set(c.Deploy)
+	deploy.MustSetDeploy(c.Deploy)
 	fmt.Println("using config:")
-	log.JSON(c)
+	JSON(c)
+}
+
+func JSON(v ...interface{}) {
+	for _, vv := range v {
+		b, _ := json.MarshalIndent(vv, "", "  ")
+		fmt.Println(string(b))
+	}
 }

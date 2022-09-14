@@ -52,20 +52,25 @@ type sqliteForeignKey struct {
 }
 
 type SQLite struct {
+	db               *gorm.DB
 	CustomDefineType map[string]string
+}
+
+func NewSQLite(db *gorm.DB, customDefineType map[string]string) *SQLite {
+	return &SQLite{db, customDefineType}
 }
 
 // GetDbInfo get database info
 // 获取数据库信息
-func (sf *SQLite) GetDatabase(db *gorm.DB, dbName string, tbNames ...string) (*view.Database, error) {
-	tables, err := sf.GetTables(db, dbName, tbNames...)
+func (sf *SQLite) GetDatabase(dbName string, tbNames ...string) (*view.Database, error) {
+	tables, err := sf.GetTables(dbName, tbNames...)
 	if err != nil {
 		return nil, err
 	}
 
 	tbInfos := make([]view.Table, 0, len(tables))
 	for _, v := range tables {
-		tbInfo, err := sf.GetTableColumns(db, dbName, v)
+		tbInfo, err := sf.GetTableColumns(dbName, v)
 		if err != nil {
 			return nil, err
 		}
@@ -81,10 +86,10 @@ func (sf *SQLite) GetDatabase(db *gorm.DB, dbName string, tbNames ...string) (*v
 
 // GetTables get all table name and comments
 // 获取所有表及注释
-func (sf *SQLite) GetTables(db *gorm.DB, dbName string, tbNames ...string) ([]view.TableAttribute, error) {
+func (sf *SQLite) GetTables(dbName string, tbNames ...string) ([]view.TableAttribute, error) {
 	var rows []sqliteTable
 
-	err := db.Raw(`SELECT name FROM sqlite_master WHERE type='table' AND name !='sqlite_sequence'`).
+	err := sf.db.Raw(`SELECT name FROM sqlite_master WHERE type='table' AND name !='sqlite_sequence'`).
 		Find(&rows).Error
 	if err != nil {
 		return nil, err
@@ -99,12 +104,12 @@ func (sf *SQLite) GetTables(db *gorm.DB, dbName string, tbNames ...string) ([]vi
 
 // GetTableColumns get table's column info.
 // 获取表的所有列的信息
-func (sf *SQLite) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttribute) (*view.Table, error) {
+func (sf *SQLite) GetTableColumns(dbName string, tb view.TableAttribute) (*view.Table, error) {
 	var columnInfos []view.Column
 	var columns []sqliteColumn
 	var foreignKeys []sqliteForeignKey
 
-	err := db.Raw("PRAGMA table_info(" + tb.Name + ")").Find(&columns).Error
+	err := sf.db.Raw("PRAGMA table_info(" + tb.Name + ")").Find(&columns).Error
 	if err != nil {
 		return nil, err
 	}
@@ -143,10 +148,10 @@ func (sf *SQLite) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttri
 }
 
 // GetCreateTableSQL get create table sql
-func (*SQLite) GetCreateTableSQL(db *gorm.DB, tbName string) (string, error) {
+func (sf *SQLite) GetCreateTableSQL(tbName string) (string, error) {
 	var row sqliteTable
 
-	err := db.Raw("SELECT tbl_name, sql FROM sqlite_master WHERE type='table' AND name=?", tbName).
+	err := sf.db.Raw("SELECT tbl_name, sql FROM sqlite_master WHERE type='table' AND name=?", tbName).
 		Take(&row).Error
 	return row.SQL, err
 }

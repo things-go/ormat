@@ -71,19 +71,24 @@ type mysqlCreateTable struct {
 }
 
 type MySQL struct {
+	db               *gorm.DB
 	CustomDefineType map[string]string
 }
 
+func NewMySQL(db *gorm.DB, customDefineType map[string]string) *MySQL {
+	return &MySQL{db, customDefineType}
+}
+
 // GetDatabase get database information
-func (sf *MySQL) GetDatabase(db *gorm.DB, dbName string, tbNames ...string) (*view.Database, error) {
-	tables, err := sf.GetTables(db, dbName, tbNames...)
+func (sf *MySQL) GetDatabase(dbName string, tbNames ...string) (*view.Database, error) {
+	tables, err := sf.GetTables(dbName, tbNames...)
 	if err != nil {
 		return nil, err
 	}
 
 	tbInfos := make([]view.Table, 0, len(tables))
 	for _, v := range tables {
-		tbInfo, err := sf.GetTableColumns(db, dbName, v)
+		tbInfo, err := sf.GetTableColumns(dbName, v)
 		if err != nil {
 			return nil, err
 		}
@@ -97,15 +102,15 @@ func (sf *MySQL) GetDatabase(db *gorm.DB, dbName string, tbNames ...string) (*vi
 }
 
 // GetTables get all table name and comments
-func (sf *MySQL) GetTables(db *gorm.DB, dbName string, tbNames ...string) ([]view.TableAttribute, error) {
+func (sf *MySQL) GetTables(dbName string, tbNames ...string) ([]view.TableAttribute, error) {
 	var rows []mysqlTable
 
-	err := db.Table("information_schema.TABLES").
+	err := sf.db.Table("information_schema.TABLES").
 		Scopes(func(db *gorm.DB) *gorm.DB {
 			if len(tbNames) > 0 {
 				db = db.Where("TABLE_NAME in (?)", tbNames)
 			}
-			return db.Where("TABLE_SCHEMA=?", dbName)
+			return db.Where("TABLE_SCHEMA = ?", dbName)
 		}).
 		Find(&rows).Error
 	if err != nil {
@@ -113,7 +118,7 @@ func (sf *MySQL) GetTables(db *gorm.DB, dbName string, tbNames ...string) ([]vie
 	}
 	result := make([]view.TableAttribute, 0, len(rows))
 	for _, v := range rows {
-		createTableSQL, err := sf.GetCreateTableSQL(db, v.Name)
+		createTableSQL, err := sf.GetCreateTableSQL(v.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -123,21 +128,21 @@ func (sf *MySQL) GetTables(db *gorm.DB, dbName string, tbNames ...string) ([]vie
 }
 
 // GetTableColumns get table's column info.
-func (sf *MySQL) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttribute) (*view.Table, error) {
+func (sf *MySQL) GetTableColumns(dbName string, tb view.TableAttribute) (*view.Table, error) {
 	var columnInfos []view.Column
 	var columns []mysqlColumn
 	var keys []mysqlKey
 	var foreignKeys []mysqlForeignKey
 
 	// get table column list
-	err := db.Raw("SELECT * FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=? AND `TABLE_NAME`=?", dbName, tb.Name).
+	err := sf.db.Raw("SELECT * FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=? AND `TABLE_NAME`=?", dbName, tb.Name).
 		Find(&columns).Error
 	if err != nil {
 		return nil, err
 	}
 
 	// get index key list
-	err = db.Raw("SHOW KEYS FROM `" + tb.Name + "`").Find(&keys).Error
+	err = sf.db.Raw("SHOW KEYS FROM `" + tb.Name + "`").Find(&keys).Error
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +155,7 @@ func (sf *MySQL) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttrib
 	}
 
 	// get table column foreign keys
-	err = db.Raw(`
+	err = sf.db.Raw(`
 			SELECT table_schema, table_name, column_name, referenced_table_schema, referenced_table_name, referenced_column_name
 			FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
 			WHERE table_schema=? AND REFERENCED_TABLE_NAME IS NOT NULL AND TABLE_NAME=?`, dbName, tb.Name).
@@ -208,10 +213,10 @@ func (sf *MySQL) GetTableColumns(db *gorm.DB, dbName string, tb view.TableAttrib
 }
 
 // GetCreateTableSQL get create table sql
-func (sf *MySQL) GetCreateTableSQL(db *gorm.DB, tbName string) (string, error) {
+func (sf *MySQL) GetCreateTableSQL(tbName string) (string, error) {
 	var ct mysqlCreateTable
 
-	err := db.Raw("SHOW CREATE TABLE `" + tbName + "`").
+	err := sf.db.Raw("SHOW CREATE TABLE `" + tbName + "`").
 		Take(&ct).Error
 	if err != nil {
 		return "", err

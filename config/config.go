@@ -29,25 +29,18 @@ type Config struct {
 	View       view.Config       `yaml:"view" json:"view"`
 }
 
-// GetDatabase Get database configuration.
-func (c *Config) GetDatabase() *Database { return &c.Database }
-
-// GetTypeDefine 获取自定义字段映射.
-func (c *Config) GetTypeDefine() map[string]string { return c.TypeDefine }
-
-func (c *Config) GetDbDSNAndDbName() (dsn, db string, err error) {
-	cc := c.Database
-	switch cc.Dialect {
+func (c *Database) GetDbDSNAndDbName() (dsn, db string, err error) {
+	switch c.Dialect {
 	case "mysql":
-		if cc.Options == "" {
-			cc.Options = "charset=utf8&parseTime=True&loc=Local&interpolateParams=True"
+		if c.Options == "" {
+			c.Options = "charset=utf8&parseTime=True&loc=Local&interpolateParams=True"
 		}
 		return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s",
-			cc.Username, cc.Password, cc.Host, cc.Port, cc.Db, cc.Options), cc.Db, nil
+			c.Username, c.Password, c.Host, c.Port, c.Db, c.Options), c.Db, nil
 	case "sqlite3":
-		_, dbName := filepath.Split(cc.Db)
+		_, dbName := filepath.Split(c.Db)
 		if dbName != "" {
-			return cc.Db, dbName, nil
+			return c.Db, dbName, nil
 		}
 		err = errors.New("empty sqlite3 db name")
 	default:

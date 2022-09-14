@@ -11,7 +11,7 @@ import (
 )
 
 var cfg = config.Config{
-	Deploy: deploy.Prod,
+	Deploy: deploy.Prod.String(),
 	Database: config.Database{
 		Host:     "127.0.0.1",
 		Port:     3306,
@@ -38,8 +38,8 @@ var cfg = config.Config{
 func LoadConfig() error {
 	viper.SetConfigName(".ormat")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(utils.GetExecutableDir())
-	viper.AddConfigPath(utils.GetWd())
+	viper.AddConfigPath(utils.ExecutableDir())
+	viper.AddConfigPath(utils.WorkDir())
 	err := viper.ReadInConfig()
 	if err != nil {
 		return err
