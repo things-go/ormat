@@ -33,19 +33,31 @@ const helperTpl = `
 // {{.StructName}}Columns get sql column name
 var {{.StructName}}Columns = []string {
 {{- range $field := .Fields}}
+	{{- if $field.IsTimestamp}}
+	"UNIX_TIMESTAMP({{$field.ColumnName}}) AS {{$field.ColumnName}}",  
+	{{- else}}
 	"{{$field.ColumnName}}",  
+	{{- end}}
 {{- end}}
 }
 // {{.StructName}}ColumnsWithTable get sql column name with table prefix
 var {{.StructName}}ColumnsWithTable = []string {
 {{- range $field := .Fields}}
-	"{{$tableName}}.{{$field.ColumnName}} AS {{$tableName}}_{{$field.ColumnName}}",  
+	{{- if $field.IsTimestamp}}
+	"UNIX_TIMESTAMP({{$tableName}}.{{$field.ColumnName}}) AS {{$tableName}}_{{$field.ColumnName}}", 
+	{{- else}}
+	"{{$tableName}}.{{$field.ColumnName}} AS {{$tableName}}_{{$field.ColumnName}}", 
+	{{- end}}
 {{- end}}
 }
 // {{.StructName}}ColumnsWithAbbrTable get sql column name with abbr table prefix
 var {{.StructName}}ColumnsWithAbbrTable = []string {
 {{- range $field := .Fields}}
-	"{{$abbrTableName}}.{{$field.ColumnName}} AS {{$abbrTableName}}_{{$field.ColumnName}}",  
+	{{- if $field.IsTimestamp}}
+	"UNIX_TIMESTAMP({{$abbrTableName}}.{{$field.ColumnName}}) AS {{$abbrTableName}}_{{$field.ColumnName}}", 
+	{{- else}}
+	"{{$abbrTableName}}.{{$field.ColumnName}} AS {{$abbrTableName}}_{{$field.ColumnName}}",
+	{{- end}}
 {{- end}}
 }
 
@@ -55,7 +67,7 @@ message {{.StructName}} {
     {{- if $field.ColumnComment}} 
 	// {{$field.ColumnComment}} 
 	{{- end}}
-	{{$field.ColumnDataType}} {{$field.ColumnName}} = {{$index}};
+	{{$field.ColumnDataType}} {{$field.ColumnName}} = {{$index}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
 {{- end}}    
 }
 // {{.StructName}}WithTable {{.StructComment}}

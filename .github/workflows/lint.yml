@@ -14,4 +14,4 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          args: -E goimports -E gocritic -E misspell -E revive
+          args: -E goimports -E gocritic -E misspell

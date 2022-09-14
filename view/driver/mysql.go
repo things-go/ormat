@@ -221,7 +221,7 @@ func (sf *MySQL) GetCreateTableSQL(tbName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return ct.SQL, err
+	return rAutoIncrement.ReplaceAllString(ct.SQL, " "), err
 }
 
 // fixForeignKey fix foreign key

@@ -1,6 +1,8 @@
 package view
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestName(t *testing.T) {
 	t.Logf("%#v", rJSONTag.FindStringSubmatch(` 11 [@jsontag: id,omitempty,string] 11k l23123 人11`))

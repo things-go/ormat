@@ -153,7 +153,7 @@ func (sf *SQLite) GetCreateTableSQL(tbName string) (string, error) {
 
 	err := sf.db.Raw("SELECT tbl_name, sql FROM sqlite_master WHERE type='table' AND name=?", tbName).
 		Take(&row).Error
-	return row.SQL, err
+	return rAutoIncrement.ReplaceAllString(row.SQL, " "), err
 }
 
 // fixForeignKey fix foreign key

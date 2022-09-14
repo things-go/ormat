@@ -103,6 +103,7 @@ type ProtobufField struct {
 	ColumnComment  string
 	ColumnDataType string
 	ColumnName     string
+	IsTimestamp    bool
 	Annotation     string
 }
 
@@ -122,14 +123,37 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 		Fields:        make([]ProtobufField, 0, len(s.StructFields)),
 	}
 
+	intoAnnotation := func(annotations []string) string {
+		annotation := ""
+		if len(annotations) > 0 {
+			annotation = "[" + strings.Join(annotations, ", ") + "]"
+		}
+		return annotation
+	}
+
 	for _, field := range s.StructFields {
 		var tmpAnnotations []string
 		dataType := field.ColumnDataType
 		switch dataType {
 		case "time.Time":
 			dataType = "google.protobuf.Timestamp"
-			tmpAnnotations = append(tmpAnnotations, `(gogoproto.stdtime) = true`, `(gogoproto.nullable) = false`)
-
+			pm.Fields = append(pm.Fields,
+				ProtobufField{
+					ColumnComment:  field.FieldComment,
+					ColumnDataType: "google.protobuf.Timestamp",
+					ColumnName:     field.ColumnName,
+					IsTimestamp:    false,
+					Annotation:     intoAnnotation([]string{`(gogoproto.stdtime) = true`, `(gogoproto.nullable) = false`}),
+				},
+				ProtobufField{
+					ColumnComment:  field.FieldComment,
+					ColumnDataType: "int64",
+					ColumnName:     field.ColumnName,
+					IsTimestamp:    true,
+					Annotation:     intoAnnotation([]string{`(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`}),
+				},
+			)
+			continue
 		case "uint16", "uint8", "uint":
 			dataType = "uint32"
 		case "int16", "int8", "int":
@@ -144,16 +168,13 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 			tmpAnnotations = append(tmpAnnotations,
 				`(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
 		}
-		annotation := ""
-		if len(tmpAnnotations) > 0 {
-			annotation = "[" + strings.Join(tmpAnnotations, ", ") + "]"
-		}
 
 		pm.Fields = append(pm.Fields, ProtobufField{
 			ColumnComment:  field.FieldComment,
 			ColumnDataType: dataType,
 			ColumnName:     field.ColumnName,
-			Annotation:     annotation,
+			IsTimestamp:    false,
+			Annotation:     intoAnnotation(tmpAnnotations),
 		})
 	}
 	return pm
@@ -161,12 +182,10 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 
 func intoAbbrTableName(tableName string) string {
 	ss := strings.Split(tableName, "_")
-	if len(ss) > 1 {
-		tableName = ""
-		for _, vv := range ss {
-			if len(vv) > 0 {
-				tableName += string(vv[0])
-			}
+	tableName = ""
+	for _, vv := range ss {
+		if len(vv) > 0 {
+			tableName += string(vv[0])
 		}
 	}
 	return tableName
