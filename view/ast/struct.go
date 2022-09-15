@@ -115,14 +115,16 @@ func (s *Struct) BuildProtobufTemple() string {
 }
 
 func (s *Struct) intoProtobufMessage() *ProtobufMessage {
-	pm := &ProtobufMessage{
-		StructName:    s.StructName,
-		StructComment: s.StructComment,
-		TableName:     s.TableName,
-		AbbrTableName: intoAbbrTableName(s.TableName),
-		Fields:        make([]ProtobufField, 0, len(s.StructFields)),
+	intoAbbrTableName := func(tableName string) string {
+		ss := strings.Split(tableName, "_")
+		tableName = ""
+		for _, vv := range ss {
+			if len(vv) > 0 {
+				tableName += string(vv[0])
+			}
+		}
+		return tableName
 	}
-
 	intoAnnotation := func(annotations []string) string {
 		annotation := ""
 		if len(annotations) > 0 {
@@ -131,6 +133,13 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 		return annotation
 	}
 
+	pm := &ProtobufMessage{
+		StructName:    s.StructName,
+		StructComment: s.StructComment,
+		TableName:     s.TableName,
+		AbbrTableName: intoAbbrTableName(s.TableName),
+		Fields:        make([]ProtobufField, 0, len(s.StructFields)),
+	}
 	for _, field := range s.StructFields {
 		var tmpAnnotations []string
 		dataType := field.ColumnDataType
@@ -178,15 +187,4 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 		})
 	}
 	return pm
-}
-
-func intoAbbrTableName(tableName string) string {
-	ss := strings.Split(tableName, "_")
-	tableName = ""
-	for _, vv := range ss {
-		if len(vv) > 0 {
-			tableName += string(vv[0])
-		}
-	}
-	return tableName
 }
