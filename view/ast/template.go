@@ -67,7 +67,7 @@ message {{.StructName}} {
     {{- if $field.ColumnComment}} 
 	// {{$field.ColumnComment}} 
 	{{- end}}
-	{{$field.ColumnDataType}} {{$field.ColumnName}} = {{$index}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
+	{{$field.ColumnDataType}} {{$field.ColumnName}} = {{add $index 1}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
 {{- end}}    
 }
 // {{.StructName}}WithTable {{.StructComment}}
@@ -76,7 +76,7 @@ message {{.StructName}}WithTable {
     {{- if $field.ColumnComment}} 
 	// {{$field.ColumnComment}} 
 	{{- end}}
-	{{$field.ColumnDataType}} {{$tableName}}_{{$field.ColumnName}} = {{$index}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
+	{{$field.ColumnDataType}} {{$tableName}}_{{$field.ColumnName}} = {{add $index 1}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
 {{- end}}    
 }
 // {{.StructName}}WithAbbrTable {{.StructComment}}
@@ -85,7 +85,7 @@ message {{.StructName}}WithAbbrTable {
     {{- if $field.ColumnComment}} 
 	// {{$field.ColumnComment}} 
 	{{- end}}
-	{{$field.ColumnDataType}} {{$abbrTableName}}_{{$field.ColumnName}} = {{$index}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
+	{{$field.ColumnDataType}} {{$abbrTableName}}_{{$field.ColumnName}} = {{add $index 1}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
 {{- end}}    
 }
 */
@@ -93,4 +93,4 @@ message {{.StructName}}WithAbbrTable {
 
 var TableNameTpl = template.Must(template.New("tableNameTpl").Parse(tableNameTpl))
 var ColumnNameTpl = template.Must(template.New("columnNameTpl").Parse(columnNameTpl))
-var HelperTpl = template.Must(template.New("helperTpl").Parse(helperTpl))
+var HelperTpl = template.Must(template.New("helperTpl").Funcs(template.FuncMap{"add": func(a, b int) int { return a + b }}).Parse(helperTpl))
