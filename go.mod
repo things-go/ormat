@@ -3,17 +3,17 @@ module github.com/things-go/ormat
 go 1.18
 
 require (
-	github.com/go-playground/validator/v10 v10.11.0
+	github.com/go-playground/validator/v10 v10.11.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.13.0
 	github.com/things-go/log v0.0.2
-	gorm.io/driver/mysql v1.3.6
-	gorm.io/driver/postgres v1.3.9
-	gorm.io/driver/sqlite v1.3.6
+	gorm.io/driver/mysql v1.4.1
+	gorm.io/driver/postgres v1.3.10
+	gorm.io/driver/sqlite v1.4.2
 	gorm.io/driver/sqlserver v1.3.2
-	gorm.io/gorm v1.23.8
+	gorm.io/gorm v1.24.0
 )
 
 require (
