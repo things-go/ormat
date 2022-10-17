@@ -9,7 +9,7 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.13.0
 	github.com/things-go/log v0.0.2
-	gorm.io/driver/mysql v1.4.1
+	gorm.io/driver/mysql v1.4.3
 	gorm.io/driver/postgres v1.4.4
 	gorm.io/driver/sqlite v1.4.2
 	gorm.io/driver/sqlserver v1.4.1
