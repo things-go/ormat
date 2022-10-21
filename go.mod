@@ -10,10 +10,10 @@ require (
 	github.com/spf13/viper v1.13.0
 	github.com/things-go/log v0.0.2
 	gorm.io/driver/mysql v1.4.3
-	gorm.io/driver/postgres v1.4.4
+	gorm.io/driver/postgres v1.4.5
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/driver/sqlserver v1.4.1
-	gorm.io/gorm v1.24.0
+	gorm.io/gorm v1.24.1-0.20221019064659-5dd2bb482755
 )
 
 require (
