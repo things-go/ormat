@@ -88,6 +88,18 @@ message {{.StructName}}WithAbbrTable {
 	{{$field.ColumnDataType}} {{$abbrTableName}}_{{$field.ColumnName}} = {{add $index 1}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
 {{- end}}    
 }
+
+{{- range $e := .Enums}}
+// {{$e.EnumName}} {{$e.EnumComment}}
+enum {{$e.EnumName}} {
+{{- range $ee := $e.EnumFields}}
+    {{- if $ee.Comment}} 
+	// {{$ee.Comment}}
+	{{- end}}
+	{{$ee.Name}} = {{$ee.Id}};
+{{- end}} 
+}
+{{- end}}
 */
 `
 

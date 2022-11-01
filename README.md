@@ -32,7 +32,7 @@ NOTE:
 
 - database filed comment `[@jsontag: realjsontag]` will overwrite the filed json tags.
 - database filed comment `[@affix]` will append `,string` to the filed json tags.
-
+- database filed comment `[@enum: enumValue]` or `[@status: enumValue]` will generate protobuf enum comment. `enumValue` should be like `{"0":["name","comment"]}`
 ```go
 // SysUser 用户表
 type SysUser struct {
@@ -93,7 +93,7 @@ make mac
 ## References
 
 ### JetBrains OS licenses
-go-modbus had been being developed with GoLand under the free JetBrains Open Source license(s) granted by JetBrains s.r.o., hence I would like to express my thanks here.
+ormat had been being developed with GoLand under the free JetBrains Open Source license(s) granted by JetBrains s.r.o., hence I would like to express my thanks here.
 
 <a href="https://www.jetbrains.com/?from=things-go/go-modbus" target="_blank"><img src="https://github.com/thinkgos/thinkgos/blob/master/asserts/jetbrains-variant-4.svg" width="200" align="middle"/></a>
 
