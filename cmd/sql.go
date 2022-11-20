@@ -8,7 +8,7 @@ import (
 
 var sqlCmd = &cobra.Command{
 	Use:     "sql",
-	Short:   "generate create table sql",
+	Short:   "Generate create table sql",
 	Example: "ormat sql",
 	RunE: func(*cobra.Command, []string) error {
 		initConfig()
