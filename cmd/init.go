@@ -9,7 +9,7 @@ import (
 
 var initCmd = &cobra.Command{
 	Use:     "init",
-	Short:   "generate config file",
+	Short:   "Generate config file",
 	Example: "ormat init",
 	RunE: func(*cobra.Command, []string) error {
 		b, err := tpl.Static.ReadFile("ormat.yml")
