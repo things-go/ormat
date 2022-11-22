@@ -210,7 +210,7 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 			Annotation:     intoAnnotation(tmpAnnotations),
 		})
 
-		protobufEnum := parseEnumComment(s.StructName, s.TableName, field.ColumnName, field.FieldComment)
+		protobufEnum := parseEnumComment(s.StructName, s.TableName, field.FieldName, field.ColumnName, field.FieldComment)
 		if protobufEnum != nil {
 			pm.Enums = append(pm.Enums, *protobufEnum)
 		}
@@ -221,7 +221,7 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 // t.Logf("%#v", rEnum.FindStringSubmatch(` 11 [@enum:{"0":["none"],"1":["expenditure","支出"],"2":["income","收入"]}] 11k l23123 人11`))
 var rEnum = regexp.MustCompile(`^.*?\[@.*?(?i:(?:enum|status)+):\s*(.*)\].*?`)
 
-func parseEnumComment(structName, tableName, columnName, comment string) *ProtobufEnum {
+func parseEnumComment(structName, tableName, fieldName, columnName, comment string) *ProtobufEnum {
 	enumCommentString := func(comment string) string {
 		match := rEnum.FindStringSubmatch(comment)
 		if len(match) == 2 {
@@ -244,7 +244,7 @@ func parseEnumComment(structName, tableName, columnName, comment string) *Protob
 		return nil
 	}
 	protobufEnum := ProtobufEnum{
-		EnumName:    structName + columnName,
+		EnumName:    structName + fieldName,
 		EnumComment: comment,
 		EnumFields:  make([]ProtobufEnumField, 0, len(mp)),
 	}

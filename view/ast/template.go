@@ -99,6 +99,11 @@ enum {{$e.EnumName}} {
 	{{$ee.Name}} = {{$ee.Id}};
 {{- end}} 
 }
+var {{$e.EnumName}}Mapping = map[int]string{
+{{- range $ee := $e.EnumFields}}
+	{{$ee.Id}}: "{{$ee.Comment}}",
+{{- end}} 
+}
 {{- end}}
 */
 `
