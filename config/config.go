@@ -29,22 +29,22 @@ type Config struct {
 	View       view.Config       `yaml:"view" json:"view"`
 }
 
-func (c *Database) GetDbDSNAndDbName() (dsn, db string, err error) {
+func (c *Database) GetDbDSNAndDbName() (dsn string, err error) {
 	switch c.Dialect {
 	case "mysql":
 		if c.Options == "" {
 			c.Options = "charset=utf8&parseTime=True&loc=Local&interpolateParams=True"
 		}
 		return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s",
-			c.Username, c.Password, c.Host, c.Port, c.Db, c.Options), c.Db, nil
+			c.Username, c.Password, c.Host, c.Port, c.Db, c.Options), nil
 	case "sqlite3":
 		_, dbName := filepath.Split(c.Db)
 		if dbName != "" {
-			return c.Db, dbName, nil
+			return c.Db, nil
 		}
 		err = errors.New("empty sqlite3 db name")
 	default:
 		err = errors.New("database not found, please check database.dialect (mysql, sqlite3, mssql)")
 	}
-	return "", "", err
+	return "", err
 }

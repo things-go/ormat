@@ -5,6 +5,7 @@ import (
 	stdlog "log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -31,13 +32,13 @@ func Execute() {
 
 	cfg := GetConfig()
 
-	_, dbName, err := cfg.Database.GetDbDSNAndDbName()
+	_, err = cfg.Database.GetDbDSNAndDbName()
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	vw := view.New(md, cfg.View, dbName, cfg.TableNames...)
+	vw := view.New(md, cfg.View)
 
 	list, err := vw.GetDbFile(utils.GetPkgName(cfg.OutDir))
 	if err != nil {
@@ -69,13 +70,13 @@ func ExecuteCreateSQL() {
 	}
 	defer database.Close(db)
 	cfg := GetConfig()
-	_, dbName, err := cfg.Database.GetDbDSNAndDbName()
+	_, err = cfg.Database.GetDbDSNAndDbName()
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	vw := view.New(md, cfg.View, dbName, cfg.TableNames...)
+	vw := view.New(md, cfg.View)
 
 	content, err := vw.GetDBCreateTableSQLContent()
 	if err != nil {
@@ -98,17 +99,31 @@ func GetDbAndViewModel() (*gorm.DB, view.DBModel, error) {
 	}
 	cfg := GetConfig()
 
-	dsn, _, err := cfg.Database.GetDbDSNAndDbName()
+	dsn, err := cfg.Database.GetDbDSNAndDbName()
 	if err != nil {
 		return nil, nil, err
 	}
 	switch cfg.Database.Dialect {
 	case "mysql": // mysql
 		db, err := database.New(database.Config{Dialect: "mysql", Dsn: dsn}, gc)
-		return db, driver.NewMySQL(db, cfg.TypeDefine), err
+		return db, &driver.MySQL{
+			DB:               db,
+			DbName:           cfg.Database.Db,
+			TableNames:       cfg.TableNames,
+			CustomDefineType: cfg.TypeDefine,
+		}, err
 	case "sqlite3": // sqlite3
 		db, err := database.New(database.Config{Dialect: "sqlite3", Dsn: dsn}, gc)
-		return db, driver.NewSQLite(db, cfg.TypeDefine), err
+		if err != nil {
+			return nil, nil, err
+		}
+		_, dbName := filepath.Split(cfg.Database.Db)
+		return db, &driver.SQLite{
+			DB:               db,
+			DbName:           dbName,
+			TableNames:       cfg.TableNames,
+			CustomDefineType: cfg.TypeDefine,
+		}, err
 	default:
 		return nil, nil, errors.New("database not fund: please check database.dialect (mysql, sqlite3, mssql)")
 	}

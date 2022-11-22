@@ -34,19 +34,11 @@ type Table struct {
 	Columns []Column // column information
 }
 
-type Tables []Table
+type TableSlice []Table
 
-func (t Tables) Len() int {
-	return len(t)
-}
-
-func (t Tables) Less(i, j int) bool {
-	return t[i].Name < t[j].Name
-}
-
-func (t Tables) Swap(i, j int) {
-	t[i], t[j] = t[j], t[i]
-}
+func (t TableSlice) Len() int           { return len(t) }
+func (t TableSlice) Less(i, j int) bool { return t[i].Name < t[j].Name }
+func (t TableSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 
 // Column column information
 type Column struct {
@@ -62,19 +54,11 @@ type Column struct {
 	ForeignKeys     []ForeignKey // Foreign key list
 }
 
-type Columns []Column
+type ColumnSlice []Column
 
-func (t Columns) Len() int {
-	return len(t)
-}
-
-func (t Columns) Less(i, j int) bool {
-	return t[i].OrdinalPosition < t[j].OrdinalPosition
-}
-
-func (t Columns) Swap(i, j int) {
-	t[i], t[j] = t[j], t[i]
-}
+func (t ColumnSlice) Len() int           { return len(t) }
+func (t ColumnSlice) Less(i, j int) bool { return t[i].OrdinalPosition < t[j].OrdinalPosition }
+func (t ColumnSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 
 // Index database index/unique_index list
 type Index struct {

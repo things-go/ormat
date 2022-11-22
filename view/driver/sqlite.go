@@ -52,44 +52,42 @@ type sqliteForeignKey struct {
 }
 
 type SQLite struct {
-	db               *gorm.DB
+	DB               *gorm.DB
+	DbName           string
+	TableNames       []string
 	CustomDefineType map[string]string
-}
-
-func NewSQLite(db *gorm.DB, customDefineType map[string]string) *SQLite {
-	return &SQLite{db, customDefineType}
 }
 
 // GetDbInfo get database info
 // 获取数据库信息
-func (sf *SQLite) GetDatabase(dbName string, tbNames ...string) (*view.Database, error) {
-	tables, err := sf.GetTables(dbName, tbNames...)
+func (sf *SQLite) GetDatabase() (*view.Database, error) {
+	tables, err := sf.GetTables()
 	if err != nil {
 		return nil, err
 	}
 
 	tbInfos := make([]view.Table, 0, len(tables))
 	for _, v := range tables {
-		tbInfo, err := sf.GetTableColumns(dbName, v)
+		tbInfo, err := sf.GetTableColumns(v)
 		if err != nil {
 			return nil, err
 		}
 		tbInfos = append(tbInfos, *tbInfo)
 	}
 	// sort tables
-	sort.Sort(view.Tables(tbInfos))
+	sort.Sort(view.TableSlice(tbInfos))
 	return &view.Database{
-		Name:   dbName,
+		Name:   sf.DbName,
 		Tables: tbInfos,
 	}, nil
 }
 
 // GetTables get all table name and comments
 // 获取所有表及注释
-func (sf *SQLite) GetTables(dbName string, tbNames ...string) ([]view.TableAttribute, error) {
+func (sf *SQLite) GetTables() ([]view.TableAttribute, error) {
 	var rows []sqliteTable
 
-	err := sf.db.Raw(`SELECT name FROM sqlite_master WHERE type='table' AND name !='sqlite_sequence'`).
+	err := sf.DB.Raw(`SELECT name FROM sqlite_master WHERE type='table' AND name !='sqlite_sequence'`).
 		Find(&rows).Error
 	if err != nil {
 		return nil, err
@@ -104,12 +102,12 @@ func (sf *SQLite) GetTables(dbName string, tbNames ...string) ([]view.TableAttri
 
 // GetTableColumns get table's column info.
 // 获取表的所有列的信息
-func (sf *SQLite) GetTableColumns(dbName string, tb view.TableAttribute) (*view.Table, error) {
+func (sf *SQLite) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
 	var columnInfos []view.Column
 	var columns []sqliteColumn
 	var foreignKeys []sqliteForeignKey
 
-	err := sf.db.Raw("PRAGMA table_info(" + tb.Name + ")").Find(&columns).Error
+	err := sf.DB.Raw("PRAGMA table_info(" + tb.Name + ")").Find(&columns).Error
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +138,7 @@ func (sf *SQLite) GetTableColumns(dbName string, tb view.TableAttribute) (*view.
 		columnInfos = append(columnInfos, columnInfo)
 	}
 
-	sort.Sort(view.Columns(columnInfos))
+	sort.Sort(view.ColumnSlice(columnInfos))
 	return &view.Table{
 		TableAttribute: tb,
 		Columns:        columnInfos,
@@ -151,7 +149,7 @@ func (sf *SQLite) GetTableColumns(dbName string, tb view.TableAttribute) (*view.
 func (sf *SQLite) GetCreateTableSQL(tbName string) (string, error) {
 	var row sqliteTable
 
-	err := sf.db.Raw("SELECT tbl_name, sql FROM sqlite_master WHERE type='table' AND name=?", tbName).
+	err := sf.DB.Raw("SELECT tbl_name, sql FROM sqlite_master WHERE type='table' AND name=?", tbName).
 		Take(&row).Error
 	return rAutoIncrement.ReplaceAllString(row.SQL, " "), err
 }

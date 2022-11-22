@@ -71,46 +71,44 @@ type mysqlCreateTable struct {
 }
 
 type MySQL struct {
-	db               *gorm.DB
+	DB               *gorm.DB
+	DbName           string
+	TableNames       []string
 	CustomDefineType map[string]string
 }
 
-func NewMySQL(db *gorm.DB, customDefineType map[string]string) *MySQL {
-	return &MySQL{db, customDefineType}
-}
-
 // GetDatabase get database information
-func (sf *MySQL) GetDatabase(dbName string, tbNames ...string) (*view.Database, error) {
-	tables, err := sf.GetTables(dbName, tbNames...)
+func (sf *MySQL) GetDatabase() (*view.Database, error) {
+	tables, err := sf.GetTables()
 	if err != nil {
 		return nil, err
 	}
 
 	tbInfos := make([]view.Table, 0, len(tables))
 	for _, v := range tables {
-		tbInfo, err := sf.GetTableColumns(dbName, v)
+		tbInfo, err := sf.GetTableColumns(v)
 		if err != nil {
 			return nil, err
 		}
 		tbInfos = append(tbInfos, *tbInfo)
 	}
-	sort.Sort(view.Tables(tbInfos))
+	sort.Sort(view.TableSlice(tbInfos))
 	return &view.Database{
-		Name:   dbName,
+		Name:   sf.DbName,
 		Tables: tbInfos,
 	}, nil
 }
 
 // GetTables get all table name and comments
-func (sf *MySQL) GetTables(dbName string, tbNames ...string) ([]view.TableAttribute, error) {
+func (sf *MySQL) GetTables() ([]view.TableAttribute, error) {
 	var rows []mysqlTable
 
-	err := sf.db.Table("information_schema.TABLES").
+	err := sf.DB.Table("information_schema.TABLES").
 		Scopes(func(db *gorm.DB) *gorm.DB {
-			if len(tbNames) > 0 {
-				db = db.Where("TABLE_NAME in (?)", tbNames)
+			if len(sf.TableNames) > 0 {
+				db = db.Where("TABLE_NAME in (?)", sf.TableNames)
 			}
-			return db.Where("TABLE_SCHEMA = ?", dbName)
+			return db.Where("TABLE_SCHEMA = ?", sf.DbName)
 		}).
 		Find(&rows).Error
 	if err != nil {
@@ -122,27 +120,31 @@ func (sf *MySQL) GetTables(dbName string, tbNames ...string) ([]view.TableAttrib
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, view.TableAttribute{Name: v.Name, Comment: v.Comment, CreateTableSQL: createTableSQL})
+		result = append(result, view.TableAttribute{
+			Name:           v.Name,
+			Comment:        v.Comment,
+			CreateTableSQL: createTableSQL,
+		})
 	}
 	return result, err
 }
 
 // GetTableColumns get table's column info.
-func (sf *MySQL) GetTableColumns(dbName string, tb view.TableAttribute) (*view.Table, error) {
+func (sf *MySQL) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
 	var columnInfos []view.Column
 	var columns []mysqlColumn
 	var keys []mysqlKey
 	var foreignKeys []mysqlForeignKey
 
 	// get table column list
-	err := sf.db.Raw("SELECT * FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=? AND `TABLE_NAME`=?", dbName, tb.Name).
+	err := sf.DB.Raw("SELECT * FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=? AND `TABLE_NAME`=?", sf.DbName, tb.Name).
 		Find(&columns).Error
 	if err != nil {
 		return nil, err
 	}
 
 	// get index key list
-	err = sf.db.Raw("SHOW KEYS FROM `" + tb.Name + "`").Find(&keys).Error
+	err = sf.DB.Raw("SHOW KEYS FROM `" + tb.Name + "`").Find(&keys).Error
 	if err != nil {
 		return nil, err
 	}
@@ -155,10 +157,10 @@ func (sf *MySQL) GetTableColumns(dbName string, tb view.TableAttribute) (*view.T
 	}
 
 	// get table column foreign keys
-	err = sf.db.Raw(`
+	err = sf.DB.Raw(`
 			SELECT table_schema, table_name, column_name, referenced_table_schema, referenced_table_name, referenced_column_name
 			FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-			WHERE table_schema=? AND REFERENCED_TABLE_NAME IS NOT NULL AND TABLE_NAME=?`, dbName, tb.Name).
+			WHERE table_schema=? AND REFERENCED_TABLE_NAME IS NOT NULL AND TABLE_NAME=?`, sf.DbName, tb.Name).
 		Find(&foreignKeys).Error
 	if err != nil {
 		return nil, err
@@ -205,7 +207,7 @@ func (sf *MySQL) GetTableColumns(dbName string, tb view.TableAttribute) (*view.T
 		columnInfos = append(columnInfos, ci)
 	}
 
-	sort.Sort(view.Columns(columnInfos))
+	sort.Sort(view.ColumnSlice(columnInfos))
 	return &view.Table{
 		TableAttribute: tb,
 		Columns:        columnInfos,
@@ -216,7 +218,7 @@ func (sf *MySQL) GetTableColumns(dbName string, tb view.TableAttribute) (*view.T
 func (sf *MySQL) GetCreateTableSQL(tbName string) (string, error) {
 	var ct mysqlCreateTable
 
-	err := sf.db.Raw("SHOW CREATE TABLE `" + tbName + "`").
+	err := sf.DB.Raw("SHOW CREATE TABLE `" + tbName + "`").
 		Take(&ct).Error
 	if err != nil {
 		return "", err

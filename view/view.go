@@ -19,9 +19,9 @@ const (
 
 // DBModel Implement the interface to acquire database information.
 type DBModel interface {
-	GetDatabase(dbName string, tbNames ...string) (*Database, error)
-	GetTables(dbName string, tbNames ...string) ([]TableAttribute, error)
-	GetTableColumns(dbName string, tb TableAttribute) (*Table, error)
+	GetDatabase() (*Database, error)
+	GetTables() ([]TableAttribute, error)
+	GetTableColumns(tb TableAttribute) (*Table, error)
 	GetCreateTableSQL(tbName string) (string, error)
 }
 
@@ -50,18 +50,16 @@ type Config struct {
 type View struct {
 	Config
 	DBModel
-	dbName  string
-	tbNames []string
 }
 
 // New view instance
-func New(m DBModel, c Config, dbName string, tbNames ...string) *View {
-	return &View{c, m, dbName, tbNames}
+func New(m DBModel, c Config) *View {
+	return &View{c, m}
 }
 
 // GetDbFile ast file
 func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
-	dbInfo, err := sf.GetDatabase(sf.dbName, sf.tbNames...)
+	dbInfo, err := sf.GetDatabase()
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +79,7 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 
 // GetDBCreateTableSQLContent get all table's create table sql content
 func (sf *View) GetDBCreateTableSQLContent() ([]byte, error) {
-	tbSqls, err := sf.GetTables(sf.dbName, sf.tbNames...)
+	tbSqls, err := sf.GetTables()
 	if err != nil {
 		return nil, err
 	}
