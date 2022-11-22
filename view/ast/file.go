@@ -11,8 +11,8 @@ type File struct {
 	Filename        string            // file name
 	PackageName     string            // package name
 	Imports         map[string]string // import package
-	Structs         []Struct          // struct list
-	IsOutColumnName bool              // 是否输出表的列名
+	Structs         []Struct          // struct list in file
+	IsOutColumnName bool              // is out column name
 }
 
 // AddImport Add import by type
@@ -47,10 +47,8 @@ func (p *File) Build() string {
 	// auto add import
 	for _, v := range p.Structs {
 		for _, v1 := range v.StructFields {
-			if v2, ok := ImportsHeads[v1.FieldType]; ok {
-				if v2 != "" {
-					p.AddImport(v2)
-				}
+			if v2, ok := ImportsHeads[v1.FieldType]; ok && v2 != "" {
+				p.AddImport(v2)
 			}
 		}
 	}
@@ -87,14 +85,4 @@ func (p *File) BuildSQL() string {
 		buf.WriteString(v.BuildSQL() + delimLF)
 	}
 	return buf.String()
-}
-
-// ImportsHeads import head options
-var ImportsHeads = map[string]string{
-	"string":         `"string"`,
-	"time.Time":      `"time"`,
-	"gorm.Model":     `"gorm.io/gorm"`,
-	"fmt":            `"fmt"`,
-	"datatypes.JSON": `"gorm.io/datatypes"`,
-	"datatypes.Date": `"gorm.io/datatypes"`,
 }

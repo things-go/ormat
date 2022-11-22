@@ -127,7 +127,7 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 		TableName:     s.TableName,
 		AbbrTableName: intoAbbrTableName(s.TableName),
 		Fields:        make([]ProtobufMessageField, 0, len(s.StructFields)),
-		Enums:         make([]ProtobufEnum, 0, 32),
+		Enums:         make([]*ProtobufEnum, 0, 32),
 	}
 	for _, field := range s.StructFields {
 		var tmpAnnotations []string
@@ -178,7 +178,7 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 
 		protobufEnum := parseEnumComment(s.StructName, s.TableName, field.FieldName, field.ColumnName, field.FieldComment)
 		if protobufEnum != nil {
-			pm.Enums = append(pm.Enums, *protobufEnum)
+			pm.Enums = append(pm.Enums, protobufEnum)
 		}
 	}
 	return pm

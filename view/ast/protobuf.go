@@ -9,14 +9,6 @@ import (
 	"github.com/spf13/cast"
 )
 
-type ProtobufMessageField struct {
-	FieldDataType   string // 列数据类型
-	FieldName       string // 列名称
-	FieldComment    string // 列注释
-	FieldAnnotation string // 列注解
-	IsTimestamp     bool   // 是否是时间类型
-}
-
 type ProtobufEnumField struct {
 	Id      int    // 段序号
 	Name    string // 段名称 uppercase(表名_列名_段名)
@@ -30,13 +22,21 @@ type ProtobufEnum struct {
 	EnumFields  []ProtobufEnumField // 枚举字段
 }
 
+type ProtobufMessageField struct {
+	FieldDataType   string // 列数据类型
+	FieldName       string // 列名称
+	FieldComment    string // 列注释
+	FieldAnnotation string // 列注解
+	IsTimestamp     bool   // 是否是时间类型
+}
+
 type ProtobufMessage struct {
 	StructName    string                 // 结构体名
 	StructComment string                 // 结构体注释
 	TableName     string                 // 表名
 	AbbrTableName string                 // 表名缩写
 	Fields        []ProtobufMessageField // 字段列表
-	Enums         []ProtobufEnum         // 枚举列表
+	Enums         []*ProtobufEnum        // 枚举列表(解析注释中)
 }
 
 type ProtobufEnumFieldSlice []ProtobufEnumField
@@ -71,8 +71,7 @@ func parseEnumComment(structName, tableName, fieldName, columnName, comment stri
 		return nil
 	}
 	protobufEnum := ProtobufEnum{
-		EnumName: structName + fieldName,
-
+		EnumName:    structName + fieldName,
 		EnumComment: comment,
 		EnumFields:  make([]ProtobufEnumField, 0, len(mp)),
 	}
