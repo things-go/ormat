@@ -28,7 +28,12 @@ var rootCmd = &cobra.Command{
 func init() {
 	validate.SetTagName("binding")
 
-	rootCmd.AddCommand(versionCmd, initCmd, sqlCmd)
+	rootCmd.AddCommand(
+		versionCmd,
+		initCmd,
+		sqlCmd,
+		genCmd,
+	)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

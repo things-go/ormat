@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/spf13/cobra"
-	"github.com/xwb1989/sqlparser"
+
+	"github.com/things-go/ormat/view/driver"
 )
 
 var genCmd = &cobra.Command{
@@ -26,32 +24,11 @@ var genCmd = &cobra.Command{
 				"PRIMARY KEY (`id`)" +
 				")ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='公告-面向所有人的消息';"
 
-		stmt, err := sqlparser.Parse(sql)
-		if err != nil {
-			return err
-			// Do something with the error
+		d := &driver.SQL{
+			CreateTableSQL:   sql,
+			CustomDefineType: make(map[string]string),
 		}
-
-		// Otherwise do something with stmt
-		switch stmt := stmt.(type) {
-		case *sqlparser.DDL:
-			fmt.Printf("action: %#v\n", stmt.Action)
-			fmt.Printf("new name: %#v\n", stmt.NewName)
-			fmt.Printf("table: %#v\n", stmt.Table)
-			fmt.Printf("\n Colums: \n")
-			for _, column := range stmt.TableSpec.Columns {
-				fmt.Printf("%#v\n", column)
-			}
-
-			fmt.Printf("\n Indexes: \n")
-			for _, idx := range stmt.TableSpec.Indexes {
-				fmt.Printf("%#v\n", idx)
-			}
-
-		default:
-			return errors.New("sql is not ddl")
-		}
-		return nil
+		return d.Parse()
 
 	},
 }
