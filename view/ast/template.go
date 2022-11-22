@@ -2,10 +2,6 @@ package ast
 
 import "text/template"
 
-// interval
-const delimTab = "\t"
-const delimLF = "\n"
-
 const tableNameTpl = `
 // TableName implement schema.Tabler interface
 func (*{{.StructName}}) TableName() string {
@@ -103,6 +99,9 @@ var {{$e.EnumName}}Mapping = map[int]string{
 {{- range $ee := $e.EnumFields}}
 	{{$ee.Id}}: "{{$ee.Comment}}",
 {{- end}} 
+}
+func Get{{$e.EnumName}}Desc(t int) string {
+	return {{$e.EnumName}}Mapping[t]
 }
 {{- end}}
 */

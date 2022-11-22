@@ -132,7 +132,7 @@ func (sf *View) getColumnFields(tables []Table, cols []Column) []ast.Field {
 			FieldName:      fieldName,
 			FieldType:      fieldType,
 			FieldComment:   col.Comment,
-			FieldTags:      make(map[string][]string),
+			FieldTags:      make(map[string]*ast.FieldTagValue),
 			ColumnDataType: col.DataType,
 			ColumnName:     col.Name,
 		}
@@ -170,8 +170,8 @@ func (sf *View) getForeignKeyField(tables []Table, col Column) (fks []ast.Field)
 				field.FieldType = name
 			}
 			field.FieldComment = comment
-			field.AddFieldTag(tagDb, "joinForeignKey:"+col.Name).
-				AddFieldTag(tagDb, "foreignKey:"+v.ColumnName)
+			field.AddFieldTagValue(tagDb, "joinForeignKey:"+col.Name).
+				AddFieldTagValue(tagDb, "foreignKey:"+v.ColumnName)
 
 			fixFieldWebTags(&field, v.TableName, sf.WebTags, sf.EnableLint)
 			fks = append(fks, field)
@@ -211,72 +211,73 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 	}
 
 	// 输出db标签
-	if tagDb != "" {
-		// not simple output
-		field.AddFieldTag(tagDb, "column:"+ci.Name)
-		columnType := "type:" + ci.ColumnType
-		field.AddFieldTag(tagDb, columnType)
+	// not simple output
+	columnType := "type:" + ci.ColumnType
+	filedTagValue := ast.NewFiledTagValue().
+		SetSeparate(";").
+		AddValue("column:" + ci.Name).
+		AddValue(columnType)
 
-		if ci.IsAutoIncrement {
-			field.AddFieldTag(tagDb, "autoIncrement:true")
+	if ci.IsAutoIncrement {
+		filedTagValue.AddValue("autoIncrement:true")
+	}
+	if !ci.IsNullable {
+		filedTagValue.AddValue("not null")
+	}
+	// default tag
+	if ci.Default != nil {
+		dflt := "default:''"
+		if *ci.Default != "" {
+			dflt = "default:" + *ci.Default
 		}
-		if !ci.IsNullable {
-			field.AddFieldTag(tagDb, "not null")
-		}
-		// default tag
-		if ci.Default != nil {
-			dflt := "default:''"
-			if *ci.Default != "" {
-				dflt = "default:" + *ci.Default
+		filedTagValue.AddValue(dflt)
+	}
+
+	for _, v1 := range ci.Index {
+		var vv string
+
+		switch v1.KeyType {
+		// case ColumnsDefaultKey:
+		case ColumnKeyTypePrimary:
+			vv = "primaryKey"
+		case ColumnKeyTypeUniqueKey:
+			vv = "uniqueIndex:" + v1.KeyName
+		case ColumnKeyTypeNormalIndex:
+			vv = "index:" + v1.KeyName
+			// 兼容 gorm 本身 sort 标签
+			if v1.KeyName == "sort" {
+				vv = "index"
 			}
-			field.AddFieldTag(tagDb, dflt)
-		}
-
-		for _, v1 := range ci.Index {
-			var vv string
-
-			switch v1.KeyType {
-			// case ColumnsDefaultKey:
-			case ColumnKeyTypePrimary:
-				vv = "primaryKey"
-			case ColumnKeyTypeUniqueKey:
-				vv = "uniqueIndex:" + v1.KeyName
-			case ColumnKeyTypeNormalIndex:
-				vv = "index:" + v1.KeyName
-				// 兼容 gorm 本身 sort 标签
-				if v1.KeyName == "sort" {
-					vv = "index"
-				}
-				if v1.IndexType == "FULLTEXT" {
-					vv += ",class:FULLTEXT"
-				}
-			}
-			if vv != "" {
-				// NOTE: 主要是整型主键,gorm在自动迁移时没有在mysql上加上auto_increment
-				if vv == "primaryKey" && ci.IsAutoIncrement {
-					field.RemoveFieldTag(tagDb, columnType)
-				}
-				if v1.IsMulti {
-					if vv == "primaryKey" {
-						vv += ";"
-					} else {
-						vv += ","
-					}
-					vv += "priority:" + cast.ToString(v1.SeqInIndex)
-				}
-				field.AddFieldTag(tagDb, vv)
+			if v1.IndexType == "FULLTEXT" {
+				vv += ",class:FULLTEXT"
 			}
 		}
-		if sf.IsCommentTag && field.FieldComment != "" {
-			comment := strings.TrimSpace(field.FieldComment)
-			comment = strings.ReplaceAll(comment, ";", ",")
-			comment = strings.ReplaceAll(comment, "`", "'")
-			comment = strings.ReplaceAll(comment, `"`, `\"`)
-			comment = strings.ReplaceAll(comment, "\n", " ")
-			comment = strings.ReplaceAll(comment, "\r\n", " ")
-			field.AddFieldTag(tagDb, "comment:"+comment)
+		if vv != "" {
+			// NOTE: 主要是整型主键,gorm在自动迁移时没有在mysql上加上auto_increment
+			if vv == "primaryKey" && ci.IsAutoIncrement {
+				filedTagValue.RemoveValue(columnType)
+			}
+			if v1.IsMulti {
+				if vv == "primaryKey" {
+					vv += ";"
+				} else {
+					vv += ","
+				}
+				vv += "priority:" + cast.ToString(v1.SeqInIndex)
+			}
+			filedTagValue.AddValue(vv)
 		}
 	}
+	if sf.IsCommentTag && field.FieldComment != "" {
+		comment := strings.TrimSpace(field.FieldComment)
+		comment = strings.ReplaceAll(comment, ";", ",")
+		comment = strings.ReplaceAll(comment, "`", "'")
+		comment = strings.ReplaceAll(comment, `"`, `\"`)
+		comment = strings.ReplaceAll(comment, "\n", " ")
+		comment = strings.ReplaceAll(comment, "\r\n", " ")
+		filedTagValue.AddValue("comment:" + comment)
+	}
+	field.AddFieldTag(tagDb, filedTagValue)
 
 	// web tag
 	fixFieldWebTags(field, ci.Name, sf.WebTags, sf.EnableLint)
@@ -284,10 +285,12 @@ func (sf *View) fixFieldTags(field *ast.Field, ci Column) {
 
 func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag, enableLint bool) {
 	for _, v := range webTags {
+		filedTagValue := ast.NewFiledTagValue().
+			SetSeparate(",")
 		vv := ""
 		if v.Tag == "json" {
 			if vv = jsonTag(field.FieldComment); vv != "" {
-				field.AddFieldTag(v.Tag, vv)
+				filedTagValue.AddValue(vv)
 				return
 			}
 		}
@@ -304,13 +307,14 @@ func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag, enableLint
 		}
 
 		if vv != "" {
+			filedTagValue.AddValue(vv)
 			if v.HasOmit {
-				vv += ",omitempty"
+				filedTagValue.AddValue("omitempty")
 			}
 			if v.Tag == "json" && affixJSONTag(field.FieldComment) {
-				vv += ",string"
+				filedTagValue.AddValue("string")
 			}
-			field.AddFieldTag(v.Tag, vv)
+			field.AddFieldTag(v.Tag, filedTagValue)
 		}
 	}
 }
