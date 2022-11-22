@@ -65,12 +65,20 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 	}
 
 	files := make([]*ast.File, 0, len(dbInfo.Tables))
-	for _, sct := range sf.GetTableStruct(dbInfo.Tables) {
+	for _, tb := range dbInfo.Tables {
 		files = append(files, &ast.File{
-			Filename:        sct.TableName,
-			PackageName:     pkgName,
-			Imports:         make(map[string]string),
-			Structs:         []ast.Struct{*sct},
+			Filename:    tb.Name,
+			PackageName: pkgName,
+			Imports:     make(map[string]string),
+			Structs: []ast.Struct{
+				{
+					StructName:     utils.CamelCase(tb.Name, sf.EnableLint),
+					StructComment:  tb.Comment,
+					StructFields:   sf.getColumnFields(dbInfo.Tables, tb.Columns),
+					TableName:      tb.Name,
+					CreateTableSQL: tb.CreateTableSQL,
+				},
+			},
 			IsOutColumnName: sf.IsOutColumnName,
 		})
 	}
@@ -79,31 +87,19 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 
 // GetDBCreateTableSQLContent get all table's create table sql content
 func (sf *View) GetDBCreateTableSQLContent() ([]byte, error) {
-	tbSqls, err := sf.GetTables()
+	tbAttr, err := sf.GetTables()
 	if err != nil {
 		return nil, err
 	}
 
 	buf := &bytes.Buffer{}
-	for _, vv := range tbSqls {
-		buf.WriteString("-- " + vv.Name + " " + strings.ReplaceAll(vv.Comment, "\n", "\n-- ") + "\n" + vv.CreateTableSQL + ";\n\n")
+	for _, v := range tbAttr {
+		buf.WriteString(
+			"-- " + v.Name + " " + strings.ReplaceAll(v.Comment, "\n", "\n-- ") + "\n" +
+				v.CreateTableSQL + ";\n\n",
+		)
 	}
 	return buf.Bytes(), nil
-}
-
-// GetTableStruct get table struct
-func (sf *View) GetTableStruct(tables []Table) []*ast.Struct {
-	structs := make([]*ast.Struct, 0, len(tables))
-	for _, tb := range tables {
-		structs = append(structs, &ast.Struct{
-			StructName:     utils.CamelCase(tb.Name, sf.EnableLint),
-			StructComment:  tb.Comment,
-			StructFields:   sf.getColumnFields(tables, tb.Columns),
-			TableName:      tb.Name,
-			CreateTableSQL: tb.CreateTableSQL,
-		})
-	}
-	return structs
 }
 
 // getColumnFields Get table column's field

@@ -5,7 +5,6 @@ import (
 	stdlog "log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -30,32 +29,24 @@ func Execute() {
 	}
 	defer database.Close(db)
 
-	cfg := GetConfig()
+	c := GetConfig()
+	vw := view.New(md, c.View)
 
-	_, err = cfg.Database.GetDbDSNAndDbName()
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	vw := view.New(md, cfg.View)
-
-	list, err := vw.GetDbFile(utils.GetPkgName(cfg.OutDir))
+	list, err := vw.GetDbFile(utils.GetPkgName(c.OutDir))
 	if err != nil {
 		log.Error(err)
 		return
 	}
 	for _, v := range list {
-		path := cfg.OutDir + "/" + v.Filename + ".go"
+		path := c.OutDir + "/" + v.Filename + ".go"
 		_ = utils.WriteFile(path, []byte(v.Build()))
 
 		cmd, _ := exec.Command("goimports", "-l", "-w", path).Output()
 		log.Info(strings.TrimSuffix(string(cmd), "\n"))
-
 		_, _ = exec.Command("gofmt", "-l", "-w", path).Output()
 
-		if cfg.View.IsOutSQL {
-			_ = utils.WriteFile(cfg.OutDir+"/"+v.Filename+".sql", []byte(v.BuildSQL()))
+		if c.View.IsOutSQL {
+			_ = utils.WriteFile(c.OutDir+"/"+v.Filename+".sql", []byte(v.BuildSQL()))
 		}
 	}
 
@@ -69,21 +60,16 @@ func ExecuteCreateSQL() {
 		return
 	}
 	defer database.Close(db)
-	cfg := GetConfig()
-	_, err = cfg.Database.GetDbDSNAndDbName()
-	if err != nil {
-		log.Error(err)
-		return
-	}
+	c := GetConfig()
 
-	vw := view.New(md, cfg.View)
+	vw := view.New(md, c.View)
 
 	content, err := vw.GetDBCreateTableSQLContent()
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	_ = utils.WriteFile(cfg.OutDir+"/create_table.sql", content)
+	_ = utils.WriteFile(c.OutDir+"/create_table.sql", content)
 }
 
 func GetDbAndViewModel() (*gorm.DB, view.DBModel, error) {
@@ -97,33 +83,32 @@ func GetDbAndViewModel() (*gorm.DB, view.DBModel, error) {
 			Colorful:                  true,
 		})
 	}
-	cfg := GetConfig()
+	c := GetConfig()
+	dbCfg := c.Database
 
-	dsn, err := cfg.Database.GetDbDSNAndDbName()
-	if err != nil {
-		return nil, nil, err
-	}
-	switch cfg.Database.Dialect {
+	switch dbCfg.Dialect {
 	case "mysql": // mysql
-		db, err := database.New(database.Config{Dialect: "mysql", Dsn: dsn}, gc)
-		return db, &driver.MySQL{
-			DB:               db,
-			DbName:           cfg.Database.Db,
-			TableNames:       cfg.TableNames,
-			CustomDefineType: cfg.TypeDefine,
-		}, err
-	case "sqlite3": // sqlite3
-		db, err := database.New(database.Config{Dialect: "sqlite3", Dsn: dsn}, gc)
+		db, err := database.New(database.Config{Dialect: "mysql", Dsn: dbCfg.Dsn()}, gc)
 		if err != nil {
 			return nil, nil, err
 		}
-		_, dbName := filepath.Split(cfg.Database.Db)
+		return db, &driver.MySQL{
+			DB:               db,
+			DbName:           dbCfg.DbName(),
+			TableNames:       c.TableNames,
+			CustomDefineType: c.TypeDefine,
+		}, err
+	case "sqlite3": // sqlite3
+		db, err := database.New(database.Config{Dialect: "sqlite3", Dsn: dbCfg.Dsn()}, gc)
+		if err != nil {
+			return nil, nil, err
+		}
 		return db, &driver.SQLite{
 			DB:               db,
-			DbName:           dbName,
-			TableNames:       cfg.TableNames,
-			CustomDefineType: cfg.TypeDefine,
-		}, err
+			DbName:           dbCfg.DbName(),
+			TableNames:       c.TableNames,
+			CustomDefineType: c.TypeDefine,
+		}, nil
 	default:
 		return nil, nil, errors.New("database not fund: please check database.dialect (mysql, sqlite3, mssql)")
 	}

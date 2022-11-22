@@ -44,8 +44,14 @@ func LoadConfig() error {
 	if err != nil {
 		return err
 	}
-	return viper.Unmarshal(&cfg, func(c *mapstructure.DecoderConfig) { c.TagName = "yaml" })
+	err = viper.Unmarshal(&cfg, func(c *mapstructure.DecoderConfig) { c.TagName = "yaml" })
+	if err != nil {
+		return err
+	}
+	return cfg.Database.Parse()
 }
 
 // GetConfig get config
-func GetConfig() config.Config { return cfg }
+func GetConfig() config.Config {
+	return cfg
+}
