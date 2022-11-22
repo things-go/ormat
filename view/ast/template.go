@@ -2,15 +2,15 @@ package ast
 
 import "text/template"
 
-const tableNameTpl = `
+const tableNameTemplate = `
 // TableName implement schema.Tabler interface
 func (*{{.StructName}}) TableName() string {
 	return "{{.TableName}}"
 }
 `
 
-const columnNameTpl = `
-// {{.StructName}}Columns get sql column name
+const columnNameTemplate = `
+// {{.StructName}}Columns field name mapping column name which in database.
 var {{.StructName}}Columns = struct { 
 {{- range $field := .Fields}}
 	{{$field.FieldName}} string
@@ -22,37 +22,37 @@ var {{.StructName}}Columns = struct {
 }
 `
 
-const helperTpl = `
+const protobufTemplate = `
 /* protobuf and gorm field helper
 {{- $tableName := .TableName}}
 {{- $abbrTableName := .AbbrTableName}}
-// {{.StructName}}Columns get sql column name
+// {{.StructName}}Columns database column name.
 var {{.StructName}}Columns = []string {
 {{- range $field := .Fields}}
 	{{- if $field.IsTimestamp}}
-	"UNIX_TIMESTAMP({{$field.ColumnName}}) AS {{$field.ColumnName}}",  
+	"UNIX_TIMESTAMP({{$field.FieldName}}) AS {{$field.FieldName}}",  
 	{{- else}}
-	"{{$field.ColumnName}}",  
+	"{{$field.FieldName}}",  
 	{{- end}}
 {{- end}}
 }
-// {{.StructName}}ColumnsWithTable get sql column name with table prefix
+// {{.StructName}}ColumnsWithTable database column name with table prefix
 var {{.StructName}}ColumnsWithTable = []string {
 {{- range $field := .Fields}}
 	{{- if $field.IsTimestamp}}
-	"UNIX_TIMESTAMP({{$tableName}}.{{$field.ColumnName}}) AS {{$tableName}}_{{$field.ColumnName}}", 
+	"UNIX_TIMESTAMP({{$tableName}}.{{$field.FieldName}}) AS {{$tableName}}_{{$field.FieldName}}", 
 	{{- else}}
-	"{{$tableName}}.{{$field.ColumnName}} AS {{$tableName}}_{{$field.ColumnName}}", 
+	"{{$tableName}}.{{$field.FieldName}} AS {{$tableName}}_{{$field.FieldName}}", 
 	{{- end}}
 {{- end}}
 }
-// {{.StructName}}ColumnsWithAbbrTable get sql column name with abbr table prefix
+// {{.StructName}}ColumnsWithAbbrTable database column name with abbr table prefix
 var {{.StructName}}ColumnsWithAbbrTable = []string {
 {{- range $field := .Fields}}
 	{{- if $field.IsTimestamp}}
-	"UNIX_TIMESTAMP({{$abbrTableName}}.{{$field.ColumnName}}) AS {{$abbrTableName}}_{{$field.ColumnName}}", 
+	"UNIX_TIMESTAMP({{$abbrTableName}}.{{$field.FieldName}}) AS {{$abbrTableName}}_{{$field.FieldName}}", 
 	{{- else}}
-	"{{$abbrTableName}}.{{$field.ColumnName}} AS {{$abbrTableName}}_{{$field.ColumnName}}",
+	"{{$abbrTableName}}.{{$field.FieldName}} AS {{$abbrTableName}}_{{$field.FieldName}}",
 	{{- end}}
 {{- end}}
 }
@@ -60,28 +60,28 @@ var {{.StructName}}ColumnsWithAbbrTable = []string {
 // {{.StructName}} {{.StructComment}}
 message {{.StructName}} { 
 {{- range $index, $field := .Fields}}
-    {{- if $field.ColumnComment}} 
-	// {{$field.ColumnComment}} 
+    {{- if $field.FieldComment}} 
+	// {{$field.FieldComment}} 
 	{{- end}}
-	{{$field.ColumnDataType}} {{$field.ColumnName}} = {{add $index 1}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
+	{{$field.FieldDataType}} {{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
 {{- end}}    
 }
 // {{.StructName}}WithTable {{.StructComment}}
 message {{.StructName}}WithTable { 
 {{- range $index, $field := .Fields}}
-    {{- if $field.ColumnComment}} 
-	// {{$field.ColumnComment}} 
+    {{- if $field.FieldComment}} 
+	// {{$field.FieldComment}} 
 	{{- end}}
-	{{$field.ColumnDataType}} {{$tableName}}_{{$field.ColumnName}} = {{add $index 1}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
+	{{$field.FieldDataType}} {{$tableName}}_{{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
 {{- end}}    
 }
 // {{.StructName}}WithAbbrTable {{.StructComment}}
 message {{.StructName}}WithAbbrTable { 
 {{- range $index, $field := .Fields}}
-    {{- if $field.ColumnComment}} 
-	// {{$field.ColumnComment}} 
+    {{- if $field.FieldComment}} 
+	// {{$field.FieldComment}} 
 	{{- end}}
-	{{$field.ColumnDataType}} {{$abbrTableName}}_{{$field.ColumnName}} = {{add $index 1}} {{- if $field.Annotation}} {{$field.Annotation}} {{- end}};
+	{{$field.FieldDataType}} {{$abbrTableName}}_{{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
 {{- end}}    
 }
 
@@ -97,7 +97,7 @@ enum {{$e.EnumName}} {
 }
 var {{$e.EnumName}}Mapping = map[int]string{
 {{- range $ee := $e.EnumFields}}
-	{{$ee.Id}}: "{{$ee.Comment}}",
+	{{$ee.Id}}: "{{$ee.Mapping}}",
 {{- end}} 
 }
 func Get{{$e.EnumName}}Desc(t int) string {
@@ -107,6 +107,6 @@ func Get{{$e.EnumName}}Desc(t int) string {
 */
 `
 
-var TableNameTpl = template.Must(template.New("tableNameTpl").Parse(tableNameTpl))
-var ColumnNameTpl = template.Must(template.New("columnNameTpl").Parse(columnNameTpl))
-var HelperTpl = template.Must(template.New("helperTpl").Funcs(template.FuncMap{"add": func(a, b int) int { return a + b }}).Parse(helperTpl))
+var TableNameTpl = template.Must(template.New("tableNameTemplate").Parse(tableNameTemplate))
+var ColumnNameTpl = template.Must(template.New("columnNameTemplate").Parse(columnNameTemplate))
+var ProtobufTpl = template.Must(template.New("protobufTemplate").Funcs(template.FuncMap{"add": func(a, b int) int { return a + b }}).Parse(protobufTemplate))

@@ -66,7 +66,7 @@ type Field struct {
 	FieldType      string                    // field type
 	FieldComment   string                    // field comment
 	FieldTags      map[string]*FieldTagValue // field tags
-	ColumnDataType string                    // field column go type.
+	ColumnDataType string                    // field column go type
 	ColumnName     string                    // field column name in database
 }
 
