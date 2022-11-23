@@ -18,8 +18,8 @@ const (
 
 // Database database information
 type Database struct {
-	Name   string  // database name, 数据库名
-	Tables []Table // table information, 表信息
+	Name   string   // database name, 数据库名
+	Tables []*Table // table information, 表信息
 }
 
 // TableAttribute database table name, comment and create table sql
@@ -35,7 +35,7 @@ type Table struct {
 	Columns []*Column // column information
 }
 
-type TableSlice []Table
+type TableSlice []*Table
 
 func (t TableSlice) Len() int           { return len(t) }
 func (t TableSlice) Less(i, j int) bool { return t[i].Name < t[j].Name }

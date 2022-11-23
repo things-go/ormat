@@ -130,16 +130,19 @@ func (sf *SQL) Parse() error {
 }
 
 func (sf *SQL) GetDatabase() (*view.Database, error) {
-	return nil, nil
+	return &view.Database{
+		Name:   "",
+		Tables: []*view.Table{sf.table},
+	}, nil
 }
 func (sf *SQL) GetTables() ([]view.TableAttribute, error) {
-	return nil, nil
+	return []view.TableAttribute{sf.table.TableAttribute}, nil
 }
 func (sf *SQL) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
-	return nil, nil
+	return sf.table, nil
 }
 func (sf *SQL) GetCreateTableSQL(tbName string) (string, error) {
-	return "", nil
+	return sf.CreateTableSQL, nil
 }
 
 func intoDataTypeAndColumnType(columnType *sqlparser.ColumnType) (string, string, error) {

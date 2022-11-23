@@ -103,7 +103,7 @@ func (sf *View) GetDBCreateTableSQLContent() ([]byte, error) {
 }
 
 // getColumnFields Get table column's field
-func (sf *View) getColumnFields(tables []Table, cols []*Column) []ast.Field {
+func (sf *View) getColumnFields(tables []*Table, cols []*Column) []ast.Field {
 	fields := make([]ast.Field, 0, len(cols))
 	for _, col := range cols {
 		fieldName := utils.CamelCase(col.Name, sf.EnableLint)
@@ -144,7 +144,7 @@ func (sf *View) getColumnFields(tables []Table, cols []*Column) []ast.Field {
 
 // getForeignKeyField Get information about foreign key of table column field
 // TODO: not implement.
-func (sf *View) getForeignKeyField(tables []Table, col *Column) (fks []ast.Field) {
+func (sf *View) getForeignKeyField(tables []*Table, col *Column) (fks []ast.Field) {
 	tagDb := sf.DbTag
 	if tagDb == "" {
 		tagDb = "gorm"
@@ -174,7 +174,7 @@ func (sf *View) getForeignKeyField(tables []Table, col *Column) (fks []ast.Field
 	return
 }
 
-func (*View) getColumnsKeyMulti(tables []Table, tableName, col string) (isMulti bool, isFind bool, notes string) {
+func (*View) getColumnsKeyMulti(tables []*Table, tableName, col string) (isMulti bool, isFind bool, notes string) {
 	for _, v := range tables {
 		if strings.EqualFold(v.Name, tableName) {
 			for _, v1 := range v.Columns {

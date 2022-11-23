@@ -86,13 +86,13 @@ func (sf *MySQL) GetDatabase() (*view.Database, error) {
 		return nil, err
 	}
 
-	tbInfos := make([]view.Table, 0, len(tables))
+	tbInfos := make([]*view.Table, 0, len(tables))
 	for _, v := range tables {
 		tbInfo, err := sf.GetTableColumns(v)
 		if err != nil {
 			return nil, err
 		}
-		tbInfos = append(tbInfos, *tbInfo)
+		tbInfos = append(tbInfos, tbInfo)
 	}
 	sort.Sort(view.TableSlice(tbInfos))
 	return &view.Database{
