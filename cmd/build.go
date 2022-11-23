@@ -24,7 +24,7 @@ func init() {
 
 var buildCmd = &cobra.Command{
 	Use:     "build",
-	Short:   "generate model from sql",
+	Short:   "Generate model from sql",
 	Example: "ormat build",
 	RunE: func(*cobra.Command, []string) error {
 		rt, err := runtime.NewRuntime(false)

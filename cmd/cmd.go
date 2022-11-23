@@ -11,13 +11,13 @@ var outDir string
 var rootCmd = &cobra.Command{
 	Use:   "ormat",
 	Short: "gorm reflect tools",
-	Long:  "database to golang struct",
+	Long:  "database/sql to golang struct",
 }
 
 func init() {
 	rootCmd.AddCommand(
 		versionCmd,
-		initCmd,
+		configCmd,
 		sqlCmd,
 		buildCmd,
 		genCmd,

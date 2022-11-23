@@ -1,8 +1,6 @@
 package runtime
 
 import (
-	"encoding/json"
-	"fmt"
 	stdlog "log"
 	"os"
 	"time"
@@ -67,7 +65,6 @@ func NewConfig(remote bool) (*config.Config, error) {
 	}
 	deploy.MustSetDeploy(c.Deploy)
 	log.ReplaceGlobals(log.NewLogger(log.WithConfig(log.Config{Level: "info", Format: "console"})))
-	JSON(c)
 	return c, nil
 }
 
@@ -95,11 +92,4 @@ func NewDb(remote bool, dbCfg config.Database) (*gorm.DB, error) {
 
 func NewDbConfig(c *config.Config) config.Database {
 	return c.Database
-}
-
-func JSON(v ...interface{}) {
-	for _, vv := range v {
-		b, _ := json.MarshalIndent(vv, "", "  ")
-		fmt.Println(string(b))
-	}
 }

@@ -10,10 +10,10 @@ import (
 
 var versionCmd = &cobra.Command{
 	Use:     "version",
-	Short:   "Show version info",
+	Short:   "Show version",
 	Example: "ormat version",
 	RunE: func(*cobra.Command, []string) error {
-		fmt.Println("ormat " + consts.Version)
+		fmt.Println("ormat version " + consts.Version)
 		return nil
 	},
 }
