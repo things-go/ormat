@@ -16,8 +16,10 @@ const Primary = "PRIMARY"
 // mysqlTable mysql table info
 // sql: SELECT * FROM information_schema.TABLES WHERE TABLE_SCHEMA={db_name}
 type mysqlTable struct {
-	Name    string `gorm:"column:TABLE_NAME"`    // table name, 表名
-	Comment string `gorm:"column:TABLE_COMMENT"` // table comment, 表注释
+	Name      string `gorm:"column:TABLE_NAME"`    // table name, 表名
+	Engine    string `gorm:"column:ENGINE"`        // table engine, 表引擎(InnoDB)
+	RowFormat string `gorm:"column:ROW_FORMAT"`    // table row format, 表数据格式(Dynamic)
+	Comment   string `gorm:"column:TABLE_COMMENT"` // table comment, 表注释
 }
 
 // mysqlColumn mysql column info
@@ -106,7 +108,7 @@ func (sf *MySQL) GetTables() ([]view.TableAttribute, error) {
 	err := sf.DB.Table("information_schema.TABLES").
 		Scopes(func(db *gorm.DB) *gorm.DB {
 			if len(sf.TableNames) > 0 {
-				db = db.Where("TABLE_NAME in (?)", sf.TableNames)
+				db = db.Where("TABLE_NAME IN (?)", sf.TableNames)
 			}
 			return db.Where("TABLE_SCHEMA = ?", sf.DbName)
 		}).
@@ -131,13 +133,19 @@ func (sf *MySQL) GetTables() ([]view.TableAttribute, error) {
 
 // GetTableColumns get table's column info.
 func (sf *MySQL) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
-	var columnInfos []view.Column
+	var columnInfos []*view.Column
 	var columns []mysqlColumn
 	var keys []mysqlKey
 	var foreignKeys []mysqlForeignKey
 
 	// get table column list
-	err := sf.DB.Raw("SELECT * FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=? AND `TABLE_NAME`=?", sf.DbName, tb.Name).
+	err := sf.DB.Raw(`
+SELECT 
+    * 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = ? 
+AND TABLE_NAME = ?
+`, sf.DbName, tb.Name).
 		Find(&columns).Error
 	if err != nil {
 		return nil, err
@@ -158,16 +166,25 @@ func (sf *MySQL) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
 
 	// get table column foreign keys
 	err = sf.DB.Raw(`
-			SELECT table_schema, table_name, column_name, referenced_table_schema, referenced_table_name, referenced_column_name
-			FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-			WHERE table_schema=? AND REFERENCED_TABLE_NAME IS NOT NULL AND TABLE_NAME=?`, sf.DbName, tb.Name).
+SELECT 
+    TABLE_SCHEMA,
+    TABLE_NAME,
+    COLUMN_NAME,
+    REFERENCED_TABLE_SCHEMA,
+    REFERENCED_TABLE_NAME,
+    REFERENCED_COLUMN_NAME
+FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+WHERE TABLE_SCHEMA = ? 
+AND REFERENCED_TABLE_NAME IS NOT NULL 
+AND TABLE_NAME = ?
+`, sf.DbName, tb.Name).
 		Find(&foreignKeys).Error
 	if err != nil {
 		return nil, err
 	}
 
 	for _, v := range columns {
-		ci := view.Column{
+		ci := &view.Column{
 			Name:            v.ColumnName,
 			OrdinalPosition: v.OrdinalPosition,
 			DataType:        sf.getGoDataType(v.ColumnType),

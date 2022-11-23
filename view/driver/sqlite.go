@@ -103,7 +103,7 @@ func (sf *SQLite) GetTables() ([]view.TableAttribute, error) {
 // GetTableColumns get table's column info.
 // 获取表的所有列的信息
 func (sf *SQLite) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
-	var columnInfos []view.Column
+	var columnInfos []*view.Column
 	var columns []sqliteColumn
 	var foreignKeys []sqliteForeignKey
 
@@ -113,7 +113,7 @@ func (sf *SQLite) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
 	}
 
 	for _, v := range columns {
-		columnInfo := view.Column{
+		columnInfo := &view.Column{
 			Name:            v.Name,
 			OrdinalPosition: v.Cid,
 			DataType:        sf.getGoDataType(v.Name, v.Type),

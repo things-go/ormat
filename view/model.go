@@ -13,6 +13,7 @@ const (
 	ColumnKeyTypePrimary                          // primary key
 	ColumnKeyTypeNormalIndex                      // normal index key
 	ColumnKeyTypeUniqueKey                        // unique key
+	ColumnKeyTypeUnique                           // unique
 )
 
 // Database database information
@@ -31,7 +32,7 @@ type TableAttribute struct {
 // Table database table information
 type Table struct {
 	TableAttribute
-	Columns []Column // column information
+	Columns []*Column // column information
 }
 
 type TableSlice []Table
@@ -54,7 +55,7 @@ type Column struct {
 	ForeignKeys     []ForeignKey // Foreign key list
 }
 
-type ColumnSlice []Column
+type ColumnSlice []*Column
 
 func (t ColumnSlice) Len() int           { return len(t) }
 func (t ColumnSlice) Less(i, j int) bool { return t[i].OrdinalPosition < t[j].OrdinalPosition }
