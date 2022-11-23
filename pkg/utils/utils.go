@@ -19,7 +19,7 @@ func ExecutableDir() string {
 }
 
 func GetPkgName(path string) string {
-	_, pkgName := filepath.Split(path)
+	pkgName := filepath.Base(path)
 	if pkgName == "" || pkgName == "." {
 		path, _ = os.Getwd()
 		_, pkgName = filepath.Split(path)

@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/things-go/ormat/utils"
+	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/view/ast"
 )
 

@@ -3,7 +3,7 @@ package ast
 import (
 	"strings"
 
-	"github.com/things-go/ormat/consts"
+	"github.com/things-go/ormat/pkg/consts"
 )
 
 // File a file

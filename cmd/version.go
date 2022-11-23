@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/things-go/ormat/consts"
+	"github.com/things-go/ormat/pkg/consts"
 )
 
 var versionCmd = &cobra.Command{

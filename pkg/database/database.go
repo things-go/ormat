@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/things-go/ormat/utils"
+	"github.com/things-go/ormat/pkg/utils"
 )
 
 // Config 数据库配置
