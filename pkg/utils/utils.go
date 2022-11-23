@@ -12,17 +12,11 @@ func WorkDir() string {
 	return strings.ReplaceAll(dir, "\\", "/")
 }
 
-func ExecutableDir() string {
-	dir, _ := os.Executable()
-	exPath := filepath.Dir(dir)
-	return strings.ReplaceAll(exPath, "\\", "/")
-}
-
 func GetPkgName(path string) string {
 	pkgName := filepath.Base(path)
 	if pkgName == "" || pkgName == "." {
-		path, _ = os.Getwd()
-		_, pkgName = filepath.Split(path)
+		workdir := WorkDir()
+		pkgName = filepath.Base(workdir)
 	}
 	return pkgName
 }

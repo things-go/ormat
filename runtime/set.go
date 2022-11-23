@@ -24,33 +24,40 @@ import (
 var ConfigSet = wire.NewSet(NewConfig)
 
 func NewConfig(remote bool) (*config.Config, error) {
-	c := config.NewDefaultConfig()
+	loadConfig := func() (*config.Config, error) {
+		c := config.NewDefaultConfig()
 
-	doErr := func(e error) (*config.Config, error) {
-		if remote {
-			return nil, e
+		doErr := func(e error) (*config.Config, error) {
+			if remote {
+				return nil, e
+			}
+			// 如果不是远程, 则使用默认
+			return &c, nil
 		}
-		// 如果不是远程, 则使用默认
+
+		viper.SetConfigName(".ormat")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath(utils.WorkDir())
+		err := viper.ReadInConfig()
+		if err != nil {
+			return doErr(err)
+		}
+		err = viper.Unmarshal(&c, func(c *mapstructure.DecoderConfig) { c.TagName = "yaml" })
+		if err != nil {
+			return doErr(err)
+		}
+		if remote {
+			err = c.Database.Parse()
+			if err != nil {
+				return nil, err
+			}
+		}
 		return &c, nil
 	}
 
-	viper.SetConfigName(".ormat")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(utils.ExecutableDir())
-	viper.AddConfigPath(utils.WorkDir())
-	err := viper.ReadInConfig()
+	c, err := loadConfig()
 	if err != nil {
-		return doErr(err)
-	}
-	err = viper.Unmarshal(&c, func(c *mapstructure.DecoderConfig) { c.TagName = "yaml" })
-	if err != nil {
-		return doErr(err)
-	}
-	if remote {
-		err = c.Database.Parse()
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 	validate := validator.New()
 	validate.SetTagName("binding")
@@ -61,7 +68,7 @@ func NewConfig(remote bool) (*config.Config, error) {
 	deploy.MustSetDeploy(c.Deploy)
 	log.ReplaceGlobals(log.NewLogger(log.WithConfig(log.Config{Level: "info", Format: "console"})))
 	JSON(c)
-	return &c, nil
+	return c, nil
 }
 
 var DbSet = wire.NewSet(NewDb, NewDbConfig)

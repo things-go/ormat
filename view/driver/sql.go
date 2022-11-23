@@ -17,7 +17,14 @@ type SQL struct {
 	table            *view.Table
 }
 
+func (sf *SQL) hasParse() bool {
+	return sf.table != nil
+}
+
 func (sf *SQL) Parse() error {
+	if sf.hasParse() {
+		return nil
+	}
 	statement, err := sqlparser.Parse(sf.CreateTableSQL)
 	if err != nil {
 		return err
@@ -42,7 +49,6 @@ func (sf *SQL) Parse() error {
 		tbOptions := strings.Split(stmt.TableSpec.Options, " ")
 		for _, option := range tbOptions {
 			keyValue := strings.Split(option, "=")
-			fmt.Println(keyValue)
 			if len(keyValue) >= 2 {
 				switch keyValue[0] {
 				case "ENGINE":
@@ -107,17 +113,22 @@ func (sf *SQL) Parse() error {
 					indexType = option.Using
 				}
 			}
+			isMulti := len(indexes.Columns) > 1
 			for i := 0; i < len(indexes.Columns); i++ {
 				col := indexes.Columns[i]
 				ci := columnFiledMapping[col.Column.String()]
 				if ci == nil {
 					break
 				}
+				seqInIndex := 0
+				if isMulti {
+					seqInIndex = i + 1
+				}
 				ci.Index = append(ci.Index, view.Index{
 					KeyType:    keyType,
 					KeyName:    indexes.Info.Name.String(),
-					IsMulti:    len(indexes.Columns) > 0,
-					SeqInIndex: i + 1,
+					IsMulti:    isMulti,
+					SeqInIndex: seqInIndex,
 					IndexType:  indexType,
 				})
 			}
@@ -130,15 +141,27 @@ func (sf *SQL) Parse() error {
 }
 
 func (sf *SQL) GetDatabase() (*view.Database, error) {
+	err := sf.Parse()
+	if err != nil {
+		return nil, err
+	}
 	return &view.Database{
 		Name:   "",
 		Tables: []*view.Table{sf.table},
 	}, nil
 }
 func (sf *SQL) GetTables() ([]view.TableAttribute, error) {
+	err := sf.Parse()
+	if err != nil {
+		return nil, err
+	}
 	return []view.TableAttribute{sf.table.TableAttribute}, nil
 }
 func (sf *SQL) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
+	err := sf.Parse()
+	if err != nil {
+		return nil, err
+	}
 	return sf.table, nil
 }
 func (sf *SQL) GetCreateTableSQL(tbName string) (string, error) {

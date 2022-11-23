@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var outDir string
+
 var rootCmd = &cobra.Command{
 	Use:   "ormat",
 	Short: "gorm reflect tools",
@@ -17,7 +19,7 @@ func init() {
 		versionCmd,
 		initCmd,
 		sqlCmd,
-		dbCmd,
+		buildCmd,
 		genCmd,
 	)
 }

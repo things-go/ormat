@@ -15,7 +15,7 @@ import (
 
 var genCmd = &cobra.Command{
 	Use:     "gen",
-	Short:   "generate model from sql",
+	Short:   "generate model from database",
 	Example: "ormat gen",
 	RunE: func(*cobra.Command, []string) error {
 		rt, err := runtime.NewRuntime(true)

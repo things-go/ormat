@@ -5,12 +5,13 @@
 # 数据库连接信息
 # dialect 支持mysql, sqlite3
 database:
-    dialect: mysql
-    host: 127.0.0.1
-    port: 3306
-    username: root
-    password: things
-    db: goadmin-dev
+  dialect: mysql
+  host: 127.0.0.1
+  port: 3306
+  username: root
+  password: 123456
+  db: test
+  options: ""
 
 # 输出模型的路径
 # 默认: ./model
@@ -18,12 +19,12 @@ database:
 
 # 自定义数据类型
 #typeDefine:
-#    datetime: time.Time
-#    time: time.Time
+#  datetime: time.Time
+#  time: time.Time
 
 # 只输出指定表
 #tableNames:
-#    - sys_user
+#  - sys_user
 
 #view:
 #  db 标签
@@ -31,7 +32,7 @@ database:
 #  dbTag: gorm
 
 # 其它标签, kind支持 smallCamelCase, camelCase, snakeCase, kebab
-# 默认: 输出 snakeCase 的 json标签, 默认输出 omitempty
+# 默认: 输出 snakeCase 的 json 标签, 默认输出 omitempty
 #  webTags:
 #    - kind: smallCamelCase
 #      tag: json
@@ -74,5 +75,5 @@ database:
 #  isForeignKey: true
 
 # 是否注释在tag中
-# 默认: 不输出
-#  isCommentTag: true
+# 默认: 输出
+#  isCommentTag: false
