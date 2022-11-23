@@ -267,8 +267,8 @@ func (sf *View) fixFieldTags(field *ast.Field, ci *Column) {
 		comment = strings.ReplaceAll(comment, ";", ",")
 		comment = strings.ReplaceAll(comment, "`", "'")
 		comment = strings.ReplaceAll(comment, `"`, `\"`)
-		comment = strings.ReplaceAll(comment, "\n", " ")
 		comment = strings.ReplaceAll(comment, "\r\n", " ")
+		comment = strings.ReplaceAll(comment, "\n", " ")
 		filedTagValue.AddValue("comment:" + comment)
 	}
 	field.AddFieldTag(tagDb, filedTagValue)

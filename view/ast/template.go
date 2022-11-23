@@ -84,7 +84,12 @@ message {{.StructName}}WithAbbrTable {
 	{{$field.FieldDataType}} {{$abbrTableName}}_{{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
 {{- end}}    
 }
-
+*/
+`
+const protobufEnumTemplate = `
+{{- if .IsAnnotation}}
+/*
+{{- end}}
 {{- range $e := .Enums}}
 // {{$e.EnumName}} {{$e.EnumComment}}
 enum {{$e.EnumName}} {
@@ -95,18 +100,30 @@ enum {{$e.EnumName}} {
 	{{$ee.Name}} = {{$ee.Id}};
 {{- end}} 
 }
-var {{$e.EnumName}}Mapping = map[int]string{
+{{- end}}
+{{- if .IsAnnotation}}
+*/
+{{- end}}
+`
+
+const protobufEnumMappingTemplate = `
+{{- range $e := .Enums}}
+// __{{$e.EnumName}}Mapping  {{$e.EnumName}} mapping
+var __{{$e.EnumName}}Mapping = map[int]string{
 {{- range $ee := $e.EnumFields}}
 	{{$ee.Id}}: "{{$ee.Mapping}}",
 {{- end}} 
 }
+
+// Get{{$e.EnumName}}Desc get mapping description
 func Get{{$e.EnumName}}Desc(t int) string {
-	return {{$e.EnumName}}Mapping[t]
+	return __{{$e.EnumName}}Mapping[t]
 }
 {{- end}}
-*/
 `
 
 var TableNameTpl = template.Must(template.New("tableNameTemplate").Parse(tableNameTemplate))
 var ColumnNameTpl = template.Must(template.New("columnNameTemplate").Parse(columnNameTemplate))
 var ProtobufTpl = template.Must(template.New("protobufTemplate").Funcs(template.FuncMap{"add": func(a, b int) int { return a + b }}).Parse(protobufTemplate))
+var ProtobufEnumTpl = template.Must(template.New("protobufEnumTemplate").Parse(protobufEnumTemplate))
+var ProtobufEnumMappingTpl = template.Must(template.New("protobufEnumMappingTemplate").Parse(protobufEnumMappingTemplate))

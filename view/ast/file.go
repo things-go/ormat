@@ -71,7 +71,9 @@ func (p *File) Build() string {
 			buf.WriteString(delimLF)
 			buf.WriteString(v.BuildColumnNameTemplate())
 		}
-		buf.WriteString(v.BuildProtobufTemple() + delimLF)
+		buf.WriteString(v.BuildProtobufEnumMappingTemplate())
+
+		buf.WriteString(v.BuildProtobufTemplate() + delimLF)
 	}
 	return buf.String()
 }

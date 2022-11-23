@@ -6,11 +6,12 @@ import (
 
 // Struct define a struct
 type Struct struct {
-	StructName     string  // struct name
-	StructComment  string  // struct comment
-	StructFields   []Field // struct field list
-	TableName      string  // struct table name in database.
-	CreateTableSQL string  // create table SQL
+	StructName     string           // struct name
+	StructComment  string           // struct comment
+	StructFields   []Field          // struct field list
+	TableName      string           // struct table name in database.
+	CreateTableSQL string           // create table SQL
+	protoMessage   *ProtobufMessage // proto message.
 }
 
 // AddStructFields Add one or more fields
@@ -93,14 +94,56 @@ func (s *Struct) BuildSQL() string {
 	return buf.String()
 }
 
-func (s *Struct) BuildProtobufTemple() string {
+func (s *Struct) BuildProtobufTemplate() string {
 	var buf strings.Builder
 
-	_ = ProtobufTpl.Execute(&buf, s.intoProtobufMessage())
+	s.parseProtobufMessage()
+	_ = ProtobufTpl.Execute(&buf, s.protoMessage)
+	buf.WriteString(s.buildProtobufEnumTemplate(true))
 	return buf.String()
 }
 
-func (s *Struct) intoProtobufMessage() *ProtobufMessage {
+func (s *Struct) BuildProtobufEnumTemplate() string {
+	return s.buildProtobufEnumTemplate(false)
+}
+
+func (s *Struct) buildProtobufEnumTemplate(isAnnotation bool) string {
+	type tpl struct {
+		Enums        []*ProtobufEnum
+		IsAnnotation bool
+	}
+	var buf strings.Builder
+
+	s.parseProtobufMessage()
+
+	if len(s.protoMessage.Enums) > 0 {
+		_ = ProtobufEnumTpl.Execute(&buf, &tpl{
+			Enums:        s.protoMessage.Enums,
+			IsAnnotation: isAnnotation,
+		})
+	}
+	return buf.String()
+}
+
+func (s *Struct) BuildProtobufEnumMappingTemplate() string {
+	type tpl struct {
+		Enums []*ProtobufEnum
+	}
+	var buf strings.Builder
+
+	s.parseProtobufMessage()
+	if len(s.protoMessage.Enums) > 0 {
+		_ = ProtobufEnumMappingTpl.Execute(&buf, &tpl{
+			Enums: s.protoMessage.Enums,
+		})
+	}
+	return buf.String()
+}
+
+func (s *Struct) parseProtobufMessage() {
+	if s.protoMessage != nil {
+		return
+	}
 	// 获取表名缩写
 	intoAbbrTableName := func(tableName string) string {
 		ss := strings.Split(tableName, "_")
@@ -181,5 +224,5 @@ func (s *Struct) intoProtobufMessage() *ProtobufMessage {
 			pm.Enums = append(pm.Enums, protobufEnum)
 		}
 	}
-	return pm
+	s.protoMessage = pm
 }
