@@ -150,14 +150,14 @@ func (sf *SQL) GetDatabase() (*view.Database, error) {
 		Tables: []*view.Table{sf.table},
 	}, nil
 }
-func (sf *SQL) GetTables() ([]view.TableAttribute, error) {
+func (sf *SQL) GetTableAttributes() ([]view.TableAttribute, error) {
 	err := sf.Parse()
 	if err != nil {
 		return nil, err
 	}
 	return []view.TableAttribute{sf.table.TableAttribute}, nil
 }
-func (sf *SQL) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
+func (sf *SQL) GetTables(tb view.TableAttribute) (*view.Table, error) {
 	err := sf.Parse()
 	if err != nil {
 		return nil, err

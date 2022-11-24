@@ -61,14 +61,14 @@ type SQLite struct {
 // GetDbInfo get database info
 // 获取数据库信息
 func (sf *SQLite) GetDatabase() (*view.Database, error) {
-	tables, err := sf.GetTables()
+	tables, err := sf.GetTableAttributes()
 	if err != nil {
 		return nil, err
 	}
 
 	tbInfos := make([]*view.Table, 0, len(tables))
 	for _, v := range tables {
-		tbInfo, err := sf.GetTableColumns(v)
+		tbInfo, err := sf.GetTables(v)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +84,7 @@ func (sf *SQLite) GetDatabase() (*view.Database, error) {
 
 // GetTables get all table name and comments
 // 获取所有表及注释
-func (sf *SQLite) GetTables() ([]view.TableAttribute, error) {
+func (sf *SQLite) GetTableAttributes() ([]view.TableAttribute, error) {
 	var rows []sqliteTable
 
 	err := sf.DB.Raw(`SELECT name FROM sqlite_master WHERE type='table' AND name !='sqlite_sequence'`).
@@ -102,7 +102,7 @@ func (sf *SQLite) GetTables() ([]view.TableAttribute, error) {
 
 // GetTableColumns get table's column info.
 // 获取表的所有列的信息
-func (sf *SQLite) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
+func (sf *SQLite) GetTables(tb view.TableAttribute) (*view.Table, error) {
 	var columnInfos []*view.Column
 	var columns []sqliteColumn
 	var foreignKeys []sqliteForeignKey

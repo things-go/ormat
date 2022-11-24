@@ -17,6 +17,10 @@ database:
 # 默认: ./model
 #outDir: ./model
 
+# 输出proto的路径
+# 默认: ./model
+#protoDir: ./model
+
 # 自定义数据类型
 #typeDefine:
 #  datetime: time.Time
@@ -77,3 +81,8 @@ database:
 # 是否注释在tag中
 # 默认: 输出
 #  isCommentTag: false
+#  protobuf:
+#    enabled: true
+#    package: typing
+#    options:
+#      go_package: typing

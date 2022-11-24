@@ -5,26 +5,49 @@ package testdata
 
 import (
 	"time"
-
-	"gorm.io/plugin/soft_delete"
 )
 
 // Testdata 公告-面向所有人的消息
 type Testdata struct {
-	Id        int64                 `gorm:"column:id;autoIncrement:true;not null;primaryKey" json:"id,omitempty"`
-	Title     string                `gorm:"column:title;type:varchar(255);not null;index:uk_title_created_at,priority:1;comment:标题" json:"title,omitempty"`         // 标题
-	Content   string                `gorm:"column:content;type:varchar(2048);not null;comment:内容" json:"content,omitempty"`                                         // 内容
-	Value1    float32               `gorm:"column:value1;type:float;not null;default:1;comment:值1" json:"value1,omitempty"`                                         // 值1
-	Value2    float32               `gorm:"column:value2;type:float(10,1);not null;default:2;comment:值2" json:"value2,omitempty"`                                   // 值2
-	Value3    string                `gorm:"column:value3;type:enum('00','SH');not null;default:4;comment:值4" json:"value3,omitempty"`                               // 值4
-	CreatedAt time.Time             `gorm:"column:created_at;type:datetime;not null;index:uk_title_created_at,priority:2;comment:发布时间" json:"created_at,omitempty"` // 发布时间
-	UpdatedAt time.Time             `gorm:"column:updated_at;type:datetime;not null" json:"updated_at,omitempty"`
-	DeletedAt soft_delete.DeletedAt `gorm:"column:deleted_at;type:bigint;not null;default:0" json:"deleted_at,omitempty"`
+	Id        int64     `gorm:"column:id;autoIncrement:true;not null;primaryKey" json:"id,omitempty"`
+	Title     string    `gorm:"column:title;type:varchar(255);not null;index:uk_title_created_at,priority:1;comment:标题" json:"title,omitempty"`                                                                                                 // 标题
+	Content   string    `gorm:"column:content;type:varchar(2048);not null;comment:内容" json:"content,omitempty"`                                                                                                                                 // 内容
+	Value1    float32   `gorm:"column:value1;type:float;not null;default:1;comment:[@enum:{\"0\":[\"none\",\"空\",\"空注释\"],\"1\":[\"key1\",\"键1\",\"键1注释\"],\"2\":[\"key2\",\"键2\"],\"3\":[\"key3\",\"键3\"]}]" json:"value1,omitempty"`          // [@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]
+	Value2    float32   `gorm:"column:value2;type:float(10,1);not null;default:2;comment:值2,[@enum:{\"0\":[\"none\",\"空\",\"空注释\"],\"1\":[\"key1\",\"键1\",\"键1注释\"],\"2\":[\"key2\",\"键2\"],\"3\":[\"key3\",\"键3\"]}]" json:"value2,omitempty"` // 值2,[@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]
+	Value3    string    `gorm:"column:value3;type:enum('00','SH');not null;default:4;comment:值4" json:"value3,omitempty"`                                                                                                                       // 值4
+	CreatedAt time.Time `gorm:"column:created_at;type:datetime;not null;index:uk_title_created_at,priority:2;comment:发布时间" json:"created_at,omitempty"`                                                                                         // 发布时间
+	UpdatedAt time.Time `gorm:"column:updated_at;type:datetime;not null" json:"updated_at,omitempty"`
 }
 
 // TableName implement schema.Tabler interface
 func (*Testdata) TableName() string {
 	return "testdata"
+}
+
+// __TestdataValue1Mapping  TestdataValue1 mapping
+var __TestdataValue1Mapping = map[int]string{
+	0: "空",
+	1: "键1",
+	2: "键2",
+	3: "键3",
+}
+
+// GetTestdataValue1Desc get mapping description
+func GetTestdataValue1Desc(t int) string {
+	return __TestdataValue1Mapping[t]
+}
+
+// __TestdataValue2Mapping  TestdataValue2 mapping
+var __TestdataValue2Mapping = map[int]string{
+	0: "空",
+	1: "键1",
+	2: "键2",
+	3: "键3",
+}
+
+// GetTestdataValue2Desc get mapping description
+func GetTestdataValue2Desc(t int) string {
+	return __TestdataValue2Mapping[t]
 }
 
 /* protobuf and gorm field helper
@@ -41,7 +64,6 @@ var TestdataColumns = []string {
 	"UNIX_TIMESTAMP(created_at) AS created_at",
 	"updated_at",
 	"UNIX_TIMESTAMP(updated_at) AS updated_at",
-	"deleted_at",
 }
 // TestdataColumnsWithTable database column name with table prefix
 var TestdataColumnsWithTable = []string {
@@ -56,7 +78,6 @@ var TestdataColumnsWithTable = []string {
 	"UNIX_TIMESTAMP(testdata.created_at) AS testdata_created_at",
 	"testdata.updated_at AS testdata_updated_at",
 	"UNIX_TIMESTAMP(testdata.updated_at) AS testdata_updated_at",
-	"testdata.deleted_at AS testdata_deleted_at",
 }
 // TestdataColumnsWithAbbrTable database column name with abbr table prefix
 var TestdataColumnsWithAbbrTable = []string {
@@ -71,7 +92,6 @@ var TestdataColumnsWithAbbrTable = []string {
 	"UNIX_TIMESTAMP(t.created_at) AS t_created_at",
 	"t.updated_at AS t_updated_at",
 	"UNIX_TIMESTAMP(t.updated_at) AS t_updated_at",
-	"t.deleted_at AS t_deleted_at",
 }
 
 // Testdata 公告-面向所有人的消息
@@ -81,9 +101,9 @@ message Testdata {
 	string title = 2;
 	// 内容
 	string content = 3;
-	// 值1
+	// [@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]
 	float value1 = 4;
-	// 值2
+	// 值2,[@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]
 	float value2 = 5;
 	// 值3
 	double value2 = 6;
@@ -95,7 +115,6 @@ message Testdata {
 	int64 created_at = 9 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }];
 	google.protobuf.Timestamp updated_at = 10 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 	int64 updated_at = 11 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }];
-	int64 deleted_at = 12 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }];
 }
 // TestdataWithTable 公告-面向所有人的消息
 message TestdataWithTable {
@@ -104,9 +123,9 @@ message TestdataWithTable {
 	string testdata_title = 2;
 	// 内容
 	string testdata_content = 3;
-	// 值1
+	// [@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]
 	float testdata_value1 = 4;
-	// 值2
+	// 值2,[@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]
 	float testdata_value2 = 5;
 	// 值3
 	double testdata_value2 = 6;
@@ -118,7 +137,6 @@ message TestdataWithTable {
 	int64 testdata_created_at = 9 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }];
 	google.protobuf.Timestamp testdata_updated_at = 10 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 	int64 testdata_updated_at = 11 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }];
-	int64 testdata_deleted_at = 12 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }];
 }
 // TestdataWithAbbrTable 公告-面向所有人的消息
 message TestdataWithAbbrTable {
@@ -127,9 +145,9 @@ message TestdataWithAbbrTable {
 	string t_title = 2;
 	// 内容
 	string t_content = 3;
-	// 值1
+	// [@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]
 	float t_value1 = 4;
-	// 值2
+	// 值2,[@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]
 	float t_value2 = 5;
 	// 值3
 	double t_value2 = 6;
@@ -141,6 +159,30 @@ message TestdataWithAbbrTable {
 	int64 t_created_at = 9 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }];
 	google.protobuf.Timestamp t_updated_at = 10 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 	int64 t_updated_at = 11 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }];
-	int64 t_deleted_at = 12 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }];
+}
+*/
+
+/*
+// TestdataValue1 [@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]
+enum TestdataValue1 {
+	// 空,空注释
+	TESTDATA_VALUE1_NONE = 0;
+	// 键1,键1注释
+	TESTDATA_VALUE1_KEY1 = 1;
+	// 键2
+	TESTDATA_VALUE1_KEY2 = 2;
+	// 键3
+	TESTDATA_VALUE1_KEY3 = 3;
+}
+// TestdataValue2 值2,[@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]
+enum TestdataValue2 {
+	// 空,空注释
+	TESTDATA_VALUE2_NONE = 0;
+	// 键1,键1注释
+	TESTDATA_VALUE2_KEY1 = 1;
+	// 键2
+	TESTDATA_VALUE2_KEY2 = 2;
+	// 键3
+	TESTDATA_VALUE2_KEY3 = 3;
 }
 */

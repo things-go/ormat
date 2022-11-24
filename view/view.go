@@ -20,8 +20,8 @@ const (
 // DBModel Implement the interface to acquire database information.
 type DBModel interface {
 	GetDatabase() (*Database, error)
-	GetTables() ([]TableAttribute, error)
-	GetTableColumns(tb TableAttribute) (*Table, error)
+	GetTableAttributes() ([]TableAttribute, error)
+	GetTables(tb TableAttribute) (*Table, error)
 	GetCreateTableSQL(tbName string) (string, error)
 }
 
@@ -44,6 +44,14 @@ type Config struct {
 	IsOutColumnName  bool     `yaml:"isOutColumnName" json:"isOutColumnName"`   // 是否输出表的列名, 默认不输出
 	IsForeignKey     bool     `yaml:"isForeignKey" json:"isForeignKey"`         // 输出外键
 	IsCommentTag     bool     `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
+	Protobuf         Protobuf `yaml:"protobuf" json:"protobuf"`
+}
+
+// Protobuf config
+type Protobuf struct {
+	Enabled bool              `yaml:"enabled" json:"enabled"`
+	Package string            `yaml:"package" json:"package" binding:"required"`
+	Options map[string]string `yaml:"options" json:"options" binding:"required"`
 }
 
 // View information
@@ -70,16 +78,18 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 			Filename:    tb.Name,
 			PackageName: pkgName,
 			Imports:     make(map[string]string),
-			Structs: []ast.Struct{
+			Structs: []*ast.Struct{
 				{
 					StructName:     utils.CamelCase(tb.Name, sf.EnableLint),
 					StructComment:  tb.Comment,
-					StructFields:   sf.getColumnFields(dbInfo.Tables, tb.Columns),
+					StructFields:   sf.intoColumnFields(dbInfo.Tables, tb.Columns),
 					TableName:      tb.Name,
 					CreateTableSQL: tb.CreateTableSQL,
 				},
 			},
 			IsOutColumnName: sf.IsOutColumnName,
+			ProtobufPackage: sf.Protobuf.Package,
+			ProtobufOptions: sf.Protobuf.Options,
 		})
 	}
 	return files, nil
@@ -87,23 +97,23 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 
 // GetDBCreateTableSQLContent get all table's create table sql content
 func (sf *View) GetDBCreateTableSQLContent() ([]byte, error) {
-	tbAttr, err := sf.GetTables()
+	tbAttributes, err := sf.GetTableAttributes()
 	if err != nil {
 		return nil, err
 	}
 
 	buf := &bytes.Buffer{}
-	for _, v := range tbAttr {
+	for _, ta := range tbAttributes {
 		buf.WriteString(
-			"-- " + v.Name + " " + strings.ReplaceAll(v.Comment, "\n", "\n-- ") + "\n" +
-				v.CreateTableSQL + ";\n\n",
+			"-- " + ta.Name + " " + strings.ReplaceAll(ta.Comment, "\n", "\n-- ") + "\n" +
+				ta.CreateTableSQL + ";\n\n",
 		)
 	}
 	return buf.Bytes(), nil
 }
 
-// getColumnFields Get table column's field
-func (sf *View) getColumnFields(tables []*Table, cols []*Column) []ast.Field {
+// intoColumnFields Get table column's field
+func (sf *View) intoColumnFields(tables []*Table, cols []*Column) []ast.Field {
 	fields := make([]ast.Field, 0, len(cols))
 	for _, col := range cols {
 		fieldName := utils.CamelCase(col.Name, sf.EnableLint)
@@ -135,16 +145,16 @@ func (sf *View) getColumnFields(tables []*Table, cols []*Column) []ast.Field {
 		fields = append(fields, field)
 
 		if sf.IsForeignKey && len(col.ForeignKeys) > 0 {
-			fks := sf.getForeignKeyField(tables, col)
+			fks := sf.intoForeignKeyField(tables, col)
 			fields = append(fields, fks...)
 		}
 	}
 	return fields
 }
 
-// getForeignKeyField Get information about foreign key of table column field
+// intoForeignKeyField Get information about foreign key of table column field
 // TODO: not implement.
-func (sf *View) getForeignKeyField(tables []*Table, col *Column) (fks []ast.Field) {
+func (sf *View) intoForeignKeyField(tables []*Table, col *Column) (fks []ast.Field) {
 	tagDb := sf.DbTag
 	if tagDb == "" {
 		tagDb = "gorm"

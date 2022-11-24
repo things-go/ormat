@@ -52,17 +52,17 @@ var buildCmd = &cobra.Command{
 		}
 		for _, v := range list {
 			path := outDir + "/" + v.Filename + ".go"
-			_ = utils.WriteFile(path, []byte(v.Build()))
+			_ = utils.WriteFile(path, v.Build())
 
 			cmd, _ := exec.Command("goimports", "-l", "-w", path).Output()
-			log.Info(strings.TrimSuffix(string(cmd), "\n"))
+			log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
 			_, _ = exec.Command("gofmt", "-l", "-w", path).Output()
 
 			if c.View.IsOutSQL {
-				_ = utils.WriteFile(outDir+"/"+v.Filename+".sql", []byte(v.BuildSQL()))
+				_ = utils.WriteFile(outDir+"/"+v.Filename+".sql", v.BuildSQL())
 			}
 		}
-		log.Info("generate success !!!")
+		log.Info("😄 generate success !!!")
 		return nil
 	},
 }

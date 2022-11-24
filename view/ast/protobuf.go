@@ -2,11 +2,11 @@ package ast
 
 import (
 	"encoding/json"
-	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/spf13/cast"
+	"github.com/things-go/log"
 )
 
 type ProtobufEnumField struct {
@@ -45,9 +45,6 @@ func (p ProtobufEnumFieldSlice) Len() int           { return len(p) }
 func (p ProtobufEnumFieldSlice) Less(i, j int) bool { return p[i].Id < p[j].Id }
 func (p ProtobufEnumFieldSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-// t.Logf("%#v", rEnum.FindStringSubmatch(` 11 [@enum:{"0":["none"],"1":["expenditure","支出"],"2":["income","收入"]}] 11k l23123 人11`))
-var rEnum = regexp.MustCompile(`^.*?\[@.*?(?i:(?:enum|status)+):\s*(.*)\].*?`)
-
 func parseEnumComment(structName, tableName, fieldName, columnName, comment string) *ProtobufEnum {
 	enumCommentString := func(comment string) string {
 		match := rEnum.FindStringSubmatch(comment)
@@ -64,10 +61,8 @@ func parseEnumComment(structName, tableName, fieldName, columnName, comment stri
 	var mp map[string][]string
 
 	err := json.Unmarshal([]byte(str), &mp)
-	if err != nil {
-		return nil
-	}
-	if len(mp) == 0 {
+	if err != nil || len(mp) == 0 {
+		log.Warnf("🧐 获取到枚举注解解析失败[表:%s, 列: %s, 注解: %s", tableName, columnName, str)
 		return nil
 	}
 	protobufEnum := ProtobufEnum{

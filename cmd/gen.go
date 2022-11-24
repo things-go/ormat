@@ -32,18 +32,26 @@ var genCmd = &cobra.Command{
 			return err
 		}
 		for _, v := range list {
-			path := c.OutDir + "/" + v.Filename + ".go"
-			_ = utils.WriteFile(path, []byte(v.Build()))
+			modelFilename := c.OutDir + "/" + v.Filename + ".go"
+			_ = utils.WriteFile(modelFilename, v.Build())
 
-			cmd, _ := exec.Command("goimports", "-l", "-w", path).Output()
-			log.Info(strings.TrimSuffix(string(cmd), "\n"))
-			_, _ = exec.Command("gofmt", "-l", "-w", path).Output()
+			cmd, _ := exec.Command("goimports", "-l", "-w", modelFilename).Output()
+			log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
+			_, _ = exec.Command("gofmt", "-l", "-w", modelFilename).Output()
 
 			if c.View.IsOutSQL {
-				_ = utils.WriteFile(c.OutDir+"/"+v.Filename+".sql", []byte(v.BuildSQL()))
+				_ = utils.WriteFile(c.OutDir+"/"+v.Filename+".sql", v.BuildSQL())
+			}
+
+			if vw.Protobuf.Enabled {
+				content := v.BuildProtobufEnum()
+				if len(content) > 0 {
+					protoFilename := c.ProtoDir + "/" + v.Filename + ".proto"
+					_ = utils.WriteFile(protoFilename, content)
+				}
 			}
 		}
-		log.Info("generate success !!!")
+		log.Info("😄 generate success !!!")
 		return nil
 	},
 }

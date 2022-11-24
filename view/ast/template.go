@@ -90,6 +90,7 @@ const protobufEnumTemplate = `
 {{- if .IsAnnotation}}
 /*
 {{- end}}
+
 {{- range $e := .Enums}}
 // {{$e.EnumName}} {{$e.EnumComment}}
 enum {{$e.EnumName}} {

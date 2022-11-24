@@ -111,11 +111,12 @@ func (s *Struct) buildProtobufEnumTemplate(isAnnotation bool) string {
 	type tpl struct {
 		Enums        []*ProtobufEnum
 		IsAnnotation bool
+		Package      string
+		Options      map[string]string
 	}
 	var buf strings.Builder
 
 	s.parseProtobufMessage()
-
 	if len(s.protoMessage.Enums) > 0 {
 		_ = ProtobufEnumTpl.Execute(&buf, &tpl{
 			Enums:        s.protoMessage.Enums,
@@ -144,6 +145,7 @@ func (s *Struct) parseProtobufMessage() {
 	if s.protoMessage != nil {
 		return
 	}
+
 	// 获取表名缩写
 	intoAbbrTableName := func(tableName string) string {
 		ss := strings.Split(tableName, "_")

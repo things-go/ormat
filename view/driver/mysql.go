@@ -81,14 +81,14 @@ type MySQL struct {
 
 // GetDatabase get database information
 func (sf *MySQL) GetDatabase() (*view.Database, error) {
-	tables, err := sf.GetTables()
+	tables, err := sf.GetTableAttributes()
 	if err != nil {
 		return nil, err
 	}
 
 	tbInfos := make([]*view.Table, 0, len(tables))
 	for _, v := range tables {
-		tbInfo, err := sf.GetTableColumns(v)
+		tbInfo, err := sf.GetTables(v)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +102,7 @@ func (sf *MySQL) GetDatabase() (*view.Database, error) {
 }
 
 // GetTables get all table name and comments
-func (sf *MySQL) GetTables() ([]view.TableAttribute, error) {
+func (sf *MySQL) GetTableAttributes() ([]view.TableAttribute, error) {
 	var rows []mysqlTable
 
 	err := sf.DB.Table("information_schema.TABLES").
@@ -132,7 +132,7 @@ func (sf *MySQL) GetTables() ([]view.TableAttribute, error) {
 }
 
 // GetTableColumns get table's column info.
-func (sf *MySQL) GetTableColumns(tb view.TableAttribute) (*view.Table, error) {
+func (sf *MySQL) GetTables(tb view.TableAttribute) (*view.Table, error) {
 	var columnInfos []*view.Column
 	var columns []mysqlColumn
 	var keys []mysqlKey

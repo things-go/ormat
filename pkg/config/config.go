@@ -14,8 +14,9 @@ type Config struct {
 	Deploy     string            `yaml:"deploy" json:"deploy" binding:"oneof=local dev debug uat prod"` // 布署环境
 	Database   Database          `yaml:"database" json:"database"`                                      // 数据库连接信息
 	OutDir     string            `yaml:"outDir" json:"outDir" binding:"required"`                       // 文件输出路径
-	TypeDefine map[string]string `yaml:"typeDefine" json:"typeDefine"`                                  // 自定义数据类型
-	TableNames []string          `yaml:"tableNames" json:"tableNames"`                                  // 指定输出表
+	ProtoDir   string            `yaml:"protoDir" json:"protoDir" binding:"required"`
+	TypeDefine map[string]string `yaml:"typeDefine" json:"typeDefine"` // 自定义数据类型
+	TableNames []string          `yaml:"tableNames" json:"tableNames"` // 指定输出表
 	View       view.Config       `yaml:"view" json:"view"`
 }
 
@@ -32,6 +33,7 @@ func NewDefaultConfig() Config {
 			Options:  "",
 		},
 		OutDir:     "./model",
+		ProtoDir:   "./model",
 		TypeDefine: make(map[string]string),
 		TableNames: nil,
 		View: view.Config{
@@ -53,6 +55,13 @@ func NewDefaultConfig() Config {
 			IsOutColumnName:  false,
 			IsForeignKey:     false,
 			IsCommentTag:     true,
+			Protobuf: view.Protobuf{
+				Enabled: false,
+				Package: "typing",
+				Options: map[string]string{
+					"go_package": "typing",
+				},
+			},
 		},
 	}
 }
