@@ -46,7 +46,7 @@ var genCmd = &cobra.Command{
 			if vw.Protobuf.Enabled {
 				content := v.BuildProtobufEnum()
 				if len(content) > 0 {
-					protoFilename := c.ProtoDir + "/" + v.Filename + ".proto"
+					protoFilename := vw.Protobuf.Dir + "/" + v.Filename + ".proto"
 					_ = utils.WriteFile(protoFilename, content)
 					log.Info("👆 " + protoFilename)
 				}

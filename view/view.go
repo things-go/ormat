@@ -50,6 +50,7 @@ type Config struct {
 // Protobuf config
 type Protobuf struct {
 	Enabled bool              `yaml:"enabled" json:"enabled"`
+	Dir     string            `yaml:"dir" json:"dir" binding:"required"`
 	Package string            `yaml:"package" json:"package" binding:"required"`
 	Options map[string]string `yaml:"options" json:"options" binding:"required"`
 }

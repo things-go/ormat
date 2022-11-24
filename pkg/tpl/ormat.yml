@@ -12,14 +12,9 @@ database:
   password: 123456
   db: test
   options: ""
-
 # 输出模型的路径
 # 默认: ./model
 #outDir: ./model
-
-# 输出proto的路径
-# 默认: ./model
-#protoDir: ./model
 
 # 自定义数据类型
 #typeDefine:
@@ -30,7 +25,7 @@ database:
 #tableNames:
 #  - sys_user
 
-#view:
+# view:
 #  db 标签
 #  默认输出gorm
 #  dbTag: gorm
@@ -83,6 +78,9 @@ database:
 #  isCommentTag: false
 #  protobuf:
 #    enabled: true
+#    # 输出proto的路径
+#    # 默认: ./model
+#    dir: ./model
 #    package: typing
 #    options:
 #      go_package: typing
