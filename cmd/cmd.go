@@ -21,6 +21,7 @@ func init() {
 		sqlCmd,
 		buildCmd,
 		genCmd,
+		expandCmd,
 	)
 }
 

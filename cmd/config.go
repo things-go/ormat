@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
+	"os"
 
+	"github.com/alecthomas/chroma/quick"
 	"github.com/spf13/cobra"
 
 	"github.com/things-go/ormat/pkg/tpl"
@@ -45,6 +46,6 @@ var configInitSubCmd = &cobra.Command{
 func JSON(v ...interface{}) {
 	for _, vv := range v {
 		b, _ := json.MarshalIndent(vv, "", "  ")
-		fmt.Println(string(b))
+		quick.Highlight(os.Stdout, string(b), "JSON", "terminal", "solarized-dark")
 	}
 }

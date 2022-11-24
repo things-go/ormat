@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"encoding/json"
 	"sort"
 	"strings"
 
@@ -46,23 +45,13 @@ func (p ProtobufEnumFieldSlice) Less(i, j int) bool { return p[i].Id < p[j].Id }
 func (p ProtobufEnumFieldSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func parseEnumComment(structName, tableName, fieldName, columnName, comment string) *ProtobufEnum {
-	enumCommentString := func(comment string) string {
-		match := rEnum.FindStringSubmatch(comment)
-		if len(match) == 2 {
-			return strings.TrimSpace(match[1])
-		}
-		return ""
-	}
-
-	str := enumCommentString(comment)
-	if str == "" {
+	annotation := MatchEnumAnnotation(comment)
+	if annotation == "" {
 		return nil
 	}
-	var mp map[string][]string
-
-	err := json.Unmarshal([]byte(str), &mp)
+	mp, err := ParseEnumAnnotation(annotation)
 	if err != nil || len(mp) == 0 {
-		log.Warnf("🧐 获取到枚举注解解析失败[表:%s, 列: %s, 注解: %s", tableName, columnName, str)
+		log.Warnf("🧐 获取到枚举注解解析失败[表:%s, 列: %s, 注解: %s", tableName, columnName, annotation)
 		return nil
 	}
 	protobufEnum := ProtobufEnum{

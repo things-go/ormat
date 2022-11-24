@@ -3,6 +3,7 @@ module github.com/things-go/ormat
 go 1.18
 
 require (
+	github.com/alecthomas/chroma v0.10.0
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/google/wire v0.5.0
 	github.com/mitchellh/mapstructure v1.5.0
@@ -22,6 +23,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
