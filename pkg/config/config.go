@@ -55,6 +55,7 @@ func NewDefaultConfig() Config {
 			IsCommentTag:     true,
 			Protobuf: view.Protobuf{
 				Enabled: false,
+				Merge:   false,
 				Dir:     "./model",
 				Package: "typing",
 				Options: map[string]string{

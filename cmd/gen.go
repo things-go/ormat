@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"os/exec"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/runtime"
 	"github.com/things-go/ormat/view"
+	"github.com/things-go/ormat/view/ast"
 )
 
 var genCmd = &cobra.Command{
@@ -31,6 +33,8 @@ var genCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		buf := bytes.Buffer{}
 		for _, v := range list {
 			modelFilename := c.OutDir + "/" + v.Filename + ".go"
 			_ = utils.WriteFile(modelFilename, v.Build())
@@ -44,14 +48,30 @@ var genCmd = &cobra.Command{
 			}
 
 			if vw.Protobuf.Enabled {
-				content := v.BuildProtobufEnum()
-				if len(content) > 0 {
-					protoFilename := vw.Protobuf.Dir + "/" + v.Filename + ".proto"
-					_ = utils.WriteFile(protoFilename, content)
-					log.Info("👆 " + protoFilename)
+				if vw.Protobuf.Merge {
+					content := v.BuildProtobufEnumBody()
+					if len(content) > 0 {
+						buf.Write(content)
+					}
+				} else {
+					content := v.BuildProtobufEnum()
+					if len(content) > 0 {
+						protoFilename := vw.Protobuf.Dir + "/" + v.Filename + ".proto"
+						_ = utils.WriteFile(protoFilename, content)
+						log.Info("👆 " + protoFilename)
+					}
 				}
 			}
 		}
+
+		if vw.Protobuf.Enabled && vw.Protobuf.Merge && buf.Len() > 0 {
+			filename := utils.GetPkgName(vw.Protobuf.Dir)
+			protoFilename := vw.Protobuf.Dir + "/" + filename + ".proto"
+			header := ast.BuildRawProtobufEnumHeader(vw.Protobuf.Package, vw.Protobuf.Options)
+			_ = utils.WriteFile(protoFilename, append(header, buf.Bytes()...))
+			log.Info("👆 " + protoFilename)
+		}
+
 		log.Info("😄 generate success !!!")
 		return nil
 	},

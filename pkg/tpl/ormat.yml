@@ -78,6 +78,8 @@ database:
 #  isCommentTag: false
 #  protobuf:
 #    enabled: true
+#    # only support gen command
+#    merge: false
 #    # 输出proto的路径
 #    # 默认: ./model
 #    dir: ./model
