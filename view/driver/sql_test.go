@@ -31,5 +31,4 @@ func Test_SQL_Parse(t *testing.T) {
 	err := d.Parse()
 	require.NoError(t, err)
 	fmt.Println(d.table)
-
 }

@@ -215,7 +215,6 @@ func intoDataTypeAndColumnType(columnType *sqlparser.ColumnType) (string, string
 					return fmt.Sprintf("%s(%d) unsigned", targetColumnType, length)
 				} else {
 					return fmt.Sprintf("%s(%d)", targetColumnType, length)
-
 				}
 			} else {
 				if isUnsigned {
