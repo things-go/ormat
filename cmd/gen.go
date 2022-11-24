@@ -48,6 +48,7 @@ var genCmd = &cobra.Command{
 				if len(content) > 0 {
 					protoFilename := c.ProtoDir + "/" + v.Filename + ".proto"
 					_ = utils.WriteFile(protoFilename, content)
+					log.Info("👆 " + protoFilename)
 				}
 			}
 		}
