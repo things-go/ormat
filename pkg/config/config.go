@@ -1,11 +1,8 @@
 package config
 
 import (
-	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
-	"github.com/things-go/log"
-	"github.com/things-go/ormat/pkg/deploy"
 	"github.com/things-go/ormat/view"
 )
 
@@ -35,13 +32,6 @@ func init() {
 			HasOmit: true,
 		},
 	})
-	viper.SetDefault("view.protobuf", view.Protobuf{
-		Enabled: false,
-		Merge:   false,
-		Dir:     "./model",
-		Package: "typing",
-		Options: map[string]string{"go_package": "typing"},
-	})
 }
 
 func (cc *Config) Load() error {
@@ -55,13 +45,5 @@ func (cc *Config) Load() error {
 			return err
 		}
 	}
-	validate := validator.New()
-	validate.SetTagName("binding")
-	err = validate.Struct(cc)
-	if err != nil {
-		return err
-	}
-	deploy.MustSetDeploy(cc.Deploy)
-	log.ReplaceGlobals(log.NewLogger(log.WithConfig(log.Config{Level: "info", Format: "console"})))
 	return nil
 }

@@ -20,6 +20,7 @@ var sqlCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		setupBase(c)
 		rt, err := runtime.NewRuntime(c)
 		if err != nil {
 			return err

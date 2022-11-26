@@ -26,6 +26,7 @@ var genCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		setupBase(c)
 		rt, err := runtime.NewRuntime(c)
 		if err != nil {
 			return err
@@ -45,8 +46,8 @@ var genCmd = &cobra.Command{
 			_ = utils.WriteFile(modelFilename, v.Build())
 
 			cmd, _ := exec.Command("goimports", "-l", "-w", modelFilename).Output()
-			log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
 			_, _ = exec.Command("gofmt", "-l", "-w", modelFilename).Output()
+			log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
 
 			if c.View.IsOutSQL {
 				_ = utils.WriteFile(c.OutDir+"/"+v.Filename+".sql", v.BuildSQL())
