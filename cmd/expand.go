@@ -15,7 +15,7 @@ var inputComment string
 
 func init() {
 	expandCmd.Flags().StringVarP(&inputComment, "input", "i", "", "input file")
-	expandCmd.MarkFlagRequired("input")
+	expandCmd.MarkFlagRequired("input") // nolint
 }
 
 var expandCmd = &cobra.Command{

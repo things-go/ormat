@@ -56,7 +56,7 @@ var (
 func init() {
 	initialismForReplacer := make([]string, 0, len(commonInitialisms)*2)
 	for s := range commonInitialisms {
-		initialismForReplacer = append(initialismForReplacer, s, strings.Title(strings.ToLower(s)))
+		initialismForReplacer = append(initialismForReplacer, s, strings.Title(strings.ToLower(s))) // nolint
 	}
 
 	defaultReplacer = strings.NewReplacer(initialismForReplacer...)

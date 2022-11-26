@@ -183,7 +183,7 @@ func (s *Struct) parseProtobufMessage() {
 			dataType = "google.protobuf.Timestamp"
 			pm.Fields = append(pm.Fields,
 				ProtobufMessageField{
-					FieldDataType:   "google.protobuf.Timestamp",
+					FieldDataType:   dataType,
 					FieldName:       field.ColumnName,
 					FieldComment:    field.FieldComment,
 					FieldAnnotation: intoAnnotation([]string{`(gogoproto.stdtime) = true`, `(gogoproto.nullable) = false`}),

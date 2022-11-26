@@ -47,6 +47,6 @@ var configInitSubCmd = &cobra.Command{
 func JSON(v ...interface{}) {
 	for _, vv := range v {
 		b, _ := json.MarshalIndent(vv, "", "  ")
-		quick.Highlight(os.Stdout, string(b), "JSON", "terminal", "solarized-dark")
+		quick.Highlight(os.Stdout, string(b), "JSON", "terminal", "solarized-dark") // nolint
 	}
 }

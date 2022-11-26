@@ -35,8 +35,8 @@ func init() {
 	buildCmd.Flags().StringVarP(&protobuf.Dir, "dir", "d", "", "protobuf out directory")
 	buildCmd.Flags().StringVarP(&protobuf.Package, "package", "p", "", "protobuf package name")
 	buildCmd.Flags().StringToStringVarP(&protobuf.Options, "options", "t", nil, "protobuf options key value")
-	buildCmd.MarkFlagRequired("input")
-	buildCmd.MarkFlagRequired("out")
+	buildCmd.MarkFlagRequired("input") // nolint
+	buildCmd.MarkFlagRequired("out")   // nolint
 	buildCmd.MarkFlagsRequiredTogether(
 		"enabled",
 		"dir",
@@ -208,7 +208,6 @@ var buildProtoSubCmd = &cobra.Command{
 		}
 
 		log.Info("😄 generate success !!!")
-		return nil
 		return nil
 	},
 }
