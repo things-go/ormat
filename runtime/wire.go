@@ -6,11 +6,12 @@ package runtime
 
 import (
 	"github.com/google/wire"
+
+	"github.com/things-go/ormat/pkg/config"
 )
 
-func NewRuntime(remote bool) (*Runtime, error) {
+func NewRuntime(c *config.Config) (*Runtime, error) {
 	wire.Build(
-		ConfigSet,
 		DbSet,
 		wire.NewSet(wire.Struct(new(Runtime), "*")),
 	)

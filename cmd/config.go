@@ -7,9 +7,9 @@ import (
 	"github.com/alecthomas/chroma/quick"
 	"github.com/spf13/cobra"
 
+	"github.com/things-go/ormat/pkg/config"
 	"github.com/things-go/ormat/pkg/tpl"
 	"github.com/things-go/ormat/pkg/utils"
-	"github.com/things-go/ormat/runtime"
 )
 
 func init() {
@@ -21,7 +21,8 @@ var configCmd = &cobra.Command{
 	Short:   "Show/Generate config file",
 	Example: "ormat config - show config \normat config init - Generate config file",
 	RunE: func(*cobra.Command, []string) error {
-		c, err := runtime.NewConfig(false)
+		c := config.Global
+		err := c.Load()
 		if err != nil {
 			return err
 		}

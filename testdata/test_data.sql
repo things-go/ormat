@@ -1,4 +1,4 @@
-CREATE TABLE `testdata` (
+CREATE TABLE `test_data` (
     `id` bigint NOT NULL AUTO_INCREMENT,
     `title` varchar(255) NOT NULL COMMENT '标题',
     `content` varchar(2048) NOT NULL COMMENT '内容',

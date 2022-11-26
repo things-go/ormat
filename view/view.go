@@ -44,16 +44,16 @@ type Config struct {
 	IsOutColumnName  bool     `yaml:"isOutColumnName" json:"isOutColumnName"`   // 是否输出表的列名, 默认不输出
 	IsForeignKey     bool     `yaml:"isForeignKey" json:"isForeignKey"`         // 输出外键
 	IsCommentTag     bool     `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
-	Protobuf         Protobuf `yaml:"protobuf" json:"protobuf"`
+	Protobuf         Protobuf `yaml:"protobuf" json:"protobuf" binding:"omitempty"`
 }
 
 // Protobuf config
 type Protobuf struct {
 	Enabled bool              `yaml:"enabled" json:"enabled"`
 	Merge   bool              `yaml:"merge" json:"merge"`
-	Dir     string            `yaml:"dir" json:"dir" binding:"required"`
-	Package string            `yaml:"package" json:"package" binding:"required"`
-	Options map[string]string `yaml:"options" json:"options" binding:"required"`
+	Dir     string            `yaml:"dir" json:"dir" binding:"required_if=Enabled true"`
+	Package string            `yaml:"package" json:"package" binding:"required_if=Enabled true"`
+	Options map[string]string `yaml:"options" json:"options" binding:"required_if=Enabled true"`
 }
 
 // View information

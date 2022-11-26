@@ -6,21 +6,20 @@
 
 package runtime
 
+import (
+	"github.com/things-go/ormat/pkg/config"
+)
+
 // Injectors from wire.go:
 
-func NewRuntime(remote bool) (*Runtime, error) {
-	config, err := NewConfig(remote)
-	if err != nil {
-		return nil, err
-	}
-	database := NewDbConfig(config)
-	db, err := NewDb(remote, database)
+func NewRuntime(c *config.Config) (*Runtime, error) {
+	database := NewDbConfig(c)
+	db, err := NewDb(database)
 	if err != nil {
 		return nil, err
 	}
 	runtime := &Runtime{
-		Config: config,
-		DB:     db,
+		DB: db,
 	}
 	return runtime, nil
 }

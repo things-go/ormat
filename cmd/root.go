@@ -1,12 +1,13 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/things-go/ormat/pkg/utils"
 )
-
-var outDir string
 
 var rootCmd = &cobra.Command{
 	Use:   "ormat",
@@ -15,6 +16,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	cobra.OnInitialize(initConfig)
+
 	rootCmd.AddCommand(
 		versionCmd,
 		configCmd,
@@ -29,5 +32,17 @@ func init() {
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
+	}
+}
+
+func initConfig() {
+	viper.SetConfigName(".ormat")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(utils.WorkDir())
+
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 }

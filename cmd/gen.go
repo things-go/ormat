@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/things-go/log"
 
+	"github.com/things-go/ormat/pkg/config"
 	"github.com/things-go/ormat/pkg/database"
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/runtime"
@@ -20,13 +21,17 @@ var genCmd = &cobra.Command{
 	Short:   "Generate model from database",
 	Example: "ormat gen",
 	RunE: func(*cobra.Command, []string) error {
-		rt, err := runtime.NewRuntime(true)
+		c := config.Global
+		err := c.Load()
+		if err != nil {
+			return err
+		}
+		rt, err := runtime.NewRuntime(c)
 		if err != nil {
 			return err
 		}
 		defer database.Close(rt.DB)
 
-		c := rt.Config
 		vw := view.New(GetViewModel(rt), c.View)
 
 		list, err := vw.GetDbFile(utils.GetPkgName(c.OutDir))

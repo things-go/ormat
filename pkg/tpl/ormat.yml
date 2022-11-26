@@ -81,8 +81,8 @@ database:
 #    # only support gen command
 #    merge: false
 #    # 输出proto的路径
-#    # 默认: ./model
-#    dir: ./model
+#    # 默认: ./typing
+#    dir: ./typing
 #    package: typing
 #    options:
 #      go_package: typing

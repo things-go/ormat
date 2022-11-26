@@ -1,0 +1,1 @@
+ ormat build -i test_data.sql -o .

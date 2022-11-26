@@ -6,20 +6,39 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/things-go/log"
 
+	"github.com/things-go/ormat/pkg/config"
 	"github.com/things-go/ormat/pkg/utils"
-	"github.com/things-go/ormat/runtime"
 	"github.com/things-go/ormat/view"
 	"github.com/things-go/ormat/view/driver"
 )
 
 var inputFile string
+var protobufOptions []string
 
 func init() {
 	buildCmd.Flags().StringVarP(&inputFile, "input", "i", "", "input file")
-	buildCmd.Flags().StringVarP(&outDir, "out", "o", "", "out directory")
+	buildCmd.Flags().StringP("out", "o", "", "model out directory")
+	buildCmd.Flags().StringP("dir", "d", "", "protobuf out directory")
+	buildCmd.Flags().BoolP("enabled", "e", true, "enabled generate protobuf")
+	buildCmd.Flags().StringP("package", "p", "", "protobuf package name")
+	buildCmd.Flags().StringSliceVarP(&protobufOptions, "options", "t", nil, "protobuf options key value")
+
+	// buildCmd.MarkFlagsRequiredTogether(
+	// 	"enabled",
+	// 	"dir",
+	// 	"package",
+	// 	"options",
+	// )
 	buildCmd.MarkFlagRequired("input")
+	// buildCmd.MarkFlagRequired("out")
+
+	viper.BindPFlag("outDir", buildCmd.Flags().Lookup("out"))
+	// viper.BindPFlag("view.protobuf.enabled", buildCmd.Flags().Lookup("enabled"))
+	// viper.BindPFlag("view.protobuf.dir", buildCmd.Flags().Lookup("dir"))
+	// viper.BindPFlag("view.protobuf.package", buildCmd.Flags().Lookup("package"))
 }
 
 var buildCmd = &cobra.Command{
@@ -27,17 +46,13 @@ var buildCmd = &cobra.Command{
 	Short:   "Generate model from sql",
 	Example: "ormat build",
 	RunE: func(*cobra.Command, []string) error {
-		rt, err := runtime.NewRuntime(false)
+		c := config.Global
+		err := c.Load()
 		if err != nil {
 			return err
 		}
-		c := rt.Config
 
-		outDir := outDir
-		if outDir == "" {
-			outDir = c.OutDir
-		}
-
+		outDir := c.OutDir
 		content, err := os.ReadFile(inputFile)
 		if err != nil {
 			return err

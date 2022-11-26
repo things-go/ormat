@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	"github.com/things-go/ormat/pkg/config"
 	"github.com/things-go/ormat/runtime"
 	"github.com/things-go/ormat/view"
 	"github.com/things-go/ormat/view/driver"
 )
 
 func GetViewModel(rt *runtime.Runtime) view.DBModel {
-	c := rt.Config
+	c := config.Global
 	dbCfg := c.Database
 	switch dbCfg.Dialect {
 	case "mysql":
