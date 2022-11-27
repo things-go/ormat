@@ -45,5 +45,4 @@ func setupBase(c *config.Config) {
 		Level:  "info",
 		Format: "console",
 	})))
-
 }
