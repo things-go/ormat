@@ -2,7 +2,7 @@ CREATE TABLE `test_data1` (
     `id` bigint NOT NULL AUTO_INCREMENT,
     `title` varchar(255) NOT NULL COMMENT '标题',
     `content` varchar(2048) NOT NULL COMMENT '内容',
-    `value1` float unsigned NOT NULL DEFAULT '1' COMMENT '[@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]',
+    `value1` float unsigned NOT NULL DEFAULT '1' COMMENT '值1,[@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]',
     `value2` float(10,1) unsigned NOT NULL DEFAULT '2' COMMENT '值2,[@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2"],"3":["key3","键3"]}]',
     `value2` double(16,2) NOT NULL DEFAULT '3' COMMENT '值3',
     `value3` enum('00','SH') NOT NULL DEFAULT '4' COMMENT '值4',

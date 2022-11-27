@@ -1,7 +1,6 @@
  ormat build proto \
     -i test_data1.sql \
     -i test_data2.sql \
-    -o . \
     -m true \
     -d . \
     -p testdata \

@@ -107,7 +107,7 @@ func (p *File) BuildProtobufEnumBody() []byte {
 	for _, v := range p.Structs {
 		content := v.BuildProtobufEnumTemplate()
 		if len(content) > 0 {
-			buf.WriteString(content + delimLF)
+			buf.WriteString(content)
 		}
 	}
 	return buf.Bytes()

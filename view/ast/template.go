@@ -60,28 +60,28 @@ var {{.StructName}}ColumnsWithAbbrTable = []string {
 // {{.StructName}} {{.StructComment}}
 message {{.StructName}} { 
 {{- range $index, $field := .Fields}}
-    {{- if $field.FieldComment}} 
-	// {{$field.FieldComment}} 
-	{{- end}}
-	{{$field.FieldDataType}} {{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
+  {{- if $field.FieldComment}} 
+  // {{$field.FieldComment}} 
+  {{- end}}
+  {{$field.FieldDataType}} {{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
 {{- end}}    
 }
 // {{.StructName}}WithTable {{.StructComment}}
 message {{.StructName}}WithTable { 
 {{- range $index, $field := .Fields}}
-    {{- if $field.FieldComment}} 
-	// {{$field.FieldComment}} 
-	{{- end}}
-	{{$field.FieldDataType}} {{$tableName}}_{{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
+  {{- if $field.FieldComment}} 
+  // {{$field.FieldComment}} 
+  {{- end}}
+  {{$field.FieldDataType}} {{$tableName}}_{{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
 {{- end}}    
 }
 // {{.StructName}}WithAbbrTable {{.StructComment}}
 message {{.StructName}}WithAbbrTable { 
 {{- range $index, $field := .Fields}}
-    {{- if $field.FieldComment}} 
-	// {{$field.FieldComment}} 
-	{{- end}}
-	{{$field.FieldDataType}} {{$abbrTableName}}_{{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
+  {{- if $field.FieldComment}} 
+  // {{$field.FieldComment}} 
+  {{- end}}
+  {{$field.FieldDataType}} {{$abbrTableName}}_{{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
 {{- end}}    
 }
 */
@@ -95,10 +95,10 @@ const protobufEnumTemplate = `
 // {{$e.EnumName}} {{$e.EnumComment}}
 enum {{$e.EnumName}} {
 {{- range $ee := $e.EnumFields}}
-    {{- if $ee.Comment}} 
-	// {{$ee.Comment}}
-	{{- end}}
-	{{$ee.Name}} = {{$ee.Id}};
+  {{- if $ee.Comment}} 
+  // {{$ee.Comment}}
+  {{- end}}
+  {{$ee.Name}} = {{$ee.Id}};
 {{- end}} 
 }
 {{- end}}

@@ -28,8 +28,8 @@ var protobuf = view.Protobuf{
 
 func init() {
 	buildCmd.PersistentFlags().StringSliceVarP(&inputFile, "input", "i", nil, "input file")
-	buildCmd.PersistentFlags().StringVarP(&outDir, "out", "o", "", "model out directory")
 
+	buildCmd.Flags().StringVarP(&outDir, "out", "o", "", "model out directory")
 	buildCmd.Flags().BoolVarP(&protobuf.Enabled, "enabled", "e", false, "protobuf enabled or not(default: false)")
 	buildCmd.Flags().BoolVarP(&protobuf.Merge, "merge", "m", false, "protobuf merge in a file or not(default: false)")
 	buildCmd.Flags().StringVarP(&protobuf.Dir, "dir", "d", "", "protobuf out directory")
@@ -149,7 +149,6 @@ var buildProtoSubCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		c.OutDir = outDir
 		c.View.Protobuf = view.Protobuf{
 			Enabled: true,
 			Dir:     protobuf.Dir,
