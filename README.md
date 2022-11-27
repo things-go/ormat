@@ -20,11 +20,11 @@ database to golang struct
 
 Use go get.
 ```bash
-    go get github.com/things-go/ormat
+    go get github.com/things-go/ormat/cmd/ormat
 ```
 or 
 ```bash
-    go install github.com/things-go/ormat@latest
+    go install github.com/things-go/ormat/cmd/ormat@latest
 ```
 Example.
 
@@ -32,7 +32,7 @@ NOTE:
 
 - database filed comment `[@jsontag: realjsontag]` will overwrite the filed json tags.
 - database filed comment `[@affix]` will append `,string` to the filed json tags.
-- database filed comment `[@enum: enumValue]` or `[@status: enumValue]` will generate protobuf enum comment. `enumValue` should be like `{"0":["name","comment"]}`
+- database filed comment `[@enum: enumValue]` or `[@status: enumValue]` will generate protobuf enum comment. `enumValue` should be like `{"0":["name","remark","comment"]}`
 ```go
 // SysUser 用户表
 type SysUser struct {
@@ -63,21 +63,24 @@ func (*SysUser) TableName() string {
 ```shell
 $ ./ormat --help
 
-database to golang struct
+database/sql to golang struct
 
 Usage:
-  ormat [flags]
   ormat [command]
 
 Available Commands:
-  completion  generate the autocompletion script for the specified shell
+  build       Generate model from sql
+  completion  Generate the autocompletion script for the specified shell
+  config      Show/Generate config file
+  expand      expand annotation from comment
+  gen         Generate model/proto from database
   help        Help about any command
-  init        generate config file
-  sql         generate create table sql
-  version     Get version info
+  sql         Generate create table sql
 
 Flags:
-  -h, --help   help for ormat
+  -c, --config string   config file
+  -h, --help            help for ormat
+  -v, --version         version for ormat
 
 Use "ormat [command] --help" for more information about a command.
 ```
@@ -88,6 +91,10 @@ Use "ormat [command] --help" for more information about a command.
 make linux
 make windows
 make mac
+```
+or 
+```
+goreleaser release --snapshot  --rm-dist
 ```
 
 ## References
