@@ -14,7 +14,7 @@ import (
 var inputComment string
 
 func init() {
-	expandCmd.Flags().StringVarP(&inputComment, "input", "i", "", "input file")
+	expandCmd.Flags().StringVarP(&inputComment, "input", "i", "", "input comment")
 	expandCmd.MarkFlagRequired("input") // nolint
 }
 

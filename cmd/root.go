@@ -6,20 +6,27 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/things-go/ormat/pkg/consts"
 	"github.com/things-go/ormat/pkg/utils"
 )
 
+var configFile string
+
 var rootCmd = &cobra.Command{
-	Use:   "ormat",
-	Short: "gorm reflect tools",
-	Long:  "database/sql to golang struct",
+	Use:           "ormat",
+	Short:         "gorm reflect tools",
+	Long:          "database/sql to golang struct",
+	Version:       consts.BuildVersion(),
+	SilenceUsage:  false,
+	SilenceErrors: true,
+	Args:          cobra.NoArgs,
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "config file")
 	rootCmd.AddCommand(
-		versionCmd,
 		configCmd,
 		sqlCmd,
 		buildCmd,
@@ -36,10 +43,13 @@ func Execute() {
 }
 
 func initConfig() {
-	viper.SetConfigName(".ormat")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(utils.WorkDir())
-
+	if configFile != "" {
+		viper.SetConfigFile(configFile)
+	} else {
+		viper.AddConfigPath(utils.WorkDir())
+		viper.SetConfigName(".ormat")
+		viper.SetConfigType("yaml")
+	}
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err == nil {

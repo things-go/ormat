@@ -18,7 +18,7 @@ import (
 
 var genCmd = &cobra.Command{
 	Use:     "gen",
-	Short:   "Generate model from database",
+	Short:   "Generate model/proto from database",
 	Example: "ormat gen",
 	RunE: func(*cobra.Command, []string) error {
 		c := config.Global
