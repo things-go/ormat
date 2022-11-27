@@ -20,7 +20,7 @@ func init() {
 
 var expandCmd = &cobra.Command{
 	Use:     "expand",
-	Short:   "expand annotation from comment",
+	Short:   "Expand annotation from comment",
 	Example: "ormat expand -i comment",
 	RunE: func(*cobra.Command, []string) error {
 		str := ast.MatchEnumAnnotation(inputComment)

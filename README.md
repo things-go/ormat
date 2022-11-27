@@ -1,6 +1,6 @@
 # ormat
 
-database to golang struct
+database/sql to golang struct, and generate enum annotation from comment to proto file.
 
 [![GoDoc](https://godoc.org/github.com/things-go/ormat?status.svg)](https://godoc.org/github.com/things-go/ormat)
 [![Go.Dev reference](https://img.shields.io/badge/go.dev-reference-blue?logo=go&logoColor=white)](https://pkg.go.dev/github.com/things-go/ormat?tab=doc)
@@ -10,29 +10,32 @@ database to golang struct
 [![Licence](https://img.shields.io/github/license/things-go/ormat)](https://raw.githubusercontent.com/things-go/ormat/main/LICENSE)
 [![Tag](https://img.shields.io/github/v/tag/things-go/ormat)](https://github.com/things-go/ormat/tags)
 
-
 ## Features
-
 
 ## Usage
 
 ### Installation
 
 Use go get.
+
 ```bash
     go get github.com/things-go/ormat/cmd/ormat
 ```
-or 
+
+or
+
 ```bash
     go install github.com/things-go/ormat/cmd/ormat@latest
 ```
+
 Example.
 
-NOTE: 
+NOTE:
 
 - database filed comment `[@jsontag: realjsontag]` will overwrite the filed json tags.
 - database filed comment `[@affix]` will append `,string` to the filed json tags.
 - database filed comment `[@enum: enumValue]` or `[@status: enumValue]` will generate protobuf enum comment. `enumValue` should be like `{"0":["name","remark","comment"]}`
+
 ```go
 // SysUser 用户表
 type SysUser struct {
@@ -72,7 +75,7 @@ Available Commands:
   build       Generate model from sql
   completion  Generate the autocompletion script for the specified shell
   config      Show/Generate config file
-  expand      expand annotation from comment
+  expand      Expand annotation from comment
   gen         Generate model/proto from database
   help        Help about any command
   sql         Generate create table sql
@@ -92,18 +95,20 @@ make linux
 make windows
 make mac
 ```
-or 
-```
+
+or
+
+```bash
 goreleaser release --snapshot  --rm-dist
 ```
 
 ## References
 
 ### JetBrains OS licenses
+
 ormat had been being developed with GoLand under the free JetBrains Open Source license(s) granted by JetBrains s.r.o., hence I would like to express my thanks here.
 
 <a href="https://www.jetbrains.com/?from=things-go/go-modbus" target="_blank"><img src="https://github.com/thinkgos/thinkgos/blob/master/asserts/jetbrains-variant-4.svg" width="200" align="middle"/></a>
-
 
 ## License
 
