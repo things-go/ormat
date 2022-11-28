@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
 	"github.com/things-go/ormat/pkg/consts"
 	"github.com/things-go/ormat/pkg/utils"
 )
@@ -18,7 +19,7 @@ var rootCmd = &cobra.Command{
 	Long:          "database/sql to golang struct",
 	Version:       consts.BuildVersion(),
 	SilenceUsage:  false,
-	SilenceErrors: true,
+	SilenceErrors: false,
 	Args:          cobra.NoArgs,
 }
 
@@ -32,6 +33,7 @@ func init() {
 		buildCmd,
 		genCmd,
 		expandCmd,
+		upgradeCmd,
 	)
 }
 
