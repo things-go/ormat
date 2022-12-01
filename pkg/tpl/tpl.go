@@ -16,6 +16,8 @@ const (
 //go:embed template
 var Static embed.FS
 
-var Template = template.Must(template.New("xx").
-	Funcs(template.FuncMap{"add": func(a, b int) int { return a + b }}).
+var Template = template.Must(template.New("components").
+	Funcs(template.FuncMap{
+		"add": func(a, b int) int { return a + b },
+	}).
 	ParseFS(Static, "template/layout/*"))

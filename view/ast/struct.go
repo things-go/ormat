@@ -11,7 +11,7 @@ type Struct struct {
 	StructFields   []Field          // struct field list
 	TableName      string           // struct table name in database.
 	CreateTableSQL string           // create table SQL
-	protoMessage   *ProtobufMessage // proto message.
+	ProtoMessage   *ProtobufMessage // proto message.
 }
 
 // AddStructFields Add one or more fields
@@ -98,7 +98,7 @@ func (s *Struct) BuildProtobufTemplate() string {
 	var buf strings.Builder
 
 	s.parseProtobufMessage()
-	_ = ProtobufTpl.Execute(&buf, s.protoMessage)
+	_ = ProtobufTpl.Execute(&buf, s.ProtoMessage)
 	buf.WriteString(s.buildProtobufEnumTemplate(true))
 	return buf.String()
 }
@@ -117,9 +117,9 @@ func (s *Struct) buildProtobufEnumTemplate(isAnnotation bool) string {
 	var buf strings.Builder
 
 	s.parseProtobufMessage()
-	if len(s.protoMessage.Enums) > 0 {
+	if len(s.ProtoMessage.Enums) > 0 {
 		_ = ProtobufEnumTpl.Execute(&buf, &tpl{
-			Enums:        s.protoMessage.Enums,
+			Enums:        s.ProtoMessage.Enums,
 			IsAnnotation: isAnnotation,
 		})
 	}
@@ -133,16 +133,16 @@ func (s *Struct) BuildProtobufEnumMappingTemplate() string {
 	var buf strings.Builder
 
 	s.parseProtobufMessage()
-	if len(s.protoMessage.Enums) > 0 {
+	if len(s.ProtoMessage.Enums) > 0 {
 		_ = ProtobufEnumMappingTpl.Execute(&buf, &tpl{
-			Enums: s.protoMessage.Enums,
+			Enums: s.ProtoMessage.Enums,
 		})
 	}
 	return buf.String()
 }
 
 func (s *Struct) parseProtobufMessage() {
-	if s.protoMessage != nil {
+	if s.ProtoMessage != nil {
 		return
 	}
 
@@ -226,5 +226,5 @@ func (s *Struct) parseProtobufMessage() {
 			pm.Enums = append(pm.Enums, protobufEnum)
 		}
 	}
-	s.protoMessage = pm
+	s.ProtoMessage = pm
 }
