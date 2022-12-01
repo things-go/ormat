@@ -36,7 +36,7 @@ var configInitSubCmd = &cobra.Command{
 	Short:   "Generate config file",
 	Example: "ormat config init",
 	RunE: func(*cobra.Command, []string) error {
-		b, err := tpl.Static.ReadFile("ormat.yml")
+		b, err := tpl.Static.ReadFile("template/ormat.yml")
 		if err != nil {
 			return err
 		}

@@ -49,14 +49,14 @@ func (s *Struct) Build() string {
 
 // BuildTableNameTemplate struct implement schema.Tabler.
 func (s *Struct) BuildTableNameTemplate() string {
-	type tpl struct {
+	type tmpTpl struct {
 		TableName  string
 		StructName string
 	}
 
 	var buf strings.Builder
 
-	_ = TableNameTpl.Execute(&buf, tpl{
+	_ = TableNameTpl.Execute(&buf, tmpTpl{
 		TableName:  s.TableName,
 		StructName: s.StructName,
 	})
