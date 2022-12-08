@@ -1,7 +1,3 @@
-{{- if .IsAnnotation}}
-/*
-{{- end}}
-
 {{- range $e := .Enums}}
 // {{$e.EnumName}} {{$e.EnumComment}}
 enum {{$e.EnumName}} {
@@ -12,7 +8,4 @@ enum {{$e.EnumName}} {
   {{$ee.Name}} = {{$ee.Id}};
 {{- end}}
 }
-{{- end}}
-{{- if .IsAnnotation}}
-*/
 {{- end}}

@@ -98,29 +98,22 @@ func (s *Struct) BuildProtobufTemplate() string {
 	var buf strings.Builder
 
 	s.parseProtobufMessage()
-	_ = ProtobufTpl.Execute(&buf, s.ProtoMessage)
-	buf.WriteString(s.buildProtobufEnumTemplate(true))
+	_ = ProtobufCommentTpl.Execute(&buf, s.ProtoMessage)
 	return buf.String()
 }
 
 func (s *Struct) BuildProtobufEnumTemplate() string {
-	return s.buildProtobufEnumTemplate(false)
-}
-
-func (s *Struct) buildProtobufEnumTemplate(isAnnotation bool) string {
 	type tpl struct {
-		Enums        []*ProtobufEnum
-		IsAnnotation bool
-		Package      string
-		Options      map[string]string
+		Enums   []*ProtobufEnum
+		Package string
+		Options map[string]string
 	}
 	var buf strings.Builder
 
 	s.parseProtobufMessage()
 	if len(s.ProtoMessage.Enums) > 0 {
 		_ = ProtobufEnumTpl.Execute(&buf, &tpl{
-			Enums:        s.ProtoMessage.Enums,
-			IsAnnotation: isAnnotation,
+			Enums: s.ProtoMessage.Enums,
 		})
 	}
 	return buf.String()
