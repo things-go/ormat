@@ -116,7 +116,7 @@ func (sf *SQLite) GetTables(tb view.TableAttribute) (*view.Table, error) {
 		columnInfo := &view.Column{
 			Name:            v.Name,
 			OrdinalPosition: v.Cid,
-			DataType:        sf.getGoDataType(v.Name, v.Type),
+			ColumnGoType:    sf.getGoDataType(v.Name, v.Type),
 			ColumnType:      v.Type, // TODO: ??
 			IsNullable:      !v.NotNull,
 			IsAutoIncrement: false,

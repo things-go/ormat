@@ -7,14 +7,6 @@ import (
 	"github.com/things-go/ormat/pkg/utils"
 )
 
-const (
-	ColumnName          = "column_name.tpl"
-	ProtobufComment     = "protobuf_comment.tpl"
-	ProtobufEnum        = "protobuf_enum.tpl"
-	ProtobufEnumMapping = "protobuf_enum_mapping.tpl"
-	TableName           = "table_name.tpl"
-)
-
 //go:embed template
 var Static embed.FS
 
@@ -30,3 +22,8 @@ var Template = template.Must(
 		Funcs(TemplateFuncs).
 		ParseFS(Static, "template/layout/*"),
 )
+
+var ProtobufEnumTpl = Template.Lookup("protobuf_enum.tpl")
+var ProtobufEnumMappingTpl = Template.Lookup("protobuf_enum_mapping.tpl")
+var SqlDDLTpl = Template.Lookup("sql_ddl.tpl")
+var ModelTpl = Template.Lookup("model.tpl")

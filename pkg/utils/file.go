@@ -3,6 +3,7 @@ package utils
 import (
 	"os"
 	"path"
+	"text/template"
 )
 
 // IsExist checks whether a file or directory exists.
@@ -20,4 +21,18 @@ func WriteFile(filename string, data []byte) error {
 		return err
 	}
 	return os.WriteFile(filename, data, 0655)
+}
+
+// WriteFileWithTemplate write file with template.
+func WriteFileWithTemplate(filename string, t *template.Template, data any) error {
+	if err := os.MkdirAll(path.Dir(filename), os.ModePerm); err != nil {
+		return err
+	}
+	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0655)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return t.Execute(f, data)
 }

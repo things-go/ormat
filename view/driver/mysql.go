@@ -187,7 +187,7 @@ AND TABLE_NAME = ?
 		ci := &view.Column{
 			Name:            v.ColumnName,
 			OrdinalPosition: v.OrdinalPosition,
-			DataType:        sf.getGoDataType(v.ColumnType),
+			ColumnGoType:    sf.getGoDataType(v.ColumnType),
 			ColumnType:      v.ColumnType,
 			IsNullable:      strings.EqualFold(v.IsNullable, "YES"),
 			IsAutoIncrement: v.Extra == "auto_increment",

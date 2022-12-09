@@ -45,7 +45,7 @@ func (t TableSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 type Column struct {
 	Name            string       // column name
 	OrdinalPosition int          // column ordinal position
-	DataType        string       // column data type(string,int...)
+	ColumnGoType    string       // column data go type(string,int...)
 	ColumnType      string       // column type(varchar(256)...)
 	IsNullable      bool         // column is null or not
 	IsAutoIncrement bool         // column auto increment or not
@@ -146,6 +146,7 @@ func getFieldDataType(dataType string, isNull, disableNull, isNullToPointer, ena
 	return dataType
 }
 
+// TODO: BUG [@affix],[@jsontag:kkk] 此时匹配不上 affix
 var rJSONTag = regexp.MustCompile(`^.*?\[@.*?(?i:jsontag+):\s*(.*)\].*?`)
 var rAffixJSONTag = regexp.MustCompile(`^.*?\[@.*?(affix+).*?\].*?`)
 
@@ -157,7 +158,7 @@ func jsonTag(comment string) string {
 	return ""
 }
 
-func affixJSONTag(comment string) bool {
+func hasAffixJSONTag(comment string) bool {
 	match := rAffixJSONTag.FindStringSubmatch(comment)
 	return len(match) == 2 && strings.TrimSpace(match[1]) == "affix"
 }

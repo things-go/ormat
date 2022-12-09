@@ -83,7 +83,7 @@ func (sf *SQL) Parse() error {
 			ci := &view.Column{
 				Name:            column.Name.String(),
 				OrdinalPosition: i + 1,
-				DataType:        dt,
+				ColumnGoType:    dt,
 				ColumnType:      ct,
 				IsNullable:      !bool(columnType.NotNull),
 				IsAutoIncrement: bool(columnType.Autoincrement),

@@ -61,14 +61,6 @@ database:
 # 默认 输出null为指针类型
 #  isNullToPoint: false
 
-# 是否输出创建表的SQL
-# 默认: 不输出
-#  isOutSql: true
-
-# 是否输出表的列名
-# 默认: 不输出
-#  isOutColumnName: true
-
 # 是否输出外键字段
 # 默认: 不输出
 #  isForeignKey: true

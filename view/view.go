@@ -2,10 +2,10 @@ package view
 
 import (
 	"bytes"
+	"strconv"
 	"strings"
 
-	"github.com/spf13/cast"
-
+	"github.com/things-go/ormat/pkg/consts"
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/view/ast"
 )
@@ -40,8 +40,6 @@ type Config struct {
 	EnableIntegerInt bool     `yaml:"enableIntegerInt" json:"enableIntegerInt"` // 使能int32,uint32输出为int, uint
 	EnableBoolInt    bool     `yaml:"enableBoolInt" json:"enableBoolInt"`       // 使能bool输出int
 	IsNullToPoint    bool     `yaml:"isNullToPoint" json:"isNullToPoint"`       // 是否字段为null时输出指针类型
-	IsOutSQL         bool     `yaml:"isOutSQL" json:"isOutSQL"`                 // 是否输出创建表的SQL
-	IsOutColumnName  bool     `yaml:"isOutColumnName" json:"isOutColumnName"`   // 是否输出表的列名, 默认不输出
 	IsForeignKey     bool     `yaml:"isForeignKey" json:"isForeignKey"`         // 输出外键
 	IsCommentTag     bool     `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
 	Protobuf         Protobuf `yaml:"protobuf" json:"protobuf" binding:"omitempty"`
@@ -84,25 +82,52 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 
 	files := make([]*ast.File, 0, len(dbInfo.Tables))
 	for _, tb := range dbInfo.Tables {
+		structName := utils.CamelCase(tb.Name, sf.EnableLint)
+		structComment := ast.IntoComment(tb.Comment, "...", "\n", "\r\n// ")
+		structFields := sf.intoColumnFields(dbInfo.Tables, tb.Columns)
+		tableName := tb.Name
+		abbrTableName := ast.IntoAbbrTableName(tableName)
+		protoMessageFields, protoEnum := ast.ParseProtobuf(structName, tableName, structFields)
+		structs := []*ast.Struct{
+			{
+				StructName:         structName,
+				StructComment:      structComment,
+				StructFields:       structFields,
+				TableName:          tableName,
+				AbbrTableName:      abbrTableName,
+				CreateTableSQL:     tb.CreateTableSQL,
+				ProtoMessageFields: protoMessageFields,
+				ProtoEnum:          protoEnum,
+			},
+		}
 		files = append(files, &ast.File{
+			Version:     consts.Version,
 			Filename:    tb.Name,
 			PackageName: pkgName,
-			Imports:     make(map[string]string),
-			Structs: []*ast.Struct{
-				{
-					StructName:     utils.CamelCase(tb.Name, sf.EnableLint),
-					StructComment:  tb.Comment,
-					StructFields:   sf.intoColumnFields(dbInfo.Tables, tb.Columns),
-					TableName:      tb.Name,
-					CreateTableSQL: tb.CreateTableSQL,
-				},
-			},
-			IsOutColumnName: sf.IsOutColumnName,
-			ProtobufPackage: sf.Protobuf.Package,
-			ProtobufOptions: sf.Protobuf.Options,
+			Imports:     ast.IntoImports(structs),
+			Structs:     structs,
 		})
 	}
 	return files, nil
+}
+
+func (sf *View) GetDBCreateTableSQL() (*ast.SqlFile, error) {
+	tbAttributes, err := sf.GetTableAttributes()
+	if err != nil {
+		return nil, err
+	}
+	tbAttrs := make([]ast.TableAttribute, 0, len(tbAttributes))
+	for _, v := range tbAttributes {
+		tbAttrs = append(tbAttrs, ast.TableAttribute{
+			Name:           v.Name,
+			Comment:        strings.ReplaceAll(v.Comment, "\n", "\n-- "),
+			CreateTableSQL: v.CreateTableSQL,
+		})
+	}
+	return &ast.SqlFile{
+		Version: consts.Version,
+		Tables:  tbAttrs,
+	}, nil
 }
 
 // GetDBCreateTableSQLContent get all table's create table sql content
@@ -127,31 +152,32 @@ func (sf *View) intoColumnFields(tables []*Table, cols []*Column) []ast.Field {
 	fields := make([]ast.Field, 0, len(cols))
 	for _, col := range cols {
 		fieldName := utils.CamelCase(col.Name, sf.EnableLint)
-		fieldType := getFieldDataType(col.DataType, col.IsNullable, sf.DisableNull, sf.IsNullToPoint, sf.EnableInt, sf.EnableIntegerInt, sf.EnableBoolInt)
+		fieldType := getFieldDataType(col.ColumnGoType, col.IsNullable, sf.DisableNull, sf.IsNullToPoint, sf.EnableInt, sf.EnableIntegerInt, sf.EnableBoolInt)
 		if fieldName == "DeletedAt" &&
-			(col.DataType == "int64" ||
-				col.DataType == "uint64" ||
-				col.DataType == "uint32" ||
-				col.DataType == "int32" ||
-				col.DataType == "uint16" ||
-				col.DataType == "int16" ||
-				col.DataType == "uint8" ||
-				col.DataType == "int8" ||
-				col.DataType == "uint" ||
-				col.DataType == "int") {
+			(col.ColumnGoType == "int64" ||
+				col.ColumnGoType == "uint64" ||
+				col.ColumnGoType == "uint32" ||
+				col.ColumnGoType == "int32" ||
+				col.ColumnGoType == "uint16" ||
+				col.ColumnGoType == "int16" ||
+				col.ColumnGoType == "uint8" ||
+				col.ColumnGoType == "int8" ||
+				col.ColumnGoType == "uint" ||
+				col.ColumnGoType == "int") {
 			fieldType = "soft_delete.DeletedAt"
 		}
 
 		field := ast.Field{
-			FieldName:      fieldName,
-			FieldType:      fieldType,
-			FieldComment:   col.Comment,
-			FieldTags:      make(map[string]*ast.FieldTagValue),
-			ColumnDataType: col.DataType,
-			ColumnName:     col.Name,
+			FieldName:    fieldName,
+			FieldType:    fieldType,
+			FieldComment: ast.IntoComment(col.Comment, "", "\n", ","),
+			FieldTag:     "",
+			ColumnGoType: col.ColumnGoType,
+			ColumnName:   col.Name,
 		}
-		sf.fixFieldTags(&field, col)
-
+		fieldTags := ast.NewFieldTags()
+		sf.fixFieldTags(fieldTags, &field, col)
+		field.FieldTag = fieldTags.IntoFieldTag()
 		fields = append(fields, field)
 
 		if sf.IsForeignKey && len(col.ForeignKeys) > 0 {
@@ -184,10 +210,12 @@ func (sf *View) intoForeignKeyField(tables []*Table, col *Column) (fks []ast.Fie
 				field.FieldType = name
 			}
 			field.FieldComment = comment
-			field.AddFieldTagValue(tagDb, "joinForeignKey:"+col.Name).
-				AddFieldTagValue(tagDb, "foreignKey:"+v.ColumnName)
+			fieldTags := ast.NewFieldTags().
+				AddTagValue(tagDb, "joinForeignKey:"+col.Name).
+				AddTagValue(tagDb, "foreignKey:"+v.ColumnName)
 
-			fixFieldWebTags(&field, v.TableName, sf.WebTags, sf.EnableLint)
+			fixFieldWebTags(fieldTags, &field, v.TableName, sf.WebTags, sf.EnableLint)
+			field.FieldTag = fieldTags.IntoFieldTag()
 			fks = append(fks, field)
 		}
 	}
@@ -218,25 +246,24 @@ func (*View) getColumnsKeyMulti(tables []*Table, tableName, col string) (isMulti
 	return false, false, ""
 }
 
-func (sf *View) fixFieldTags(field *ast.Field, ci *Column) {
+func (sf *View) fixFieldTags(fieldTags *ast.FieldTags, field *ast.Field, ci *Column) {
 	tagDb := sf.DbTag
 	if tagDb == "" {
 		tagDb = "gorm"
 	}
 
-	// 输出db标签
-	// not simple output
 	columnType := "type:" + ci.ColumnType
-	filedTagValue := ast.NewFiledTagValue().
+	// 输出db标签
+	filedTagValues := ast.NewFiledTagValues().
 		SetSeparate(";").
 		AddValue("column:" + ci.Name).
 		AddValue(columnType)
 
 	if ci.IsAutoIncrement {
-		filedTagValue.AddValue("autoIncrement:true")
+		filedTagValues.AddValue("autoIncrement:true")
 	}
 	if !ci.IsNullable {
-		filedTagValue.AddValue("not null")
+		filedTagValues.AddValue("not null")
 	}
 	// default tag
 	if ci.Default != nil {
@@ -244,42 +271,41 @@ func (sf *View) fixFieldTags(field *ast.Field, ci *Column) {
 		if *ci.Default != "" {
 			dflt = "default:" + *ci.Default
 		}
-		filedTagValue.AddValue(dflt)
+		filedTagValues.AddValue(dflt)
 	}
 
-	for _, v1 := range ci.Index {
+	for _, index := range ci.Index {
 		var vv string
 
-		switch v1.KeyType {
+		switch index.KeyType {
 		// case ColumnsDefaultKey:
 		case ColumnKeyTypePrimary:
 			vv = "primaryKey"
 		case ColumnKeyTypeUniqueKey:
-			vv = "uniqueIndex:" + v1.KeyName
+			vv = "uniqueIndex:" + index.KeyName
 		case ColumnKeyTypeNormalIndex:
-			vv = "index:" + v1.KeyName
-			// 兼容 gorm 本身 sort 标签
-			if v1.KeyName == "sort" {
+			vv = "index:" + index.KeyName
+			if index.KeyName == "sort" { // 兼容 gorm 本身 sort 标签
 				vv = "index"
 			}
-			if v1.IndexType == "FULLTEXT" {
+			if index.IndexType == "FULLTEXT" {
 				vv += ",class:FULLTEXT"
 			}
 		}
 		if vv != "" {
 			// NOTE: 主要是整型主键,gorm在自动迁移时没有在mysql上加上auto_increment
 			if vv == "primaryKey" && ci.IsAutoIncrement {
-				filedTagValue.RemoveValue(columnType)
+				filedTagValues.RemoveValue(columnType)
 			}
-			if v1.IsMulti {
+			if index.IsMulti {
 				if vv == "primaryKey" {
 					vv += ";"
 				} else {
 					vv += ","
 				}
-				vv += "priority:" + cast.ToString(v1.SeqInIndex)
+				vv += "priority:" + strconv.FormatInt(int64(index.SeqInIndex), 10)
 			}
-			filedTagValue.AddValue(vv)
+			filedTagValues.AddValue(vv)
 		}
 	}
 	if sf.IsCommentTag && field.FieldComment != "" {
@@ -289,46 +315,55 @@ func (sf *View) fixFieldTags(field *ast.Field, ci *Column) {
 		comment = strings.ReplaceAll(comment, `"`, `\"`)
 		comment = strings.ReplaceAll(comment, "\r\n", " ")
 		comment = strings.ReplaceAll(comment, "\n", " ")
-		filedTagValue.AddValue("comment:" + comment)
+		filedTagValues.AddValue("comment:" + comment)
 	}
-	field.AddFieldTag(tagDb, filedTagValue)
+	fieldTags.Add(tagDb, filedTagValues)
 
 	// web tag
-	fixFieldWebTags(field, ci.Name, sf.WebTags, sf.EnableLint)
+	fixFieldWebTags(fieldTags, field, ci.Name, sf.WebTags, sf.EnableLint)
 }
 
-func fixFieldWebTags(field *ast.Field, name string, webTags []WebTag, enableLint bool) {
-	for _, v := range webTags {
-		filedTagValue := ast.NewFiledTagValue().
-			SetSeparate(",")
+func fixFieldWebTags(fieldTags *ast.FieldTags, field *ast.Field, columnName string, webTags []WebTag, enableLint bool) {
+	intoWebTagName := func(kind, columnName string, enableLint bool) string {
 		vv := ""
-		if v.Tag == "json" {
-			if vv = jsonTag(field.FieldComment); vv != "" {
-				filedTagValue.AddValue(vv)
-				return
-			}
-		}
-
-		switch v.Kind {
+		switch kind {
 		case WebTagSmallCamelCase:
-			vv = utils.SmallCamelCase(name, enableLint)
+			vv = utils.SmallCamelCase(columnName, enableLint)
 		case WebTagCamelCase:
-			vv = utils.CamelCase(name, enableLint)
+			vv = utils.CamelCase(columnName, enableLint)
 		case WebTagSnakeCase:
-			vv = utils.SnakeCase(name, enableLint)
+			vv = utils.SnakeCase(columnName, enableLint)
 		case WebTagKebab:
-			vv = utils.Kebab(name, enableLint)
+			vv = utils.Kebab(columnName, enableLint)
 		}
+		return vv
+	}
 
-		if vv != "" {
-			filedTagValue.AddValue(vv)
-			if v.HasOmit {
-				filedTagValue.AddValue("omitempty")
+	for _, v := range webTags {
+		if v.Tag == "json" {
+			if vv := jsonTag(field.FieldComment); vv != "" {
+				fieldTags.Add(
+					v.Tag,
+					ast.NewFiledTagValues().
+						SetSeparate(",").
+						AddValue(vv),
+				)
+				continue
 			}
-			if v.Tag == "json" && affixJSONTag(field.FieldComment) {
-				filedTagValue.AddValue("string")
-			}
-			field.AddFieldTag(v.Tag, filedTagValue)
 		}
+		vv := intoWebTagName(v.Kind, columnName, enableLint)
+		if vv == "" {
+			continue
+		}
+		filedTagValue := ast.NewFiledTagValues().
+			SetSeparate(",").
+			AddValue(vv)
+		if v.HasOmit {
+			filedTagValue.AddValue("omitempty")
+		}
+		if v.Tag == "json" && hasAffixJSONTag(field.FieldComment) {
+			filedTagValue.AddValue("string")
+		}
+		fieldTags.Add(v.Tag, filedTagValue)
 	}
 }

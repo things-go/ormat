@@ -10,6 +10,7 @@ import (
 	"github.com/things-go/ormat/pkg/config"
 	"github.com/things-go/ormat/pkg/consts"
 	"github.com/things-go/ormat/pkg/database"
+	"github.com/things-go/ormat/pkg/tpl"
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/runtime"
 	"github.com/things-go/ormat/view"
@@ -36,11 +37,10 @@ var genCmd = &cobra.Command{
 		vw := view.New(GetViewModel(rt), c.View)
 
 		mergeProtoEnumFile := ast.ProtobufEnumFile{
-			Version:  consts.Version,
-			Package:  vw.Protobuf.Package,
-			Options:  vw.Protobuf.Options,
-			Enums:    nil,
-			Template: ast.ProtobufEnumTpl,
+			Version: consts.Version,
+			Package: vw.Protobuf.Package,
+			Options: vw.Protobuf.Options,
+			Enums:   make([]*ast.ProtobufEnum, 0, 64),
 		}
 
 		list, err := vw.GetDbFile(utils.GetPkgName(c.OutDir))
@@ -49,45 +49,33 @@ var genCmd = &cobra.Command{
 		}
 		for _, v := range list {
 			modelFilename := c.OutDir + "/" + v.Filename + ".go"
-			_ = utils.WriteFile(modelFilename, v.Build())
+			_ = utils.WriteFileWithTemplate(modelFilename, tpl.ModelTpl, v)
 
 			cmd, _ := exec.Command("goimports", "-l", "-w", modelFilename).Output()
 			_, _ = exec.Command("gofmt", "-l", "-w", modelFilename).Output()
 			log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
 
-			if c.View.IsOutSQL {
-				_ = utils.WriteFile(c.OutDir+"/"+v.Filename+".sql", v.BuildSQL())
-			}
-
 			if vw.Protobuf.Enabled {
-				if enums := v.GetEnums(); len(enums) > 0 {
+				if enums := v.GetProtobufEnums(); len(enums) > 0 {
 					if vw.Protobuf.Merge {
 						mergeProtoEnumFile.Enums = append(mergeProtoEnumFile.Enums, enums...)
 					} else {
-						protoEnumFile := ast.ProtobufEnumFile{
-							Version:  consts.Version,
-							Package:  vw.Protobuf.Package,
-							Options:  vw.Protobuf.Options,
-							Enums:    enums,
-							Template: ast.ProtobufEnumTpl,
-						}
-						content := protoEnumFile.Build()
 						protoFilename := intoFilename(vw.Protobuf.Dir, v.Filename, ".proto")
-						_ = utils.WriteFile(protoFilename, content)
+						_ = utils.WriteFileWithTemplate(protoFilename, tpl.ProtobufEnumTpl, ast.ProtobufEnumFile{
+							Version: consts.Version,
+							Package: vw.Protobuf.Package,
+							Options: vw.Protobuf.Options,
+							Enums:   enums,
+						})
 						log.Info("👆 " + protoFilename)
-
 					}
 				}
 			}
 		}
 
-		if vw.Protobuf.Enabled &&
-			vw.Protobuf.Merge &&
-			len(mergeProtoEnumFile.Enums) > 0 {
-			mergeFilename := vw.Protobuf.GetMergeFilename()
-			enumFilename := intoFilename(vw.Protobuf.Dir, mergeFilename, ".proto")
-			content := mergeProtoEnumFile.Build()
-			_ = utils.WriteFile(enumFilename, content)
+		if vw.Protobuf.Enabled && vw.Protobuf.Merge && len(mergeProtoEnumFile.Enums) > 0 {
+			enumFilename := intoFilename(vw.Protobuf.Dir, vw.Protobuf.GetMergeFilename(), ".proto")
+			_ = utils.WriteFileWithTemplate(enumFilename, tpl.ProtobufEnumTpl, mergeProtoEnumFile)
 			log.Info("👆 " + enumFilename)
 		}
 

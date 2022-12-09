@@ -6,125 +6,18 @@ import (
 
 // Struct define a struct
 type Struct struct {
-	StructName     string           // struct name
-	StructComment  string           // struct comment
-	StructFields   []Field          // struct field list
-	TableName      string           // struct table name in database.
-	CreateTableSQL string           // create table SQL
-	ProtoMessage   *ProtobufMessage // proto message.
-	ProtoEnum      []*ProtobufEnum  // proto enum, parse from comment
+	StructName         string                 // struct name
+	StructComment      string                 // struct comment
+	StructFields       []Field                // struct field list
+	TableName          string                 // struct table name in database.
+	AbbrTableName      string                 // struct abbreviate table name
+	CreateTableSQL     string                 // create table SQL
+	ProtoMessageFields []ProtobufMessageField // proto message field
+	ProtoEnum          []*ProtobufEnum        // proto enum, parse from comment
 }
 
-// AddStructFields Add one or more fields
-func (s *Struct) AddStructFields(e ...Field) *Struct {
-	s.StructFields = append(s.StructFields, e...)
-	return s
-}
-
-// Build Get the struct data.
-func (s *Struct) Build() string {
-	buf := &strings.Builder{}
-
-	comment := s.StructComment
-	if comment != "" {
-		comment = strings.ReplaceAll(strings.TrimSpace(comment), "\n", "\r\n// ")
-	} else {
-		comment = "..."
-	}
-	// comment
-	buf.WriteString("// " + s.StructName + delimSpace + comment + delimLF)
-	buf.WriteString("type\t" + s.StructName + "\tstruct {" + delimLF)
-
-	// field every line
-	mp := make(map[string]struct{}, len(s.StructFields))
-	for _, field := range s.StructFields {
-		if _, ok := mp[field.FieldName]; !ok {
-			mp[field.FieldName] = struct{}{}
-			buf.WriteString("\t\t" + field.BuildLine() + delimLF)
-		}
-	}
-	buf.WriteString("}" + delimLF)
-
-	return buf.String()
-}
-
-// BuildTableNameTemplate struct implement schema.Tabler.
-func (s *Struct) BuildTableNameTemplate() string {
-	type tmpTpl struct {
-		TableName  string
-		StructName string
-	}
-
-	var buf strings.Builder
-
-	_ = TableNameTpl.Execute(&buf, tmpTpl{
-		TableName:  s.TableName,
-		StructName: s.StructName,
-	})
-	return buf.String()
-}
-
-// BuildColumnNameTemplate field name mapping column name which in database.
-func (s *Struct) BuildColumnNameTemplate() string {
-	type tpl struct {
-		StructName string
-		Fields     []Field
-	}
-	var buf strings.Builder
-
-	_ = ColumnNameTpl.Execute(&buf, &tpl{
-		StructName: s.StructName,
-		Fields:     s.StructFields,
-	})
-	return buf.String()
-}
-
-func (s *Struct) BuildSQL() string {
-	buf := &strings.Builder{}
-
-	comment := s.StructComment
-	if comment != "" {
-		comment = strings.ReplaceAll(strings.TrimSpace(comment), "\n", "\r\n// ")
-	} else {
-		comment = "..."
-	}
-	// comment
-	buf.WriteString("-- " + s.StructName + " " + comment + delimLF)
-	// sql
-	buf.WriteString(s.CreateTableSQL + ";" + delimLF)
-	return buf.String()
-}
-
-func (s *Struct) BuildProtobufTemplate() string {
-	var buf strings.Builder
-
-	s.parseProtobufMessage()
-	_ = ProtobufCommentTpl.Execute(&buf, s.ProtoMessage)
-	return buf.String()
-}
-
-func (s *Struct) GetProtobufEnum() []*ProtobufEnum {
-	s.parseProtobufMessage()
-	return s.ProtoEnum
-}
-
-func (s *Struct) parseProtobufMessage() {
-	if s.ProtoMessage != nil {
-		return
-	}
-
-	// 获取表名缩写
-	intoAbbrTableName := func(tableName string) string {
-		ss := strings.Split(tableName, "_")
-		tableName = ""
-		for _, vv := range ss {
-			if len(vv) > 0 {
-				tableName += string(vv[0])
-			}
-		}
-		return tableName
-	}
-	// 转获成注解
+func ParseProtobuf(structName, tableName string, structFields []Field) ([]ProtobufMessageField, []*ProtobufEnum) {
+	// 转成注解
 	intoAnnotation := func(annotations []string) string {
 		annotation := ""
 		if len(annotations) > 0 {
@@ -133,21 +26,17 @@ func (s *Struct) parseProtobufMessage() {
 		return annotation
 	}
 
-	pm := &ProtobufMessage{
-		StructName:    s.StructName,
-		StructComment: s.StructComment,
-		TableName:     s.TableName,
-		AbbrTableName: intoAbbrTableName(s.TableName),
-		Fields:        make([]ProtobufMessageField, 0, len(s.StructFields)),
-	}
-	for _, field := range s.StructFields {
-		var tmpAnnotations []string
-		dataType := field.ColumnDataType
+	protobufMessageFields := make([]ProtobufMessageField, 0, len(structFields))
+	protoEnum := make([]*ProtobufEnum, 0, len(structFields))
+	tmpAnnotations := make([]string, 0, 16)
+	for _, field := range structFields {
+		tmpAnnotations = tmpAnnotations[:0]
+		dataType := field.ColumnGoType
 		// 转换成 proto 类型
 		switch dataType {
 		case "time.Time":
 			dataType = "google.protobuf.Timestamp"
-			pm.Fields = append(pm.Fields,
+			protobufMessageFields = append(protobufMessageFields,
 				ProtobufMessageField{
 					FieldDataType:   dataType,
 					FieldName:       field.ColumnName,
@@ -179,7 +68,7 @@ func (s *Struct) parseProtobufMessage() {
 				`(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
 		}
 
-		pm.Fields = append(pm.Fields, ProtobufMessageField{
+		protobufMessageFields = append(protobufMessageFields, ProtobufMessageField{
 			FieldDataType:   dataType,
 			FieldName:       field.ColumnName,
 			FieldComment:    field.FieldComment,
@@ -187,10 +76,10 @@ func (s *Struct) parseProtobufMessage() {
 			IsTimestamp:     false,
 		})
 
-		protobufEnum := ParseEnumComment(s.StructName, s.TableName, field.FieldName, field.ColumnName, field.FieldComment)
+		protobufEnum := ParseEnumComment(structName, tableName, field.FieldName, field.ColumnName, field.FieldComment)
 		if protobufEnum != nil {
-			s.ProtoEnum = append(s.ProtoEnum, protobufEnum)
+			protoEnum = append(protoEnum, protobufEnum)
 		}
 	}
-	s.ProtoMessage = pm
+	return protobufMessageFields, protoEnum
 }

@@ -1,16 +1,16 @@
 package ast
 
 import (
-	"bytes"
+	"encoding/json"
 	"sort"
 	"strings"
-	"text/template"
 
 	"github.com/spf13/cast"
 	"github.com/things-go/log"
 )
 
 // ProtobufEnumField protobuf enum field
+// enum comment format: {"0":["name","mapping","comment"]}
 type ProtobufEnumField struct {
 	Id      int    // 段序号
 	Name    string // 段名称 uppercase(表名_列名_段名)
@@ -28,10 +28,11 @@ func (p ProtobufEnumFieldSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // ProtobufEnum protobuf enum
 type ProtobufEnum struct {
 	EnumName    string              // 枚举名称,表名+列名
-	EnumComment string              // 注释
+	EnumComment string              // 枚举注释
 	EnumFields  []ProtobufEnumField // 枚举字段
 }
 
+// ParseEnumComment parse enum comment
 func ParseEnumComment(structName, tableName, fieldName, columnName, comment string) *ProtobufEnum {
 	annotation := MatchEnumAnnotation(comment)
 	if annotation == "" {
@@ -74,20 +75,13 @@ func ParseEnumComment(structName, tableName, fieldName, columnName, comment stri
 	return &protobufEnum
 }
 
-type ProtobufEnumFile struct {
-	Version  string
-	Package  string
-	Options  map[string]string
-	Enums    []*ProtobufEnum
-	Template *template.Template
-}
+// ParseEnumAnnotation 解析枚举注解.
+func ParseEnumAnnotation(annotation string) (map[string][]string, error) {
+	var mp map[string][]string
 
-func (p *ProtobufEnumFile) Build() []byte {
-	if len(p.Enums) == 0 {
-		return []byte{}
+	err := json.Unmarshal([]byte(annotation), &mp)
+	if err != nil {
+		return nil, err
 	}
-	buf := bytes.Buffer{}
-
-	p.Template.Execute(&buf, p)
-	return buf.Bytes()
+	return mp, nil
 }

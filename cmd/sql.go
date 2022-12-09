@@ -5,6 +5,7 @@ import (
 
 	"github.com/things-go/ormat/pkg/config"
 	"github.com/things-go/ormat/pkg/database"
+	"github.com/things-go/ormat/pkg/tpl"
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/runtime"
 	"github.com/things-go/ormat/view"
@@ -29,12 +30,10 @@ var sqlCmd = &cobra.Command{
 
 		vw := view.New(GetViewModel(rt), c.View)
 
-		content, err := vw.GetDBCreateTableSQLContent()
+		sqlFile, err := vw.GetDBCreateTableSQL()
 		if err != nil {
 			return err
 		}
-		_ = utils.WriteFile(c.OutDir+"/create_table.sql", content)
-
-		return nil
+		return utils.WriteFileWithTemplate(c.OutDir+"/create_table.sql", tpl.SqlDDLTpl, sqlFile)
 	},
 }

@@ -34,7 +34,7 @@ NOTE:
 
 - database filed comment `[@jsontag: realjsontag]` will overwrite the filed json tags.
 - database filed comment `[@affix]` will append `,string` to the filed json tags.
-- database filed comment `[@enum: enumValue]` or `[@status: enumValue]` will generate protobuf enum comment. `enumValue` should be like `{"0":["name","remark","comment"]}`
+- database filed comment `[@enum: enumValue]` or `[@status: enumValue]` will generate protobuf enum comment. `enumValue` should be like `{"0":["name","mapping","comment"]}`
 
 ```go
 // SysUser 用户表

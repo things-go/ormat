@@ -11,6 +11,7 @@ import (
 
 	"github.com/things-go/ormat/pkg/config"
 	"github.com/things-go/ormat/pkg/consts"
+	"github.com/things-go/ormat/pkg/tpl"
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/view"
 	"github.com/things-go/ormat/view/ast"
@@ -93,11 +94,10 @@ var buildCmd = &cobra.Command{
 
 		protobufConfig := &c.View.Protobuf
 		mergeProtoEnumFile := ast.ProtobufEnumFile{
-			Version:  consts.Version,
-			Package:  protobufConfig.Package,
-			Options:  protobufConfig.Options,
-			Enums:    nil,
-			Template: ast.ProtobufEnumTpl,
+			Version: consts.Version,
+			Package: protobufConfig.Package,
+			Options: protobufConfig.Options,
+			Enums:   make([]*ast.ProtobufEnum, 0, 64),
 		}
 
 		generateModelFile := func(filename string) error {
@@ -118,27 +118,24 @@ var buildCmd = &cobra.Command{
 			}
 			for _, v := range list {
 				path := c.OutDir + "/" + v.Filename + ".go"
-				_ = utils.WriteFile(path, v.Build())
+				_ = utils.WriteFileWithTemplate(path, tpl.ModelTpl, v)
 
 				cmd, _ := exec.Command("goimports", "-l", "-w", path).Output()
 				_, _ = exec.Command("gofmt", "-l", "-w", path).Output()
 				log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
 
 				if protobufConfig.Enabled {
-					if enums := v.GetEnums(); len(enums) > 0 {
+					if enums := v.GetProtobufEnums(); len(enums) > 0 {
 						if protobufConfig.Merge {
 							mergeProtoEnumFile.Enums = append(mergeProtoEnumFile.Enums, enums...)
 						} else {
-							protoEnumFile := ast.ProtobufEnumFile{
-								Version:  consts.Version,
-								Package:  protobufConfig.Package,
-								Options:  protobufConfig.Options,
-								Enums:    enums,
-								Template: ast.ProtobufEnumTpl,
-							}
-							content := protoEnumFile.Build()
 							enumFilename := intoFilename(protobufConfig.Dir, v.Filename, ".proto")
-							_ = utils.WriteFile(enumFilename, content)
+							_ = utils.WriteFileWithTemplate(enumFilename, tpl.ProtobufEnumTpl, ast.ProtobufEnumFile{
+								Version: consts.Version,
+								Package: protobufConfig.Package,
+								Options: protobufConfig.Options,
+								Enums:   enums,
+							})
 							log.Info("👆 " + enumFilename)
 						}
 					}
@@ -153,13 +150,9 @@ var buildCmd = &cobra.Command{
 				log.Warnf("🧐 generate file from SQL file(%s) failed !!!", filename)
 			}
 		}
-		if protobufConfig.Enabled &&
-			protobufConfig.Merge &&
-			len(mergeProtoEnumFile.Enums) > 0 {
-			mergeFilename := protobufConfig.GetMergeFilename()
-			enumFilename := intoFilename(protobufConfig.Dir, mergeFilename, ".proto")
-			content := mergeProtoEnumFile.Build()
-			_ = utils.WriteFile(enumFilename, content)
+		if protobufConfig.Enabled && protobufConfig.Merge && len(mergeProtoEnumFile.Enums) > 0 {
+			enumFilename := intoFilename(protobufConfig.Dir, protobufConfig.GetMergeFilename(), ".proto")
+			_ = utils.WriteFileWithTemplate(enumFilename, tpl.ProtobufEnumTpl, mergeProtoEnumFile)
 			log.Info("👆 " + enumFilename)
 		}
 
@@ -173,7 +166,7 @@ var buildEnumCmd = &cobra.Command{
 	Short:   "Generate enum from sql",
 	Example: "ormat build enum",
 	RunE: func(*cobra.Command, []string) error {
-		return generateEnumFile(ast.ProtobufEnumTpl)
+		return generateEnumFile(tpl.ProtobufEnumTpl)
 	},
 }
 
@@ -182,7 +175,7 @@ var buildEnumMappingCmd = &cobra.Command{
 	Short:   "Generate enum mapping from sql",
 	Example: "ormat build enum mapping",
 	RunE: func(*cobra.Command, []string) error {
-		return generateEnumFile(ast.ProtobufEnumMappingTpl)
+		return generateEnumFile(tpl.ProtobufEnumMappingTpl)
 	},
 }
 
@@ -217,11 +210,10 @@ func generateEnumFile(usedTemplate *template.Template) error {
 	protobufConfig := &c.View.Protobuf
 
 	mergeProtoEnumFile := ast.ProtobufEnumFile{
-		Version:  consts.Version,
-		Package:  protobufConfig.Package,
-		Options:  protobufConfig.Options,
-		Enums:    nil,
-		Template: usedTemplate,
+		Version: consts.Version,
+		Package: protobufConfig.Package,
+		Options: protobufConfig.Options,
+		Enums:   nil,
 	}
 
 	genEnumFile := func(filename string) error {
@@ -241,19 +233,18 @@ func generateEnumFile(usedTemplate *template.Template) error {
 			return err
 		}
 		for _, v := range list {
-			if enums := v.GetEnums(); len(enums) > 0 {
+			if enums := v.GetProtobufEnums(); len(enums) > 0 {
 				if protobufConfig.Merge {
 					mergeProtoEnumFile.Enums = append(mergeProtoEnumFile.Enums, enums...)
 				} else {
 					protoEnumFile := ast.ProtobufEnumFile{
-						Version:  consts.Version,
-						Package:  protobufConfig.Package,
-						Options:  protobufConfig.Options,
-						Enums:    enums,
-						Template: usedTemplate,
+						Version: consts.Version,
+						Package: protobufConfig.Package,
+						Options: protobufConfig.Options,
+						Enums:   enums,
 					}
 					enumFilename := intoFilename(protobufConfig.Dir, v.Filename, filenameSuffix)
-					_ = utils.WriteFile(enumFilename, protoEnumFile.Build())
+					_ = utils.WriteFileWithTemplate(enumFilename, usedTemplate, protoEnumFile)
 					log.Info("👆 " + enumFilename)
 				}
 			}
@@ -271,7 +262,7 @@ func generateEnumFile(usedTemplate *template.Template) error {
 	if protobufConfig.Merge && len(mergeProtoEnumFile.Enums) > 0 {
 		mergeFilename := protobufConfig.GetMergeFilename()
 		enumFilename := intoFilename(protobufConfig.Dir, mergeFilename, filenameSuffix)
-		_ = utils.WriteFile(enumFilename, mergeProtoEnumFile.Build())
+		_ = utils.WriteFileWithTemplate(enumFilename, usedTemplate, mergeProtoEnumFile)
 		log.Info("👆 " + enumFilename)
 	}
 
