@@ -1,13 +1,16 @@
 package ast
 
 import (
+	"bytes"
 	"sort"
 	"strings"
+	"text/template"
 
 	"github.com/spf13/cast"
 	"github.com/things-go/log"
 )
 
+// ProtobufEnumField protobuf enum field
 type ProtobufEnumField struct {
 	Id      int    // 段序号
 	Name    string // 段名称 uppercase(表名_列名_段名)
@@ -15,36 +18,21 @@ type ProtobufEnumField struct {
 	Comment string // 段注释
 }
 
-type ProtobufEnum struct {
-	EnumName    string              // 枚举名称 表名+列名
-	EnumComment string              // 注释
-	EnumFields  []ProtobufEnumField // 枚举字段
-}
-
-type ProtobufMessageField struct {
-	FieldDataType   string // 列数据类型
-	FieldName       string // 列名称
-	FieldComment    string // 列注释
-	FieldAnnotation string // 列注解
-	IsTimestamp     bool   // 是否是时间类型
-}
-
-type ProtobufMessage struct {
-	StructName    string                 // 结构体名
-	StructComment string                 // 结构体注释
-	TableName     string                 // 表名
-	AbbrTableName string                 // 表名缩写
-	Fields        []ProtobufMessageField // 字段列表
-	Enums         []*ProtobufEnum        // 枚举列表(解析注释中)
-}
-
+// ProtobufEnumFieldSlice protobuf enum field slice
 type ProtobufEnumFieldSlice []ProtobufEnumField
 
 func (p ProtobufEnumFieldSlice) Len() int           { return len(p) }
 func (p ProtobufEnumFieldSlice) Less(i, j int) bool { return p[i].Id < p[j].Id }
 func (p ProtobufEnumFieldSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-func parseEnumComment(structName, tableName, fieldName, columnName, comment string) *ProtobufEnum {
+// ProtobufEnum protobuf enum
+type ProtobufEnum struct {
+	EnumName    string              // 枚举名称,表名+列名
+	EnumComment string              // 注释
+	EnumFields  []ProtobufEnumField // 枚举字段
+}
+
+func ParseEnumComment(structName, tableName, fieldName, columnName, comment string) *ProtobufEnum {
 	annotation := MatchEnumAnnotation(comment)
 	if annotation == "" {
 		return nil
@@ -84,4 +72,22 @@ func parseEnumComment(structName, tableName, fieldName, columnName, comment stri
 	}
 	sort.Sort(ProtobufEnumFieldSlice(protobufEnum.EnumFields))
 	return &protobufEnum
+}
+
+type ProtobufEnumFile struct {
+	Version  string
+	Package  string
+	Options  map[string]string
+	Enums    []*ProtobufEnum
+	Template *template.Template
+}
+
+func (p *ProtobufEnumFile) Build() []byte {
+	if len(p.Enums) == 0 {
+		return []byte{}
+	}
+	buf := bytes.Buffer{}
+
+	p.Template.Execute(&buf, p)
+	return buf.Bytes()
 }

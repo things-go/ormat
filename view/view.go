@@ -49,11 +49,19 @@ type Config struct {
 
 // Protobuf config
 type Protobuf struct {
-	Enabled bool              `yaml:"enabled" json:"enabled"`
-	Merge   bool              `yaml:"merge" json:"merge"`
-	Dir     string            `yaml:"dir" json:"dir" binding:"required_if=Enabled true"`
-	Package string            `yaml:"package" json:"package" binding:"required_if=Enabled true"`
-	Options map[string]string `yaml:"options" json:"options" binding:"required_if=Enabled true"`
+	Enabled       bool              `yaml:"enabled" json:"enabled"`
+	Merge         bool              `yaml:"merge" json:"merge"`
+	MergeFilename string            `yaml:"mergeFilename" json:"mergeFilename"`
+	Dir           string            `yaml:"dir" json:"dir" binding:"required_if=Enabled true"`
+	Package       string            `yaml:"package" json:"package" binding:"required_if=Enabled true"`
+	Options       map[string]string `yaml:"options" json:"options" binding:"required_if=Enabled true"`
+}
+
+func (p *Protobuf) GetMergeFilename() string {
+	if p.MergeFilename == "" {
+		return utils.GetPkgName(p.Dir)
+	}
+	return p.MergeFilename
 }
 
 // View information

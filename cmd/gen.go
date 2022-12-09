@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bytes"
 	"os/exec"
 	"strings"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/things-go/log"
 
 	"github.com/things-go/ormat/pkg/config"
+	"github.com/things-go/ormat/pkg/consts"
 	"github.com/things-go/ormat/pkg/database"
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/runtime"
@@ -35,12 +35,18 @@ var genCmd = &cobra.Command{
 
 		vw := view.New(GetViewModel(rt), c.View)
 
+		mergeProtoEnumFile := ast.ProtobufEnumFile{
+			Version:  consts.Version,
+			Package:  vw.Protobuf.Package,
+			Options:  vw.Protobuf.Options,
+			Enums:    nil,
+			Template: ast.ProtobufEnumTpl,
+		}
+
 		list, err := vw.GetDbFile(utils.GetPkgName(c.OutDir))
 		if err != nil {
 			return err
 		}
-
-		buf := bytes.Buffer{}
 		for _, v := range list {
 			modelFilename := c.OutDir + "/" + v.Filename + ".go"
 			_ = utils.WriteFile(modelFilename, v.Build())
@@ -54,28 +60,35 @@ var genCmd = &cobra.Command{
 			}
 
 			if vw.Protobuf.Enabled {
-				if vw.Protobuf.Merge {
-					content := v.BuildProtobufEnumBody()
-					if len(content) > 0 {
-						buf.Write(content)
-					}
-				} else {
-					content := v.BuildProtobufEnum()
-					if len(content) > 0 {
-						protoFilename := vw.Protobuf.Dir + "/" + v.Filename + ".proto"
+				if enums := v.GetEnums(); len(enums) > 0 {
+					if vw.Protobuf.Merge {
+						mergeProtoEnumFile.Enums = append(mergeProtoEnumFile.Enums, enums...)
+					} else {
+						protoEnumFile := ast.ProtobufEnumFile{
+							Version:  consts.Version,
+							Package:  vw.Protobuf.Package,
+							Options:  vw.Protobuf.Options,
+							Enums:    enums,
+							Template: ast.ProtobufEnumTpl,
+						}
+						content := protoEnumFile.Build()
+						protoFilename := intoFilename(vw.Protobuf.Dir, v.Filename, ".proto")
 						_ = utils.WriteFile(protoFilename, content)
 						log.Info("👆 " + protoFilename)
+
 					}
 				}
 			}
 		}
 
-		if vw.Protobuf.Enabled && vw.Protobuf.Merge && buf.Len() > 0 {
-			filename := utils.GetPkgName(vw.Protobuf.Dir)
-			protoFilename := vw.Protobuf.Dir + "/" + filename + ".proto"
-			header := ast.BuildRawProtobufEnumHeader(vw.Protobuf.Package, vw.Protobuf.Options)
-			_ = utils.WriteFile(protoFilename, append(header, buf.Bytes()...))
-			log.Info("👆 " + protoFilename)
+		if vw.Protobuf.Enabled &&
+			vw.Protobuf.Merge &&
+			len(mergeProtoEnumFile.Enums) > 0 {
+			mergeFilename := vw.Protobuf.GetMergeFilename()
+			enumFilename := intoFilename(vw.Protobuf.Dir, mergeFilename, ".proto")
+			content := mergeProtoEnumFile.Build()
+			_ = utils.WriteFile(enumFilename, content)
+			log.Info("👆 " + enumFilename)
 		}
 
 		log.Info("😄 generate success !!!")

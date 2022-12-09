@@ -12,6 +12,7 @@ type Struct struct {
 	TableName      string           // struct table name in database.
 	CreateTableSQL string           // create table SQL
 	ProtoMessage   *ProtobufMessage // proto message.
+	ProtoEnum      []*ProtobufEnum  // proto enum, parse from comment
 }
 
 // AddStructFields Add one or more fields
@@ -102,36 +103,9 @@ func (s *Struct) BuildProtobufTemplate() string {
 	return buf.String()
 }
 
-func (s *Struct) BuildProtobufEnumTemplate() string {
-	type tpl struct {
-		Enums   []*ProtobufEnum
-		Package string
-		Options map[string]string
-	}
-	var buf strings.Builder
-
+func (s *Struct) GetProtobufEnum() []*ProtobufEnum {
 	s.parseProtobufMessage()
-	if len(s.ProtoMessage.Enums) > 0 {
-		_ = ProtobufEnumTpl.Execute(&buf, &tpl{
-			Enums: s.ProtoMessage.Enums,
-		})
-	}
-	return buf.String()
-}
-
-func (s *Struct) BuildProtobufEnumMappingTemplate() string {
-	type tpl struct {
-		Enums []*ProtobufEnum
-	}
-	var buf strings.Builder
-
-	s.parseProtobufMessage()
-	if len(s.ProtoMessage.Enums) > 0 {
-		_ = ProtobufEnumMappingTpl.Execute(&buf, &tpl{
-			Enums: s.ProtoMessage.Enums,
-		})
-	}
-	return buf.String()
+	return s.ProtoEnum
 }
 
 func (s *Struct) parseProtobufMessage() {
@@ -165,7 +139,6 @@ func (s *Struct) parseProtobufMessage() {
 		TableName:     s.TableName,
 		AbbrTableName: intoAbbrTableName(s.TableName),
 		Fields:        make([]ProtobufMessageField, 0, len(s.StructFields)),
-		Enums:         make([]*ProtobufEnum, 0, 32),
 	}
 	for _, field := range s.StructFields {
 		var tmpAnnotations []string
@@ -214,9 +187,9 @@ func (s *Struct) parseProtobufMessage() {
 			IsTimestamp:     false,
 		})
 
-		protobufEnum := parseEnumComment(s.StructName, s.TableName, field.FieldName, field.ColumnName, field.FieldComment)
+		protobufEnum := ParseEnumComment(s.StructName, s.TableName, field.FieldName, field.ColumnName, field.FieldComment)
 		if protobufEnum != nil {
-			pm.Enums = append(pm.Enums, protobufEnum)
+			s.ProtoEnum = append(s.ProtoEnum, protobufEnum)
 		}
 	}
 	s.ProtoMessage = pm

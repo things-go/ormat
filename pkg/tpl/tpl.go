@@ -3,6 +3,8 @@ package tpl
 import (
 	"embed"
 	"text/template"
+
+	"github.com/things-go/ormat/pkg/utils"
 )
 
 const (
@@ -16,8 +18,15 @@ const (
 //go:embed template
 var Static embed.FS
 
-var Template = template.Must(template.New("components").
-	Funcs(template.FuncMap{
-		"add": func(a, b int) int { return a + b },
-	}).
-	ParseFS(Static, "template/layout/*"))
+var TemplateFuncs = template.FuncMap{
+	"add":            func(a, b int) int { return a + b },
+	"snakecase":      func(s string) string { return utils.SnakeCase(s, false) },
+	"kebabcase":      func(s string) string { return utils.Kebab(s, false) },
+	"camelcase":      func(s string) string { return utils.CamelCase(s, false) },
+	"smallcamelcase": func(s string) string { return utils.SmallCamelCase(s, false) },
+}
+var Template = template.Must(
+	template.New("components").
+		Funcs(TemplateFuncs).
+		ParseFS(Static, "template/layout/*"),
+)
