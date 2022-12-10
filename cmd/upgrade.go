@@ -22,9 +22,10 @@ import (
 )
 
 var upgradeCmd = &cobra.Command{
-	Use:   "upgrade",
-	Short: "Upgrade ormat",
-	Long:  "Upgrade ormat by providing a version. If no version is provided, upgrade to the latest.",
+	Use:          "upgrade",
+	Short:        "Upgrade ormat",
+	Long:         "Upgrade ormat by providing a version. If no version is provided, upgrade to the latest.",
+	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c := config.Global
 		err := c.Load()

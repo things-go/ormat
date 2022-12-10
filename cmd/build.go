@@ -2,15 +2,12 @@ package cmd
 
 import (
 	"os"
-	"os/exec"
-	"strings"
 	"text/template"
 
 	"github.com/spf13/cobra"
 	"github.com/things-go/log"
 
 	"github.com/things-go/ormat/pkg/config"
-	"github.com/things-go/ormat/pkg/consts"
 	"github.com/things-go/ormat/pkg/tpl"
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/view"
@@ -27,9 +24,9 @@ var protobuf = view.Protobuf{
 	Dir:           "",
 	Package:       "",
 	Options:       nil,
+	Suffix:        "",
+	Template:      "",
 }
-var filenameSuffix string
-var customTemplate string
 
 func init() {
 	buildCmd.PersistentFlags().StringSliceVarP(&inputFile, "input", "i", nil, "input file")
@@ -55,14 +52,14 @@ func init() {
 	buildEnumCmd.PersistentFlags().StringVarP(&protobuf.Dir, "dir", "d", "", "protobuf out directory")
 	buildEnumCmd.PersistentFlags().StringVarP(&protobuf.Package, "package", "p", "", "protobuf package name")
 	buildEnumCmd.PersistentFlags().StringToStringVarP(&protobuf.Options, "options", "t", nil, "protobuf options key value")
-	buildEnumCmd.PersistentFlags().StringVarP(&filenameSuffix, "suffix", "s", ".proto", "out filename suffix")
+	buildEnumCmd.PersistentFlags().StringVarP(&protobuf.Suffix, "suffix", "s", ".proto", "out filename suffix")
 	buildEnumCmd.MarkFlagsRequiredTogether(
 		"dir",
 		"package",
 		"options",
 	)
 
-	buildEnumCustomCmd.Flags().StringVar(&customTemplate, "template", "", "use custom template")
+	buildEnumCustomCmd.Flags().StringVar(&protobuf.Template, "template", "", "use custom template")
 	buildEnumCustomCmd.MarkFlagRequired("template")
 
 	buildEnumCmd.AddCommand(
@@ -76,87 +73,12 @@ var buildCmd = &cobra.Command{
 	Use:     "build",
 	Short:   "Generate model from sql",
 	Example: "ormat build",
+	PreRunE: PreRunBuildEnum,
 	RunE: func(*cobra.Command, []string) error {
 		c := config.Global
-		err := c.Load()
-		if err != nil {
-			return err
-		}
-		c.OutDir = outDir
-		c.View.Protobuf = view.Protobuf{
-			Enabled: protobuf.Enabled,
-			Dir:     protobuf.Dir,
-			Merge:   protobuf.Merge,
-			Package: protobuf.Package,
-			Options: protobuf.Options,
-		}
-		setupBase(c)
 
-		protobufConfig := &c.View.Protobuf
-		mergeProtoEnumFile := ast.ProtobufEnumFile{
-			Version: consts.Version,
-			Package: protobufConfig.Package,
-			Options: protobufConfig.Options,
-			Enums:   make([]*ast.ProtobufEnum, 0, 64),
-		}
-
-		generateModelFile := func(filename string) error {
-			content, err := os.ReadFile(filename)
-			if err != nil {
-				return err
-			}
-			vw := view.New(
-				&driver.SQL{
-					CreateTableSQL:   string(content),
-					CustomDefineType: c.TypeDefine,
-				},
-				c.View,
-			)
-			list, err := vw.GetDbFile(utils.GetPkgName(c.OutDir))
-			if err != nil {
-				return err
-			}
-			for _, v := range list {
-				path := c.OutDir + "/" + v.Filename + ".go"
-				_ = utils.WriteFileWithTemplate(path, tpl.ModelTpl, v)
-
-				cmd, _ := exec.Command("goimports", "-l", "-w", path).Output()
-				_, _ = exec.Command("gofmt", "-l", "-w", path).Output()
-				log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
-
-				if protobufConfig.Enabled {
-					if enums := v.GetProtobufEnums(); len(enums) > 0 {
-						if protobufConfig.Merge {
-							mergeProtoEnumFile.Enums = append(mergeProtoEnumFile.Enums, enums...)
-						} else {
-							enumFilename := intoFilename(protobufConfig.Dir, v.Filename, ".proto")
-							_ = utils.WriteFileWithTemplate(enumFilename, tpl.ProtobufEnumTpl, ast.ProtobufEnumFile{
-								Version: consts.Version,
-								Package: protobufConfig.Package,
-								Options: protobufConfig.Options,
-								Enums:   enums,
-							})
-							log.Info("👆 " + enumFilename)
-						}
-					}
-				}
-			}
-			return nil
-		}
-
-		for _, filename := range inputFile {
-			err = generateModelFile(filename)
-			if err != nil {
-				log.Warnf("🧐 generate file from SQL file(%s) failed !!!", filename)
-			}
-		}
-		if protobufConfig.Enabled && protobufConfig.Merge && len(mergeProtoEnumFile.Enums) > 0 {
-			enumFilename := intoFilename(protobufConfig.Dir, protobufConfig.GetMergeFilename(), ".proto")
-			_ = utils.WriteFileWithTemplate(enumFilename, tpl.ProtobufEnumTpl, mergeProtoEnumFile)
-			log.Info("👆 " + enumFilename)
-		}
-
-		log.Info("😄 generate success !!!")
+		astFiles := parseSqlFromFile(c, inputFile)
+		genModelFile(astFiles, &c.View.Protobuf, c.OutDir)
 		return nil
 	},
 }
@@ -165,8 +87,9 @@ var buildEnumCmd = &cobra.Command{
 	Use:     "enum",
 	Short:   "Generate enum from sql",
 	Example: "ormat build enum",
+	PreRunE: PreRunBuildEnum,
 	RunE: func(*cobra.Command, []string) error {
-		return generateEnumFile(tpl.ProtobufEnumTpl)
+		return runGenEnumFile(tpl.ProtobufEnumTpl)
 	},
 }
 
@@ -174,8 +97,9 @@ var buildEnumMappingCmd = &cobra.Command{
 	Use:     "mapping",
 	Short:   "Generate enum mapping from sql",
 	Example: "ormat build enum mapping",
+	PreRunE: PreRunBuildEnum,
 	RunE: func(*cobra.Command, []string) error {
-		return generateEnumFile(tpl.ProtobufEnumMappingTpl)
+		return runGenEnumFile(tpl.ProtobufEnumMappingTpl)
 	},
 }
 
@@ -183,89 +107,65 @@ var buildEnumCustomCmd = &cobra.Command{
 	Use:     "custom",
 	Short:   "Generate enum custom with template from sql",
 	Example: "ormat build enum custom",
+	PreRunE: PreRunBuildEnum,
 	RunE: func(*cobra.Command, []string) error {
-		usedTemplate, err := parseTemplateFromFile(customTemplate)
+		usedTemplate, err := parseTemplateFromFile(protobuf.Template)
 		if err != nil {
 			return err
 		}
-		return generateEnumFile(usedTemplate)
+		return runGenEnumFile(usedTemplate)
 	},
 }
 
-func generateEnumFile(usedTemplate *template.Template) error {
+func PreRunBuildEnum(*cobra.Command, []string) error {
 	c := config.Global
 	err := c.Load()
 	if err != nil {
 		return err
 	}
+	c.OutDir = outDir
 	c.View.Protobuf = view.Protobuf{
-		Enabled: true,
+		Enabled: protobuf.Enabled,
 		Dir:     protobuf.Dir,
 		Merge:   protobuf.Merge,
 		Package: protobuf.Package,
 		Options: protobuf.Options,
+		Suffix:  GetFilenameSuffix(protobuf.Suffix),
 	}
 	setupBase(c)
-	filenameSuffix = GetFilenameSuffix(filenameSuffix)
-	protobufConfig := &c.View.Protobuf
+	return nil
+}
 
-	mergeProtoEnumFile := ast.ProtobufEnumFile{
-		Version: consts.Version,
-		Package: protobufConfig.Package,
-		Options: protobufConfig.Options,
-		Enums:   nil,
-	}
+func runGenEnumFile(usedTemplate *template.Template) error {
+	c := config.Global
 
-	genEnumFile := func(filename string) error {
+	astFiles := parseSqlFromFile(c, inputFile)
+	genEnumFile(astFiles, &c.View.Protobuf, usedTemplate)
+	return nil
+}
+
+func parseSqlFromFile(c *config.Config, inputFiles []string) []*ast.File {
+	innerParseFromFile := func(filename string) ([]*ast.File, error) {
 		content, err := os.ReadFile(filename)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		vw := view.New(
+		return view.New(
 			&driver.SQL{
 				CreateTableSQL:   string(content),
 				CustomDefineType: c.TypeDefine,
 			},
 			c.View,
-		)
-		list, err := vw.GetDbFile(utils.GetPkgName(c.OutDir))
+		).GetDbFile(utils.GetPkgName(c.OutDir))
+	}
+	astFiles := make([]*ast.File, 0, 64)
+	for _, filename := range inputFiles {
+		astFile, err := innerParseFromFile(filename)
 		if err != nil {
-			return err
+			log.Warnf("🧐 parse from SQL file(%s) failed !!!", filename)
+			continue
 		}
-		for _, v := range list {
-			if enums := v.GetProtobufEnums(); len(enums) > 0 {
-				if protobufConfig.Merge {
-					mergeProtoEnumFile.Enums = append(mergeProtoEnumFile.Enums, enums...)
-				} else {
-					protoEnumFile := ast.ProtobufEnumFile{
-						Version: consts.Version,
-						Package: protobufConfig.Package,
-						Options: protobufConfig.Options,
-						Enums:   enums,
-					}
-					enumFilename := intoFilename(protobufConfig.Dir, v.Filename, filenameSuffix)
-					_ = utils.WriteFileWithTemplate(enumFilename, usedTemplate, protoEnumFile)
-					log.Info("👆 " + enumFilename)
-				}
-			}
-		}
-		return nil
+		astFiles = append(astFiles, astFile...)
 	}
-
-	for _, filename := range inputFile {
-		err = genEnumFile(filename)
-		if err != nil {
-			log.Warnf("🧐 generate file from SQL file(%s) failed !!!", filename)
-		}
-	}
-
-	if protobufConfig.Merge && len(mergeProtoEnumFile.Enums) > 0 {
-		mergeFilename := protobufConfig.GetMergeFilename()
-		enumFilename := intoFilename(protobufConfig.Dir, mergeFilename, filenameSuffix)
-		_ = utils.WriteFileWithTemplate(enumFilename, usedTemplate, mergeProtoEnumFile)
-		log.Info("👆 " + enumFilename)
-	}
-
-	log.Info("😄 generate success !!!")
-	return nil
+	return astFiles
 }

@@ -53,6 +53,8 @@ type Protobuf struct {
 	Dir           string            `yaml:"dir" json:"dir" binding:"required_if=Enabled true"`
 	Package       string            `yaml:"package" json:"package" binding:"required_if=Enabled true"`
 	Options       map[string]string `yaml:"options" json:"options" binding:"required_if=Enabled true"`
+	Suffix        string            `yaml:"suffix" json:"suffix"`
+	Template      string            `yaml:"template" json:"template"`
 }
 
 func (p *Protobuf) GetMergeFilename() string {
