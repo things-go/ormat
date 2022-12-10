@@ -14,8 +14,7 @@ var ImportsHeads = map[string]string{
 	"datatypes.Date": `"gorm.io/datatypes"`,
 }
 
-// t.Logf("%#v", rEnum.FindStringSubmatch(` 11 [@enum:{"0":["none","空","空注释"],"1":["key1","键1","键1注释"],"2":["key2","键2","3":["key3","键3"]]}] 11k l23123 人11`))
-var rEnum = regexp.MustCompile(`^.*?\[@.*?(?i:(?:enum|status)+):\s*(.*)\].*?`)
+var rEnum = regexp.MustCompile(`^.*?\[@(?:enum|status):\s*({.*})\s*\].*?`)
 
 // MatchEnumAnnotation 匹配枚举注解
 func MatchEnumAnnotation(comment string) string {
