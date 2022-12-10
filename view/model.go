@@ -146,9 +146,8 @@ func getFieldDataType(dataType string, isNull, disableNull, isNullToPointer, ena
 	return dataType
 }
 
-// TODO: BUG [@affix],[@jsontag:kkk] 此时匹配不上 affix
-var rJSONTag = regexp.MustCompile(`^.*?\[@.*?(?i:jsontag+):\s*(.*)\].*?`)
-var rAffixJSONTag = regexp.MustCompile(`^.*?\[@.*?(affix+).*?\].*?`)
+var rJSONTag = regexp.MustCompile(`^.*?\[@(?i:jsontag):\s*([^\[\]]*)\].*?`)
+var rAffixJSONTag = regexp.MustCompile(`^.*?\[@(affix)\s*\].*?`)
 
 func jsonTag(comment string) string {
 	match := rJSONTag.FindStringSubmatch(comment)
