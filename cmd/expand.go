@@ -8,6 +8,7 @@ import (
 	"github.com/alecthomas/chroma/quick"
 	"github.com/spf13/cobra"
 
+	"github.com/things-go/ormat/pkg/matcher"
 	"github.com/things-go/ormat/view/ast"
 )
 
@@ -23,7 +24,7 @@ var expandCmd = &cobra.Command{
 	Short:   "Expand annotation from comment",
 	Example: "ormat expand -i comment",
 	RunE: func(*cobra.Command, []string) error {
-		str := ast.MatchEnumAnnotation(inputComment)
+		str := matcher.EnumAnnotation(inputComment)
 		if str == "" {
 			return errors.New("没有符合的注解")
 		}

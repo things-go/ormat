@@ -54,10 +54,10 @@ func setupBase(c *config.Config) {
 	})))
 }
 
-func GetFilenameSuffix(s string) string {
+func intoFilenameSuffix(s string, defaultSuffix string) string {
 	s = strings.TrimSpace(s)
 	if s == "" {
-		return ".proto"
+		return defaultSuffix
 	}
 	if !strings.HasPrefix(s, ".") {
 		s = "." + s
@@ -66,7 +66,7 @@ func GetFilenameSuffix(s string) string {
 }
 
 func intoFilename(dir, filename, suffix string) string {
-	return filepath.Join(dir, filename) + GetFilenameSuffix(suffix)
+	return filepath.Join(dir, filename) + intoFilenameSuffix(suffix, ".proto")
 }
 
 func parseTemplateFromFile(filename string) (*template.Template, error) {

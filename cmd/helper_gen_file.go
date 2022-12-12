@@ -1,90 +1,100 @@
 package cmd
 
 import (
+	"encoding/json"
+	"os"
 	"os/exec"
 	"strings"
 	"text/template"
 
+	"github.com/alecthomas/chroma/quick"
 	"github.com/things-go/log"
 
 	"github.com/things-go/ormat/pkg/consts"
-	"github.com/things-go/ormat/pkg/tpl"
 	"github.com/things-go/ormat/pkg/utils"
-	"github.com/things-go/ormat/view"
 	"github.com/things-go/ormat/view/ast"
 )
 
-func genModelFile(astFiles []*ast.File, protobufConfig *view.Protobuf, outDir string) {
-	mergeProtoEnumFile := &ast.ProtobufEnumFile{
-		Version: consts.Version,
-		Package: protobufConfig.Package,
-		Options: protobufConfig.Options,
-		Enums:   make([]*ast.ProtobufEnum, 0, 64),
+type generateFile struct {
+	Files     []*ast.File
+	Template  *template.Template
+	OutputDir string
+	// only use for enum
+	Merge         bool
+	MergeFilename string
+	Package       string
+	Options       map[string]string
+	Suffix        string
+	GenFunc       func(filename string, t *template.Template, data any)
+}
+
+func (g *generateFile) runGenModel() {
+	for _, v := range g.Files {
+		g.GenFunc(
+			intoFilename(g.OutputDir, v.Filename, ".go"),
+			g.Template,
+			v,
+		)
 	}
-	for _, v := range astFiles {
-		modelFilename := outDir + "/" + v.Filename + ".go"
-		_ = utils.WriteFileWithTemplate(modelFilename, tpl.ModelTpl, v)
+	log.Info("😄 generate success !!!")
+}
 
-		cmd, _ := exec.Command("goimports", "-l", "-w", modelFilename).Output()
-		_, _ = exec.Command("gofmt", "-l", "-w", modelFilename).Output()
-		log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
-
-		if protobufConfig.Enabled {
-			if enums := v.GetProtobufEnums(); len(enums) > 0 {
-				if protobufConfig.Merge {
-					mergeProtoEnumFile.Enums = append(mergeProtoEnumFile.Enums, enums...)
-				} else {
-					enumFilename := intoFilename(protobufConfig.Dir, v.Filename, ".proto")
-					_ = utils.WriteFileWithTemplate(enumFilename, tpl.ProtobufEnumTpl, ast.ProtobufEnumFile{
-						Version: consts.Version,
-						Package: protobufConfig.Package,
-						Options: protobufConfig.Options,
-						Enums:   enums,
-					})
-					log.Info("👆 " + enumFilename)
-				}
+func (g *generateFile) runGenEnum() {
+	packageName := utils.GetPkgName(g.OutputDir)
+	mergeProtoEnumFile := ast.ProtobufEnumFile{
+		Version:     consts.Version,
+		PackageName: packageName,
+		Package:     g.Package,
+		Options:     g.Options,
+		Enums:       make([]*ast.ProtobufEnum, 0, 64),
+	}
+	for _, v := range g.Files {
+		if enums := v.GetProtobufEnums(); len(enums) > 0 {
+			if g.Merge {
+				mergeProtoEnumFile.Enums = append(mergeProtoEnumFile.Enums, enums...)
+			} else {
+				g.GenFunc(
+					intoFilename(g.OutputDir, v.Filename, g.Suffix),
+					g.Template,
+					ast.ProtobufEnumFile{
+						Version:     consts.Version,
+						PackageName: packageName,
+						Package:     g.Package,
+						Options:     g.Options,
+						Enums:       enums,
+					},
+				)
 			}
 		}
 	}
-	if protobufConfig.Enabled && protobufConfig.Merge && len(mergeProtoEnumFile.Enums) > 0 {
-		enumFilename := intoFilename(protobufConfig.Dir, protobufConfig.GetMergeFilename(), ".proto")
-		_ = utils.WriteFileWithTemplate(enumFilename, tpl.ProtobufEnumTpl, mergeProtoEnumFile)
-		log.Info("👆 " + enumFilename)
+	if g.Merge && len(mergeProtoEnumFile.Enums) > 0 {
+		if g.MergeFilename == "" {
+			g.MergeFilename = utils.GetPkgName(g.OutputDir)
+		}
+		g.GenFunc(
+			intoFilename(g.OutputDir, g.MergeFilename, g.Suffix),
+			g.Template,
+			mergeProtoEnumFile,
+		)
 	}
 
 	log.Info("😄 generate success !!!")
 }
 
-func genEnumFile(astFiles []*ast.File, protobufConfig *view.Protobuf, usedTemplate *template.Template) {
-	mergeProtoEnumFile := ast.ProtobufEnumFile{
-		Version: consts.Version,
-		Package: protobufConfig.Package,
-		Options: protobufConfig.Options,
-		Enums:   nil,
-	}
+func genModelFile(filename string, t *template.Template, data any) {
+	_ = utils.WriteFileWithTemplate(filename, t, data)
 
-	for _, v := range astFiles {
-		if enums := v.GetProtobufEnums(); len(enums) > 0 {
-			if protobufConfig.Merge {
-				mergeProtoEnumFile.Enums = append(mergeProtoEnumFile.Enums, enums...)
-			} else {
-				enumFilename := intoFilename(protobufConfig.Dir, v.Filename, protobufConfig.Suffix)
-				_ = utils.WriteFileWithTemplate(enumFilename, usedTemplate, ast.ProtobufEnumFile{
-					Version: consts.Version,
-					Package: protobufConfig.Package,
-					Options: protobufConfig.Options,
-					Enums:   enums,
-				})
-				log.Info("👆 " + enumFilename)
-			}
-		}
-	}
-	if protobufConfig.Merge && len(mergeProtoEnumFile.Enums) > 0 {
-		mergeFilename := protobufConfig.GetMergeFilename()
-		enumFilename := intoFilename(protobufConfig.Dir, mergeFilename, protobufConfig.Suffix)
-		_ = utils.WriteFileWithTemplate(enumFilename, usedTemplate, mergeProtoEnumFile)
-		log.Info("👆 " + enumFilename)
-	}
+	cmd, _ := exec.Command("goimports", "-l", "-w", filename).Output()
+	_, _ = exec.Command("gofmt", "-l", "-w", filename).Output()
+	log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
+}
 
-	log.Info("😄 generate success !!!")
+func genEnumFile(filename string, t *template.Template, data any) {
+	_ = utils.WriteFileWithTemplate(filename, t, data)
+	log.Info("👆 " + filename)
+}
+
+func showInfo(filename string, t *template.Template, data any) {
+	b, _ := json.MarshalIndent(data, " ", "  ")
+	quick.Highlight(os.Stdout, string(b), "JSON", "terminal", "solarized-dark")
 }

@@ -6,11 +6,7 @@
 # dialect 支持mysql, sqlite3
 database:
   dialect: mysql
-  host: 127.0.0.1
-  port: 3306
-  username: root
-  password: 123456
-  db: test
+  dsn: "root:123456@tcp(127.0.0.1:3306)/test"
   options: ""
 # 输出模型的路径
 # 默认: ./model

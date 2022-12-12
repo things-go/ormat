@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cast"
 	"github.com/things-go/log"
+
+	"github.com/things-go/ormat/pkg/matcher"
 )
 
 // ProtobufEnumField protobuf enum field
@@ -34,7 +36,7 @@ type ProtobufEnum struct {
 
 // ParseEnumComment parse enum comment
 func ParseEnumComment(structName, tableName, fieldName, columnName, comment string) *ProtobufEnum {
-	annotation := MatchEnumAnnotation(comment)
+	annotation := matcher.EnumAnnotation(comment)
 	if annotation == "" {
 		return nil
 	}

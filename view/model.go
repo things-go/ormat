@@ -1,10 +1,5 @@
 package view
 
-import (
-	"regexp"
-	"strings"
-)
-
 // ColumnKeyType column key type
 type ColumnKeyType int
 
@@ -144,20 +139,4 @@ func getFieldDataType(dataType string, isNull, disableNull, isNullToPointer, ena
 		}
 	}
 	return dataType
-}
-
-var rJSONTag = regexp.MustCompile(`^.*?\[@(?i:jsontag):\s*([^\[\]]*)\].*?`)
-var rAffixJSONTag = regexp.MustCompile(`^.*?\[@(affix)\s*\].*?`)
-
-func jsonTag(comment string) string {
-	match := rJSONTag.FindStringSubmatch(comment)
-	if len(match) == 2 {
-		return strings.TrimSpace(match[1])
-	}
-	return ""
-}
-
-func hasAffixJSONTag(comment string) bool {
-	match := rAffixJSONTag.FindStringSubmatch(comment)
-	return len(match) == 2 && strings.TrimSpace(match[1]) == "affix"
 }

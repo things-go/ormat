@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/things-go/ormat/pkg/consts"
+	"github.com/things-go/ormat/pkg/matcher"
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/view/ast"
 )
@@ -42,7 +43,6 @@ type Config struct {
 	IsNullToPoint    bool     `yaml:"isNullToPoint" json:"isNullToPoint"`       // 是否字段为null时输出指针类型
 	IsForeignKey     bool     `yaml:"isForeignKey" json:"isForeignKey"`         // 输出外键
 	IsCommentTag     bool     `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
-	Protobuf         Protobuf `yaml:"protobuf" json:"protobuf" binding:"omitempty"`
 }
 
 // Protobuf config
@@ -50,18 +50,10 @@ type Protobuf struct {
 	Enabled       bool              `yaml:"enabled" json:"enabled"`
 	Merge         bool              `yaml:"merge" json:"merge"`
 	MergeFilename string            `yaml:"mergeFilename" json:"mergeFilename"`
-	Dir           string            `yaml:"dir" json:"dir" binding:"required_if=Enabled true"`
 	Package       string            `yaml:"package" json:"package" binding:"required_if=Enabled true"`
 	Options       map[string]string `yaml:"options" json:"options" binding:"required_if=Enabled true"`
 	Suffix        string            `yaml:"suffix" json:"suffix"`
 	Template      string            `yaml:"template" json:"template"`
-}
-
-func (p *Protobuf) GetMergeFilename() string {
-	if p.MergeFilename == "" {
-		return utils.GetPkgName(p.Dir)
-	}
-	return p.MergeFilename
 }
 
 // View information
@@ -343,7 +335,7 @@ func fixFieldWebTags(fieldTags *ast.FieldTags, field *ast.Field, columnName stri
 
 	for _, v := range webTags {
 		if v.Tag == "json" {
-			if vv := jsonTag(field.FieldComment); vv != "" {
+			if vv := matcher.JsonTag(field.FieldComment); vv != "" {
 				fieldTags.Add(
 					v.Tag,
 					ast.NewFiledTagValues().
@@ -363,7 +355,7 @@ func fixFieldWebTags(fieldTags *ast.FieldTags, field *ast.Field, columnName stri
 		if v.HasOmit {
 			filedTagValue.AddValue("omitempty")
 		}
-		if v.Tag == "json" && hasAffixJSONTag(field.FieldComment) {
+		if v.Tag == "json" && matcher.HasAffixJSONTag(field.FieldComment) {
 			filedTagValue.AddValue("string")
 		}
 		fieldTags.Add(v.Tag, filedTagValue)

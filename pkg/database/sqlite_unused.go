@@ -5,6 +5,6 @@ package database
 
 import "gorm.io/gorm"
 
-func newSqlite3(string) gorm.Dialector {
+func NewSqlite3(string) gorm.Dialector {
 	panic("please build tags with sqlite3!")
 }

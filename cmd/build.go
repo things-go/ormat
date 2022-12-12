@@ -16,12 +16,11 @@ import (
 )
 
 var inputFile []string
-var outDir string
+var outputDir string
 var protobuf = view.Protobuf{
-	Enabled:       false,
+	Enabled:       true,
 	Merge:         false,
 	MergeFilename: "",
-	Dir:           "",
 	Package:       "",
 	Options:       nil,
 	Suffix:        "",
@@ -30,34 +29,15 @@ var protobuf = view.Protobuf{
 
 func init() {
 	buildCmd.PersistentFlags().StringSliceVarP(&inputFile, "input", "i", nil, "input file")
+	buildCmd.PersistentFlags().StringVarP(&outputDir, "out", "o", "", "out directory")
+	buildCmd.MarkPersistentFlagRequired("input") // nolint
+	buildCmd.MarkPersistentFlagRequired("out")   // nolint
 
-	buildCmd.Flags().StringVarP(&outDir, "out", "o", "", "model out directory")
-	buildCmd.Flags().BoolVarP(&protobuf.Enabled, "enabled", "e", false, "protobuf enabled or not(default: false)")
-	buildCmd.Flags().BoolVarP(&protobuf.Merge, "merge", "m", false, "protobuf merge in a file or not(default: false)")
-	buildCmd.Flags().StringVarP(&protobuf.MergeFilename, "filename", "f", "", "merge filename")
-	buildCmd.Flags().StringVarP(&protobuf.Dir, "dir", "d", "", "protobuf out directory")
-	buildCmd.Flags().StringVarP(&protobuf.Package, "package", "p", "", "protobuf package name")
-	buildCmd.Flags().StringToStringVarP(&protobuf.Options, "options", "t", nil, "protobuf options key value")
-
-	buildCmd.MarkFlagRequired("input") // nolint
-	buildCmd.MarkFlagRequired("out")   // nolint
-	buildCmd.MarkFlagsRequiredTogether(
-		"enabled",
-		"dir",
-		"package",
-		"options",
-	)
-
-	buildEnumCmd.PersistentFlags().BoolVarP(&protobuf.Merge, "merge", "m", false, "protobuf merge in a file or not(default: false)")
-	buildEnumCmd.PersistentFlags().StringVarP(&protobuf.Dir, "dir", "d", "", "protobuf out directory")
+	buildEnumCmd.PersistentFlags().BoolVarP(&protobuf.Merge, "merge", "m", false, "merge in a file or not")
+	buildEnumCmd.PersistentFlags().StringVarP(&protobuf.MergeFilename, "filename", "f", "", "merge filename")
 	buildEnumCmd.PersistentFlags().StringVarP(&protobuf.Package, "package", "p", "", "protobuf package name")
 	buildEnumCmd.PersistentFlags().StringToStringVarP(&protobuf.Options, "options", "t", nil, "protobuf options key value")
 	buildEnumCmd.PersistentFlags().StringVarP(&protobuf.Suffix, "suffix", "s", ".proto", "out filename suffix")
-	buildEnumCmd.MarkFlagsRequiredTogether(
-		"dir",
-		"package",
-		"options",
-	)
 
 	buildEnumCustomCmd.Flags().StringVar(&protobuf.Template, "template", "", "use custom template")
 	buildEnumCustomCmd.MarkFlagRequired("template")
@@ -65,20 +45,52 @@ func init() {
 	buildEnumCmd.AddCommand(
 		buildEnumMappingCmd,
 		buildEnumCustomCmd,
+		buildEnumInfoCmd,
 	)
-	buildCmd.AddCommand(buildEnumCmd)
+	buildCmd.AddCommand(
+		buildInfoCmd,
+		buildEnumCmd,
+	)
 }
 
 var buildCmd = &cobra.Command{
 	Use:     "build",
 	Short:   "Generate model from sql",
 	Example: "ormat build",
-	PreRunE: PreRunBuildEnum,
+	PreRunE: PreRunBuild,
 	RunE: func(*cobra.Command, []string) error {
 		c := config.Global
 
-		astFiles := parseSqlFromFile(c, inputFile)
-		genModelFile(astFiles, &c.View.Protobuf, c.OutDir)
+		genFile := &generateFile{
+			Files:     parseSqlFromFile(c, inputFile),
+			OutputDir: c.OutDir,
+			Template:  tpl.ModelTpl,
+			GenFunc:   genModelFile,
+		}
+		genFile.runGenModel()
+		return nil
+	},
+}
+
+var buildInfoCmd = &cobra.Command{
+	Use:     "info",
+	Short:   "model info from sql",
+	Example: "ormat build info",
+	PreRunE: PreRunBuild,
+	RunE: func(*cobra.Command, []string) error {
+		c := config.Global
+		genFile := &generateFile{
+			Files:         parseSqlFromFile(c, inputFile),
+			Template:      nil,
+			OutputDir:     c.OutDir,
+			Merge:         protobuf.Merge,
+			MergeFilename: protobuf.MergeFilename,
+			Package:       protobuf.Package,
+			Options:       protobuf.Options,
+			Suffix:        protobuf.Suffix,
+			GenFunc:       showInfo,
+		}
+		genFile.runGenModel()
 		return nil
 	},
 }
@@ -87,9 +99,9 @@ var buildEnumCmd = &cobra.Command{
 	Use:     "enum",
 	Short:   "Generate enum from sql",
 	Example: "ormat build enum",
-	PreRunE: PreRunBuildEnum,
+	PreRunE: PreRunBuild,
 	RunE: func(*cobra.Command, []string) error {
-		return runGenEnumFile(tpl.ProtobufEnumTpl)
+		return runBuildEnumFile(tpl.ProtobufEnumTpl)
 	},
 }
 
@@ -97,9 +109,9 @@ var buildEnumMappingCmd = &cobra.Command{
 	Use:     "mapping",
 	Short:   "Generate enum mapping from sql",
 	Example: "ormat build enum mapping",
-	PreRunE: PreRunBuildEnum,
+	PreRunE: PreRunBuild,
 	RunE: func(*cobra.Command, []string) error {
-		return runGenEnumFile(tpl.ProtobufEnumMappingTpl)
+		return runBuildEnumFile(tpl.ProtobufEnumMappingTpl)
 	},
 }
 
@@ -107,40 +119,49 @@ var buildEnumCustomCmd = &cobra.Command{
 	Use:     "custom",
 	Short:   "Generate enum custom with template from sql",
 	Example: "ormat build enum custom",
-	PreRunE: PreRunBuildEnum,
+	PreRunE: PreRunBuild,
 	RunE: func(*cobra.Command, []string) error {
 		usedTemplate, err := parseTemplateFromFile(protobuf.Template)
 		if err != nil {
 			return err
 		}
-		return runGenEnumFile(usedTemplate)
+		return runBuildEnumFile(usedTemplate)
 	},
 }
 
-func PreRunBuildEnum(*cobra.Command, []string) error {
+var buildEnumInfoCmd = &cobra.Command{
+	Use:     "info",
+	Short:   "enum info from sql",
+	Example: "ormat build enum info",
+	PreRunE: PreRunBuild,
+	RunE: func(*cobra.Command, []string) error {
+		c := config.Global
+		genFile := &generateFile{
+			Files:         parseSqlFromFile(c, inputFile),
+			Template:      nil,
+			OutputDir:     c.OutDir,
+			Merge:         protobuf.Merge,
+			MergeFilename: protobuf.MergeFilename,
+			Package:       protobuf.Package,
+			Options:       protobuf.Options,
+			Suffix:        protobuf.Suffix,
+			GenFunc:       showInfo,
+		}
+		genFile.runGenEnum()
+		return nil
+	},
+}
+
+func PreRunBuild(*cobra.Command, []string) error {
 	c := config.Global
 	err := c.Load()
 	if err != nil {
 		return err
 	}
-	c.OutDir = outDir
-	c.View.Protobuf = view.Protobuf{
-		Enabled: protobuf.Enabled,
-		Dir:     protobuf.Dir,
-		Merge:   protobuf.Merge,
-		Package: protobuf.Package,
-		Options: protobuf.Options,
-		Suffix:  GetFilenameSuffix(protobuf.Suffix),
-	}
+	c.OutDir = outputDir
 	setupBase(c)
-	return nil
-}
 
-func runGenEnumFile(usedTemplate *template.Template) error {
-	c := config.Global
-
-	astFiles := parseSqlFromFile(c, inputFile)
-	genEnumFile(astFiles, &c.View.Protobuf, usedTemplate)
+	protobuf.Suffix = intoFilenameSuffix(protobuf.Suffix, ".proto")
 	return nil
 }
 
@@ -168,4 +189,27 @@ func parseSqlFromFile(c *config.Config, inputFiles []string) []*ast.File {
 		astFiles = append(astFiles, astFile...)
 	}
 	return astFiles
+}
+
+func runBuildEnumFile(usedTemplate *template.Template) error {
+	c := config.Global
+	files := parseSqlFromFile(c, inputFile)
+	return runGenEnum(files, usedTemplate)
+}
+
+func runGenEnum(file []*ast.File, usedTemplate *template.Template) error {
+	c := config.Global
+	genFile := &generateFile{
+		Files:         file,
+		Template:      usedTemplate,
+		OutputDir:     c.OutDir,
+		Merge:         protobuf.Merge,
+		MergeFilename: protobuf.MergeFilename,
+		Package:       protobuf.Package,
+		Options:       protobuf.Options,
+		Suffix:        protobuf.Suffix,
+		GenFunc:       genEnumFile,
+	}
+	genFile.runGenEnum()
+	return nil
 }

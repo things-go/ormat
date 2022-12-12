@@ -31,9 +31,11 @@ func NewDb(dbCfg *config.Database) (*gorm.DB, error) {
 		})
 	}
 
-	return database.New(database.Config{
+	return database.New(&database.Config{
 		Dialect: dbCfg.Dialect,
-		Dsn:     dbCfg.Dsn(),
+		Source: database.SourceServe{
+			Node: database.Node{Dsn: dbCfg.DSN},
+		},
 	}, gc)
 }
 

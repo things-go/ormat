@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"regexp"
 	"strings"
 )
 
@@ -12,17 +11,6 @@ var ImportsHeads = map[string]string{
 	"fmt":            `"fmt"`,
 	"datatypes.JSON": `"gorm.io/datatypes"`,
 	"datatypes.Date": `"gorm.io/datatypes"`,
-}
-
-var rEnum = regexp.MustCompile(`^.*?\[@(?:enum|status):\s*({.*})\s*\].*?`)
-
-// MatchEnumAnnotation 匹配枚举注解
-func MatchEnumAnnotation(comment string) string {
-	match := rEnum.FindStringSubmatch(comment)
-	if len(match) == 2 {
-		return strings.TrimSpace(match[1])
-	}
-	return ""
 }
 
 // IntoAbbrTableName 获取表名缩写

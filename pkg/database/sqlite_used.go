@@ -8,6 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func newSqlite3(dsn string) gorm.Dialector {
+func NewSqlite3(dsn string) gorm.Dialector {
 	return sqlite.Open(dsn)
 }
