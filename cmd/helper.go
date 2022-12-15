@@ -90,5 +90,4 @@ func getMappingTemplate(mapping map[string]tpl.TemplateMapping, filename, suffix
 func JSON(v interface{}) {
 	b, _ := json.MarshalIndent(v, "", "  ")
 	quick.Highlight(os.Stdout, string(b), "JSON", "terminal", "solarized-dark") // nolint
-
 }
