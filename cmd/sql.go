@@ -11,29 +11,38 @@ import (
 	"github.com/things-go/ormat/view"
 )
 
-var sqlCmd = &cobra.Command{
-	Use:     "sql",
-	Short:   "Generate create table sql",
-	Example: "ormat sql",
-	RunE: func(*cobra.Command, []string) error {
-		c := config.Global
-		err := c.Load()
-		if err != nil {
-			return err
-		}
-		setupBase(c)
-		rt, err := runtime.NewRuntime(c)
-		if err != nil {
-			return err
-		}
-		defer database.Close(rt.DB)
+type sqlCmd struct {
+	cmd *cobra.Command
+}
 
-		vw := view.New(GetViewModel(rt), c.View)
+func newSqlCmd() *sqlCmd {
+	root := &sqlCmd{}
+	cmd := &cobra.Command{
+		Use:     "sql",
+		Short:   "Generate create table sql",
+		Example: "ormat sql",
+		RunE: func(*cobra.Command, []string) error {
+			c := config.Global
+			err := c.Load()
+			if err != nil {
+				return err
+			}
+			setupBase(c)
+			rt, err := runtime.NewRuntime(c)
+			if err != nil {
+				return err
+			}
+			defer database.Close(rt.DB)
 
-		sqlFile, err := vw.GetDBCreateTableSQL()
-		if err != nil {
-			return err
-		}
-		return utils.WriteFileWithTemplate(c.OutDir+"/create_table.sql", tpl.SqlDDLTpl, sqlFile)
-	},
+			vw := view.New(GetViewModel(rt), c.View)
+
+			sqlFile, err := vw.GetDBCreateTableSQL()
+			if err != nil {
+				return err
+			}
+			return utils.WriteFileWithTemplate(c.OutDir+"/create_table.sql", tpl.SqlDDL, sqlFile)
+		},
+	}
+	root.cmd = cmd
+	return root
 }

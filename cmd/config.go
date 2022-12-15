@@ -1,10 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
-	"os"
-
-	"github.com/alecthomas/chroma/quick"
 	"github.com/spf13/cobra"
 
 	"github.com/things-go/ormat/pkg/config"
@@ -13,40 +9,43 @@ import (
 )
 
 func init() {
-	configCmd.AddCommand(configInitSubCmd)
+
 }
 
-var configCmd = &cobra.Command{
-	Use:     "config",
-	Short:   "Show/Generate config file",
-	Example: "ormat config - show config \normat config init - Generate config file",
-	RunE: func(*cobra.Command, []string) error {
-		c := config.Global
-		err := c.Load()
-		if err != nil {
-			return err
-		}
-		JSON(c)
-		return nil
-	},
+type configCmd struct {
+	cmd *cobra.Command
 }
 
-var configInitSubCmd = &cobra.Command{
-	Use:     "init",
-	Short:   "Generate config file",
-	Example: "ormat config init",
-	RunE: func(*cobra.Command, []string) error {
-		b, err := tpl.Static.ReadFile("template/ormat.yml")
-		if err != nil {
-			return err
-		}
-		return utils.WriteFile(".ormat.yml", b)
-	},
-}
-
-func JSON(v ...interface{}) {
-	for _, vv := range v {
-		b, _ := json.MarshalIndent(vv, "", "  ")
-		quick.Highlight(os.Stdout, string(b), "JSON", "terminal", "solarized-dark") // nolint
+func newConfigCmd() *configCmd {
+	root := &configCmd{}
+	cmd := &cobra.Command{
+		Use:     "config",
+		Short:   "Show/Generate config file",
+		Example: "ormat config - show config \normat config init - Generate config file",
+		RunE: func(*cobra.Command, []string) error {
+			c := config.Global
+			err := c.Load()
+			if err != nil {
+				return err
+			}
+			JSON(c)
+			return nil
+		},
 	}
+
+	cmdInit := &cobra.Command{
+		Use:     "init",
+		Short:   "Generate config file",
+		Example: "ormat config init",
+		RunE: func(*cobra.Command, []string) error {
+			b, err := tpl.Static.ReadFile("template/ormat.yml")
+			if err != nil {
+				return err
+			}
+			return utils.WriteFile(".ormat.yml", b)
+		},
+	}
+	cmd.AddCommand(cmdInit)
+	root.cmd = cmd
+	return root
 }

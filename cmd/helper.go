@@ -1,11 +1,12 @@
 package cmd
 
 import (
-	"errors"
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 
+	"github.com/alecthomas/chroma/quick"
 	"github.com/go-playground/validator/v10"
 	"github.com/things-go/log"
 
@@ -54,34 +55,40 @@ func setupBase(c *config.Config) {
 	})))
 }
 
-func intoFilenameSuffix(s string, defaultSuffix string) string {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return defaultSuffix
-	}
-	if !strings.HasPrefix(s, ".") {
-		s = "." + s
-	}
-	return s
-}
-
 func intoFilename(dir, filename, suffix string) string {
-	return filepath.Join(dir, filename) + intoFilenameSuffix(suffix, ".proto")
+	suffix = strings.TrimSpace(suffix)
+	if suffix != "" && !strings.HasPrefix(suffix, ".") {
+		suffix = "." + suffix
+	}
+	return filepath.Join(dir, filename) + suffix
 }
 
-func parseTemplateFromFile(filename string) (*template.Template, error) {
-	if filename == "" {
-		return nil, errors.New("not found template file")
+func getModelTemplate(filename, suffix string) (*tpl.TemplateMapping, error) {
+	return getMappingTemplate(tpl.BuiltInModelMapping, filename, suffix)
+}
+
+func getEnumTemplate(filename, suffix string) (*tpl.TemplateMapping, error) {
+	return getMappingTemplate(tpl.BuiltInEnumMapping, filename, suffix)
+}
+func getMappingTemplate(mapping map[string]tpl.TemplateMapping, filename, suffix string) (*tpl.TemplateMapping, error) {
+	if t, ok := mapping[filename]; ok {
+		if suffix != "" {
+			t.Suffix = suffix
+		}
+		return &t, nil
 	}
-	tt, err := template.New("custom").
-		Funcs(tpl.TemplateFuncs).
-		ParseFiles(filename)
+	t, err := tpl.ParseTemplateFromFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	ts := tt.Templates()
-	if len(ts) == 0 {
-		return nil, errors.New("not found any template")
-	}
-	return ts[0], nil
+	return &tpl.TemplateMapping{
+		Template: t,
+		Suffix:   suffix,
+	}, nil
+}
+
+func JSON(v interface{}) {
+	b, _ := json.MarshalIndent(v, "", "  ")
+	quick.Highlight(os.Stdout, string(b), "JSON", "terminal", "solarized-dark") // nolint
+
 }

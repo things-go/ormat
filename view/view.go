@@ -45,17 +45,6 @@ type Config struct {
 	IsCommentTag     bool     `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
 }
 
-// Protobuf config
-type Protobuf struct {
-	Enabled       bool              `yaml:"enabled" json:"enabled"`
-	Merge         bool              `yaml:"merge" json:"merge"`
-	MergeFilename string            `yaml:"mergeFilename" json:"mergeFilename"`
-	Package       string            `yaml:"package" json:"package" binding:"required_if=Enabled true"`
-	Options       map[string]string `yaml:"options" json:"options" binding:"required_if=Enabled true"`
-	Suffix        string            `yaml:"suffix" json:"suffix"`
-	Template      string            `yaml:"template" json:"template"`
-}
-
 // View information
 type View struct {
 	Config

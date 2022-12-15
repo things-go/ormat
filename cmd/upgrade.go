@@ -21,72 +21,81 @@ import (
 	"github.com/things-go/ormat/pkg/consts"
 )
 
-var upgradeCmd = &cobra.Command{
-	Use:          "upgrade",
-	Short:        "Upgrade ormat",
-	Long:         "Upgrade ormat by providing a version. If no version is provided, upgrade to the latest.",
-	SilenceUsage: true,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		c := config.Global
-		err := c.Load()
-		if err != nil {
-			return err
-		}
-		setupBase(c)
-		ansi.HideCursor()
-		defer ansi.ShowCursor()
+type upgradeCmd struct {
+	cmd *cobra.Command
+}
 
-		m := &manager{
-			Manager: &update.Manager{
-				Command: "ormat",
-				Store: &githubStore{
-					Owner:   "things-go",
-					Repo:    "ormat",
-					Version: consts.Version,
-					Client:  NewGithubClient(os.Getenv("GITHUB_TOKEN")),
+func newUpgradeCmd() *upgradeCmd {
+	root := &upgradeCmd{}
+	cmd := &cobra.Command{
+		Use:          "upgrade",
+		Short:        "Upgrade ormat",
+		Long:         "Upgrade ormat by providing a version. If no version is provided, upgrade to the latest.",
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c := config.Global
+			err := c.Load()
+			if err != nil {
+				return err
+			}
+			setupBase(c)
+			ansi.HideCursor()
+			defer ansi.ShowCursor()
+
+			m := &manager{
+				Manager: &update.Manager{
+					Command: "ormat",
+					Store: &githubStore{
+						Owner:   "things-go",
+						Repo:    "ormat",
+						Version: consts.Version,
+						Client:  NewGithubClient(os.Getenv("GITHUB_TOKEN")),
+					},
 				},
-			},
-		}
+			}
 
-		var r *update.Release
-		var a *update.Asset
+			var r *update.Release
+			var a *update.Asset
 
-		r, err = m.GetNewerReleases(args...)
-		if err != nil {
-			return err
-		}
-		if r == nil {
-			log.Info("No upgrades")
+			r, err = m.GetNewerReleases(args...)
+			if err != nil {
+				return err
+			}
+			if r == nil {
+				log.Info("No upgrades")
+				return nil
+			}
+			// find the tarball for this system
+			arch := runtime.GOARCH
+			if runtime.GOARCH == "amd64" {
+				arch = "x86_64"
+			}
+			if runtime.GOOS == "windows" {
+				a = r.FindZip(runtime.GOOS, arch)
+			} else {
+				a = r.FindTarball(runtime.GOOS, arch)
+			}
+			if a == nil {
+				log.Info("No upgrade for your system")
+				return nil
+			}
+			log.Infof("Downloading release: %v", r.Version)
+			tmpPath, err := a.DownloadProxy(progress.Reader)
+			if err != nil {
+				return fmt.Errorf("Download failed: %s", err)
+			}
+			log.Infof("Downloaded release to %s", tmpPath)
+
+			// install it
+			if err := m.Install(tmpPath); err != nil {
+				return fmt.Errorf("install failed, %s", err)
+			}
+			log.Infof("Upgraded to %s", r.Version)
 			return nil
-		}
-		// find the tarball for this system
-		arch := runtime.GOARCH
-		if runtime.GOARCH == "amd64" {
-			arch = "x86_64"
-		}
-		if runtime.GOOS == "windows" {
-			a = r.FindZip(runtime.GOOS, arch)
-		} else {
-			a = r.FindTarball(runtime.GOOS, arch)
-		}
-		if a == nil {
-			log.Info("No upgrade for your system")
-			return nil
-		}
-		log.Infof("Downloading release: %v", r.Version)
-		tmpPath, err := a.DownloadProxy(progress.Reader)
-		if err != nil {
-			return fmt.Errorf("Download failed: %s", err)
-		}
-		log.Infof("Downloaded release to %s", tmpPath)
-
-		// install it
-		if err := m.Install(tmpPath); err != nil {
-			return fmt.Errorf("install failed, %s", err)
-		}
-		log.Infof("Upgraded to %s", r.Version)
-		return nil
-	},
+		},
+	}
+	root.cmd = cmd
+	return root
 }
 
 type manager struct {

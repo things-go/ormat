@@ -1,13 +1,10 @@
 package cmd
 
 import (
-	"encoding/json"
-	"os"
 	"os/exec"
 	"strings"
 	"text/template"
 
-	"github.com/alecthomas/chroma/quick"
 	"github.com/things-go/log"
 
 	"github.com/things-go/ormat/pkg/consts"
@@ -15,11 +12,21 @@ import (
 	"github.com/things-go/ormat/view/ast"
 )
 
+// Protobuf config
+type Protobuf struct {
+	Enabled       bool              `yaml:"enabled" json:"enabled"`
+	Merge         bool              `yaml:"merge" json:"merge"`
+	MergeFilename string            `yaml:"mergeFilename" json:"mergeFilename"`
+	Package       string            `yaml:"package" json:"package" binding:"required_if=Enabled true"`
+	Options       map[string]string `yaml:"options" json:"options" binding:"required_if=Enabled true"`
+	Suffix        string            `yaml:"suffix" json:"suffix"`
+	Template      string            `yaml:"template" json:"template"`
+}
+
 type generateFile struct {
-	Files     []*ast.File
-	Template  *template.Template
-	OutputDir string
-	// only use for enum
+	Files         []*ast.File
+	Template      *template.Template
+	OutputDir     string
 	Merge         bool
 	MergeFilename string
 	Package       string
@@ -29,19 +36,45 @@ type generateFile struct {
 }
 
 func (g *generateFile) runGenModel() {
+	packageName := utils.GetPkgName(g.OutputDir)
+	mergeFile := ast.File{
+		Version:     consts.Version,
+		Filename:    g.MergeFilename,
+		PackageName: packageName,
+		Imports:     make(map[string]struct{}),
+		Structs:     make([]*ast.Struct, 0, 512),
+	}
 	for _, v := range g.Files {
+		if g.Merge {
+			for k := range v.Imports {
+				mergeFile.Imports[k] = struct{}{}
+			}
+			mergeFile.Structs = append(mergeFile.Structs, v.Structs...)
+		} else {
+			g.GenFunc(
+				intoFilename(g.OutputDir, v.Filename, g.Suffix),
+				g.Template,
+				v,
+			)
+		}
+	}
+	if g.Merge && len(mergeFile.Structs) > 0 {
+		if mergeFile.Filename == "" {
+			mergeFile.Filename = packageName
+		}
 		g.GenFunc(
-			intoFilename(g.OutputDir, v.Filename, ".go"),
+			intoFilename(g.OutputDir, mergeFile.Filename, g.Suffix),
 			g.Template,
-			v,
+			mergeFile,
 		)
 	}
+
 	log.Info("😄 generate success !!!")
 }
 
 func (g *generateFile) runGenEnum() {
 	packageName := utils.GetPkgName(g.OutputDir)
-	mergeProtoEnumFile := ast.ProtobufEnumFile{
+	mergeEnumFile := ast.ProtobufEnumFile{
 		Version:     consts.Version,
 		PackageName: packageName,
 		Package:     g.Package,
@@ -51,7 +84,7 @@ func (g *generateFile) runGenEnum() {
 	for _, v := range g.Files {
 		if enums := v.GetProtobufEnums(); len(enums) > 0 {
 			if g.Merge {
-				mergeProtoEnumFile.Enums = append(mergeProtoEnumFile.Enums, enums...)
+				mergeEnumFile.Enums = append(mergeEnumFile.Enums, enums...)
 			} else {
 				g.GenFunc(
 					intoFilename(g.OutputDir, v.Filename, g.Suffix),
@@ -67,14 +100,14 @@ func (g *generateFile) runGenEnum() {
 			}
 		}
 	}
-	if g.Merge && len(mergeProtoEnumFile.Enums) > 0 {
+	if g.Merge && len(mergeEnumFile.Enums) > 0 {
 		if g.MergeFilename == "" {
-			g.MergeFilename = utils.GetPkgName(g.OutputDir)
+			g.MergeFilename = packageName
 		}
 		g.GenFunc(
 			intoFilename(g.OutputDir, g.MergeFilename, g.Suffix),
 			g.Template,
-			mergeProtoEnumFile,
+			mergeEnumFile,
 		)
 	}
 
@@ -94,7 +127,6 @@ func genEnumFile(filename string, t *template.Template, data any) {
 	log.Info("👆 " + filename)
 }
 
-func showInfo(filename string, t *template.Template, data any) {
-	b, _ := json.MarshalIndent(data, " ", "  ")
-	quick.Highlight(os.Stdout, string(b), "JSON", "terminal", "solarized-dark")
+func showInformation(filename string, t *template.Template, data any) {
+	JSON(data)
 }

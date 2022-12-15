@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"text/template"
-
 	"github.com/spf13/cobra"
 
 	"github.com/things-go/ormat/pkg/config"
@@ -14,104 +12,109 @@ import (
 	"github.com/things-go/ormat/view/ast"
 )
 
-func init() {
-	genEnumCmd.PersistentFlags().StringVarP(&outputDir, "out", "o", "", "out directory")
-	genEnumCmd.PersistentFlags().BoolVarP(&protobuf.Merge, "merge", "m", false, "merge in a file or not")
-	genEnumCmd.PersistentFlags().StringVarP(&protobuf.MergeFilename, "filename", "f", "", "merge filename")
-	genEnumCmd.PersistentFlags().StringVarP(&protobuf.Package, "package", "p", "", "protobuf package name")
-	genEnumCmd.PersistentFlags().StringToStringVarP(&protobuf.Options, "options", "t", nil, "protobuf options key value")
-	genEnumCmd.PersistentFlags().StringVarP(&protobuf.Suffix, "suffix", "s", ".proto", "out filename suffix")
-	genEnumCmd.MarkPersistentFlagRequired("dsn") // nolint
-	genEnumCmd.MarkPersistentFlagRequired("out") // nolint
-
-	genEnumCustomCmd.Flags().StringVar(&protobuf.Template, "template", "", "use custom template")
-	genEnumCustomCmd.MarkFlagRequired("template")
-
-	genEnumCmd.AddCommand(
-		genEnumMappingCmd,
-		genEnumCustomCmd,
-		// genEnumInfoCmd,
-	)
-	genCmd.AddCommand(
-		// genInfoCmd,
-		genEnumCmd,
-	)
+type genCmd struct {
+	cmd           *cobra.Command
+	inputFile     []string
+	outputDir     string
+	Enabled       bool
+	Merge         bool
+	MergeFilename string
+	Package       string
+	Options       map[string]string
+	Suffix        string
+	Template      string
 }
 
-var genCmd = &cobra.Command{
-	Use:     "gen",
-	Short:   "Generate model from database",
-	Example: "ormat gen",
-	RunE: func(*cobra.Command, []string) error {
-		c := config.Global
-		err := c.Load()
-		if err != nil {
-			return err
-		}
-		setupBase(c)
+func newGenCmd() *genCmd {
+	root := &genCmd{}
+	cmd := &cobra.Command{
+		Use:     "gen",
+		Short:   "Generate model from database",
+		Example: "ormat gen",
+		RunE: func(*cobra.Command, []string) error {
+			c := config.Global
+			err := c.Load()
+			if err != nil {
+				return err
+			}
+			setupBase(c)
 
-		rt, err := runtime.NewRuntime(c)
-		if err != nil {
-			return err
-		}
-		defer database.Close(rt.DB)
+			rt, err := runtime.NewRuntime(c)
+			if err != nil {
+				return err
+			}
+			defer database.Close(rt.DB)
 
-		astFiles, err := view.New(GetViewModel(rt), c.View).
-			GetDbFile(utils.GetPkgName(c.OutDir))
-		if err != nil {
-			return err
-		}
-		genFile := &generateFile{
-			Files:     astFiles,
-			OutputDir: c.OutDir,
-			Template:  tpl.ModelTpl,
-			GenFunc:   genModelFile,
-		}
-		genFile.runGenModel()
-		return nil
-	},
-}
-
-var genEnumCmd = &cobra.Command{
-	Use:     "enum",
-	Short:   "Generate enum from database",
-	Example: "ormat gen enum",
-	RunE: func(*cobra.Command, []string) error {
-		return runGenEnumFile(tpl.ProtobufEnumTpl)
-	},
-}
-
-var genEnumMappingCmd = &cobra.Command{
-	Use:     "mapping",
-	Short:   "Generate enum mapping from database",
-	Example: "ormat gen enum mapping",
-	RunE: func(*cobra.Command, []string) error {
-		return runGenEnumFile(tpl.ProtobufEnumMappingTpl)
-	},
-}
-
-var genEnumCustomCmd = &cobra.Command{
-	Use:     "custom",
-	Short:   "Generate enum custom with template from database",
-	Example: "ormat gen enum custom",
-	RunE: func(*cobra.Command, []string) error {
-		usedTemplate, err := parseTemplateFromFile(protobuf.Template)
-		if err != nil {
-			return err
-		}
-		return runGenEnumFile(usedTemplate)
-	},
-}
-
-func runGenEnumFile(usedTemplate *template.Template) error {
-	files, err := getAstFileFromDatabase()
-	if err != nil {
-		return err
+			astFiles, err := view.New(GetViewModel(rt), c.View).
+				GetDbFile(utils.GetPkgName(c.OutDir))
+			if err != nil {
+				return err
+			}
+			genFile := &generateFile{
+				Files:     astFiles,
+				OutputDir: c.OutDir,
+				Template:  tpl.Model,
+				GenFunc:   genModelFile,
+				Suffix:    ".go",
+			}
+			genFile.runGenModel()
+			return nil
+		},
 	}
-	return runGenEnum(files, usedTemplate)
-}
 
-func getAstFileFromDatabase() ([]*ast.File, error) {
+	cmdEnum := &cobra.Command{
+		Use:     "enum",
+		Short:   "Generate enum from database",
+		Example: "ormat gen enum",
+		RunE: func(*cobra.Command, []string) error {
+			usedTemplate, err := getEnumTemplate(root.Template, root.Suffix)
+			if err != nil {
+				return err
+			}
+			files, err := getAstFileFromDatabase(root.outputDir)
+			if err != nil {
+				return err
+			}
+			c := config.Global
+			genFile := &generateFile{
+				Files:         files,
+				Template:      usedTemplate.Template,
+				OutputDir:     c.OutDir,
+				Merge:         root.Merge,
+				MergeFilename: root.MergeFilename,
+				Package:       root.Package,
+				Options:       root.Options,
+				Suffix:        usedTemplate.Suffix,
+				GenFunc:       genEnumFile,
+			}
+			genFile.runGenEnum()
+			return nil
+		},
+	}
+
+	cmdEnum.PersistentFlags().StringVarP(&root.outputDir, "out", "o", "", "out directory")
+	cmdEnum.PersistentFlags().BoolVarP(&root.Merge, "merge", "m", false, "merge in a file or not")
+	cmdEnum.PersistentFlags().StringVarP(&root.MergeFilename, "filename", "f", "", "merge filename")
+	cmdEnum.PersistentFlags().StringVarP(&root.Package, "package", "p", "", "package name")
+	cmdEnum.PersistentFlags().StringToStringVarP(&root.Options, "options", "t", nil, "options key value")
+	cmdEnum.PersistentFlags().StringVarP(&root.Suffix, "suffix", "s", "", "filename suffix")
+	cmdEnum.PersistentFlags().StringVar(&root.Template, "template", "__in_go", "use custom template")
+
+	cmdEnum.MarkPersistentFlagRequired("dsn") // nolint
+	cmdEnum.MarkPersistentFlagRequired("out") // nolint
+
+	// cmdEnum.AddCommand(
+	// 	genEnumInfoCmd,
+	// )
+	cmd.AddCommand(
+		// genInfoCmd,
+		cmdEnum,
+	)
+
+	root.cmd = cmd
+	return root
+}
+func getAstFileFromDatabase(outputDir string) ([]*ast.File, error) {
 	c := config.Global
 	err := c.Load()
 	if err != nil {
@@ -120,7 +123,6 @@ func getAstFileFromDatabase() ([]*ast.File, error) {
 	c.OutDir = outputDir
 
 	setupBase(c)
-	protobuf.Suffix = intoFilenameSuffix(protobuf.Suffix, ".proto")
 
 	rt, err := runtime.NewRuntime(c)
 	if err != nil {
