@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
+
 	"github.com/things-go/ormat/view"
 )
 
@@ -25,13 +26,11 @@ func init() {
 	viper.SetDefault("view.dbTag", "gorm")
 	viper.SetDefault("view.isNullToPoint", true)
 	viper.SetDefault("view.isCommentTag", true)
-	viper.SetDefault("view.webTags", []view.WebTag{
-		{
-			Kind:    view.WebTagSnakeCase,
-			Tag:     "json",
-			HasOmit: true,
+	viper.SetDefault("view.tags",
+		map[string]string{
+			"json": view.TagSnakeCase,
 		},
-	})
+	)
 }
 
 func (cc *Config) Load() error {

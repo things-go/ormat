@@ -12,17 +12,6 @@ import (
 	"github.com/things-go/ormat/view/ast"
 )
 
-// Protobuf config
-type Protobuf struct {
-	Enabled       bool              `yaml:"enabled" json:"enabled"`
-	Merge         bool              `yaml:"merge" json:"merge"`
-	MergeFilename string            `yaml:"mergeFilename" json:"mergeFilename"`
-	Package       string            `yaml:"package" json:"package" binding:"required_if=Enabled true"`
-	Options       map[string]string `yaml:"options" json:"options" binding:"required_if=Enabled true"`
-	Suffix        string            `yaml:"suffix" json:"suffix"`
-	Template      string            `yaml:"template" json:"template"`
-}
-
 type generateFile struct {
 	Files         []*ast.File
 	Template      *template.Template

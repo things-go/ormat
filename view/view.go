@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	WebTagSmallCamelCase = "smallCamelCase"
-	WebTagCamelCase      = "camelCase"
-	WebTagSnakeCase      = "snakeCase"
-	WebTagKebab          = "kebab"
+	TagSmallCamelCase = "smallCamelCase"
+	TagCamelCase      = "camelCase"
+	TagSnakeCase      = "snakeCase"
+	TagKebab          = "kebab"
 )
 
 // DBModel Implement the interface to acquire database information.
@@ -26,23 +26,17 @@ type DBModel interface {
 	GetCreateTableSQL(tbName string) (string, error)
 }
 
-type WebTag struct {
-	Kind    string `yaml:"kind" json:"kind"` // support smallCamelCase, camelCase, snakeCase, kebab
-	Tag     string `yaml:"tag" json:"tag"`
-	HasOmit bool   `yaml:"hasOmit" json:"hasOmit"`
-}
-
 type Config struct {
-	DbTag            string   `yaml:"dbTag" json:"dbTag"`                       // db标签, 默认gorm
-	WebTags          []WebTag `yaml:"webTags" json:"webTags"`                   // web tags 标签列表
-	EnableLint       bool     `yaml:"enableLint" json:"enableLint"`             // 使能lint, id -> ID
-	DisableNull      bool     `yaml:"disableNull" json:"disableNull"`           // 不输出字段为null指针或sql.Nullxxx类型
-	EnableInt        bool     `yaml:"enableInt" json:"enableInt"`               // 使能int8,uint8,int16,uint16,int32,uint32输出为int, uint
-	EnableIntegerInt bool     `yaml:"enableIntegerInt" json:"enableIntegerInt"` // 使能int32,uint32输出为int, uint
-	EnableBoolInt    bool     `yaml:"enableBoolInt" json:"enableBoolInt"`       // 使能bool输出int
-	IsNullToPoint    bool     `yaml:"isNullToPoint" json:"isNullToPoint"`       // 是否字段为null时输出指针类型
-	IsForeignKey     bool     `yaml:"isForeignKey" json:"isForeignKey"`         // 输出外键
-	IsCommentTag     bool     `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
+	DbTag            string            `yaml:"dbTag" json:"dbTag"`                       // db标签, 默认gorm
+	Tags             map[string]string `yaml:"tags" json:"tags"`                         // web tags 标签列表, support smallCamelCase, camelCase, snakeCase, kebab
+	EnableLint       bool              `yaml:"enableLint" json:"enableLint"`             // 使能lint, id -> ID
+	DisableNull      bool              `yaml:"disableNull" json:"disableNull"`           // 不输出字段为null指针或sql.Nullxxx类型
+	EnableInt        bool              `yaml:"enableInt" json:"enableInt"`               // 使能int8,uint8,int16,uint16,int32,uint32输出为int, uint
+	EnableIntegerInt bool              `yaml:"enableIntegerInt" json:"enableIntegerInt"` // 使能int32,uint32输出为int, uint
+	EnableBoolInt    bool              `yaml:"enableBoolInt" json:"enableBoolInt"`       // 使能bool输出int
+	IsNullToPoint    bool              `yaml:"isNullToPoint" json:"isNullToPoint"`       // 是否字段为null时输出指针类型
+	IsForeignKey     bool              `yaml:"isForeignKey" json:"isForeignKey"`         // 输出外键
+	IsCommentTag     bool              `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
 }
 
 // View information
@@ -197,7 +191,7 @@ func (sf *View) intoForeignKeyField(tables []*Table, col *Column) (fks []ast.Fie
 				AddTagValue(tagDb, "joinForeignKey:"+col.Name).
 				AddTagValue(tagDb, "foreignKey:"+v.ColumnName)
 
-			fixFieldWebTags(fieldTags, &field, v.TableName, sf.WebTags, sf.EnableLint)
+			fixFieldTags(fieldTags, &field, v.TableName, sf.Tags, sf.EnableLint)
 			field.FieldTag = fieldTags.IntoFieldTag()
 			fks = append(fks, field)
 		}
@@ -303,30 +297,30 @@ func (sf *View) fixFieldTags(fieldTags *ast.FieldTags, field *ast.Field, ci *Col
 	fieldTags.Add(tagDb, filedTagValues)
 
 	// web tag
-	fixFieldWebTags(fieldTags, field, ci.Name, sf.WebTags, sf.EnableLint)
+	fixFieldTags(fieldTags, field, ci.Name, sf.Tags, sf.EnableLint)
 }
 
-func fixFieldWebTags(fieldTags *ast.FieldTags, field *ast.Field, columnName string, webTags []WebTag, enableLint bool) {
+func fixFieldTags(fieldTags *ast.FieldTags, field *ast.Field, columnName string, tags map[string]string, enableLint bool) {
 	intoWebTagName := func(kind, columnName string, enableLint bool) string {
 		vv := ""
 		switch kind {
-		case WebTagSmallCamelCase:
+		case TagSmallCamelCase:
 			vv = utils.SmallCamelCase(columnName, enableLint)
-		case WebTagCamelCase:
+		case TagCamelCase:
 			vv = utils.CamelCase(columnName, enableLint)
-		case WebTagSnakeCase:
+		case TagSnakeCase:
 			vv = utils.SnakeCase(columnName, enableLint)
-		case WebTagKebab:
+		case TagKebab:
 			vv = utils.Kebab(columnName, enableLint)
 		}
 		return vv
 	}
 
-	for _, v := range webTags {
-		if v.Tag == "json" {
+	for tag, kind := range tags {
+		if tag == "json" {
 			if vv := matcher.JsonTag(field.FieldComment); vv != "" {
 				fieldTags.Add(
-					v.Tag,
+					tag,
 					ast.NewFiledTagValues().
 						SetSeparate(",").
 						AddValue(vv),
@@ -334,19 +328,17 @@ func fixFieldWebTags(fieldTags *ast.FieldTags, field *ast.Field, columnName stri
 				continue
 			}
 		}
-		vv := intoWebTagName(v.Kind, columnName, enableLint)
+		vv := intoWebTagName(kind, columnName, enableLint)
 		if vv == "" {
 			continue
 		}
 		filedTagValue := ast.NewFiledTagValues().
 			SetSeparate(",").
-			AddValue(vv)
-		if v.HasOmit {
-			filedTagValue.AddValue("omitempty")
-		}
-		if v.Tag == "json" && matcher.HasAffixJSONTag(field.FieldComment) {
+			AddValue(vv).
+			AddValue("omitempty")
+		if tag == "json" && matcher.HasAffixJSONTag(field.FieldComment) {
 			filedTagValue.AddValue("string")
 		}
-		fieldTags.Add(v.Tag, filedTagValue)
+		fieldTags.Add(tag, filedTagValue)
 	}
 }

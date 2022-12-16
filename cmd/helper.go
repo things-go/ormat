@@ -55,6 +55,14 @@ func setupBase(c *config.Config) {
 	})))
 }
 
+func setupBase2(dp string) {
+	deploy.MustSetDeploy(dp)
+	log.ReplaceGlobals(log.NewLogger(log.WithConfig(log.Config{
+		Level:  "info",
+		Format: "console",
+	})))
+}
+
 func intoFilename(dir, filename, suffix string) string {
 	suffix = strings.TrimSpace(suffix)
 	if suffix != "" && !strings.HasPrefix(suffix, ".") {

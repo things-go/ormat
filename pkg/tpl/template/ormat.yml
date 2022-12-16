@@ -28,13 +28,9 @@ database:
 
 # 其它标签, kind支持 smallCamelCase, camelCase, snakeCase, kebab
 # 默认: 输出 snakeCase 的 json 标签, 默认输出 omitempty
-#  webTags:
-#    - kind: smallCamelCase
-#      tag: json
-#      hasOmit: false
-#    - kind: snakeCase
-#      tag: yaml
-#      hasOmit: false
+#  tags:
+#     json: smallCamelCase
+#     yaml: snakeCase
 
 # 使能lint, 如id,pid,api -> ID,PID,API
 #  enableLint: true

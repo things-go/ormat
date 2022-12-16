@@ -6,37 +6,50 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/things-go/log"
 
-	"github.com/things-go/ormat/pkg/config"
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/view"
 	"github.com/things-go/ormat/view/ast"
 	"github.com/things-go/ormat/view/driver"
 )
 
-type buildCmd struct {
-	cmd           *cobra.Command
-	inputFile     []string
-	outputDir     string
-	Enabled       bool
+type buildOpt struct {
+	InputFile     []string
+	OutputDir     string
 	Merge         bool
 	MergeFilename string
 	Package       string
 	Options       map[string]string
 	Suffix        string
 	Template      string
+	TypeDefine    map[string]string
+	View          view.Config
+}
+
+type buildCmd struct {
+	cmd *cobra.Command
+	buildOpt
 }
 
 func newBuildCmd() *buildCmd {
-	root := &buildCmd{}
+	root := &buildCmd{
+		buildOpt: buildOpt{
+			View: view.Config{
+				DbTag:            "gorm",
+				Tags:             map[string]string{"json": view.TagSnakeCase},
+				EnableLint:       false,
+				DisableNull:      false,
+				EnableInt:        false,
+				EnableIntegerInt: false,
+				EnableBoolInt:    false,
+				IsNullToPoint:    true,
+				IsForeignKey:     false,
+				IsCommentTag:     true,
+			},
+		},
+	}
 
 	PreRunBuild := func(*cobra.Command, []string) error {
-		c := config.Global
-		err := c.Load()
-		if err != nil {
-			return err
-		}
-		c.OutDir = root.outputDir
-		setupBase(c)
+		setupBase2("prod")
 		return nil
 	}
 	cmd := &cobra.Command{
@@ -49,10 +62,9 @@ func newBuildCmd() *buildCmd {
 			if err != nil {
 				return err
 			}
-			c := config.Global
 			genFile := &generateFile{
-				Files:         parseSqlFromFile(c, root.inputFile),
-				OutputDir:     c.OutDir,
+				Files:         parseSqlFromFile(&root.buildOpt),
+				OutputDir:     root.OutputDir,
 				Template:      usedTemplateMapping.Template,
 				Merge:         root.Merge,
 				MergeFilename: root.MergeFilename,
@@ -72,11 +84,10 @@ func newBuildCmd() *buildCmd {
 		Example: "ormat build info",
 		PreRunE: PreRunBuild,
 		RunE: func(*cobra.Command, []string) error {
-			c := config.Global
 			genFile := &generateFile{
-				Files:         parseSqlFromFile(c, root.inputFile),
+				Files:         parseSqlFromFile(&root.buildOpt),
 				Template:      nil,
-				OutputDir:     c.OutDir,
+				OutputDir:     root.OutputDir,
 				Merge:         true,
 				MergeFilename: root.MergeFilename,
 				Package:       root.Package,
@@ -99,11 +110,10 @@ func newBuildCmd() *buildCmd {
 			if err != nil {
 				return err
 			}
-			c := config.Global
 			genFile := &generateFile{
-				Files:         parseSqlFromFile(c, root.inputFile),
+				Files:         parseSqlFromFile(&root.buildOpt),
 				Template:      usedTemplate.Template,
-				OutputDir:     c.OutDir,
+				OutputDir:     root.OutputDir,
 				Merge:         root.Merge,
 				MergeFilename: root.MergeFilename,
 				Package:       root.Package,
@@ -122,11 +132,10 @@ func newBuildCmd() *buildCmd {
 		Example: "ormat build enum info",
 		PreRunE: PreRunBuild,
 		RunE: func(*cobra.Command, []string) error {
-			c := config.Global
 			genFile := &generateFile{
-				Files:         parseSqlFromFile(c, root.inputFile),
+				Files:         parseSqlFromFile(&root.buildOpt),
 				Template:      nil,
-				OutputDir:     c.OutDir,
+				OutputDir:     root.OutputDir,
 				Merge:         true,
 				MergeFilename: root.MergeFilename,
 				Package:       root.Package,
@@ -139,8 +148,8 @@ func newBuildCmd() *buildCmd {
 		},
 	}
 
-	cmd.PersistentFlags().StringSliceVarP(&root.inputFile, "input", "i", nil, "input file")
-	cmd.PersistentFlags().StringVarP(&root.outputDir, "out", "o", "", "out directory")
+	cmd.PersistentFlags().StringSliceVarP(&root.InputFile, "input", "i", nil, "input file")
+	cmd.PersistentFlags().StringVarP(&root.OutputDir, "out", "o", "", "out directory")
 	cmd.PersistentFlags().BoolVar(&root.Merge, "merge", false, "merge in a file or not")
 	cmd.PersistentFlags().StringVar(&root.MergeFilename, "filename", "", "merge filename")
 	cmd.PersistentFlags().StringVar(&root.Package, "package", "", "package name")
@@ -162,7 +171,7 @@ func newBuildCmd() *buildCmd {
 	return root
 }
 
-func parseSqlFromFile(c *config.Config, inputFiles []string) []*ast.File {
+func parseSqlFromFile(c *buildOpt) []*ast.File {
 	innerParseFromFile := func(filename string) ([]*ast.File, error) {
 		content, err := os.ReadFile(filename)
 		if err != nil {
@@ -174,10 +183,10 @@ func parseSqlFromFile(c *config.Config, inputFiles []string) []*ast.File {
 				CustomDefineType: c.TypeDefine,
 			},
 			c.View,
-		).GetDbFile(utils.GetPkgName(c.OutDir))
+		).GetDbFile(utils.GetPkgName(c.OutputDir))
 	}
 	astFiles := make([]*ast.File, 0, 64)
-	for _, filename := range inputFiles {
+	for _, filename := range c.InputFile {
 		astFile, err := innerParseFromFile(filename)
 		if err != nil {
 			log.Warnf("🧐 parse from SQL file(%s) failed !!!", filename)
