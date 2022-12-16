@@ -17,7 +17,6 @@ import (
 	"github.com/tj/go-update/progress"
 	"golang.org/x/oauth2"
 
-	"github.com/things-go/ormat/pkg/config"
 	"github.com/things-go/ormat/pkg/consts"
 )
 
@@ -33,12 +32,6 @@ func newUpgradeCmd() *upgradeCmd {
 		Long:         "Upgrade ormat by providing a version. If no version is provided, upgrade to the latest.",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := config.Global
-			err := c.Load()
-			if err != nil {
-				return err
-			}
-			setupBase(c)
 			ansi.HideCursor()
 			defer ansi.ShowCursor()
 
@@ -54,9 +47,9 @@ func newUpgradeCmd() *upgradeCmd {
 				},
 			}
 
+			var err error
 			var r *update.Release
 			var a *update.Asset
-
 			r, err = m.GetNewerReleases(args...)
 			if err != nil {
 				return err

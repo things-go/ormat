@@ -1,18 +1,16 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/things-go/log"
 
 	"github.com/things-go/ormat/pkg/consts"
-	"github.com/things-go/ormat/pkg/utils"
 )
 
 type RootCmd struct {
 	cmd        *cobra.Command
 	configFile string
+	level      string
 }
 
 func NewRootCmd() *RootCmd {
@@ -27,23 +25,15 @@ func NewRootCmd() *RootCmd {
 		Args:          cobra.NoArgs,
 	}
 	cobra.OnInitialize(func() {
-		if root.configFile != "" {
-			viper.SetConfigFile(root.configFile)
-		} else {
-			viper.AddConfigPath(utils.WorkDir())
-			viper.SetConfigName(".ormat")
-			viper.SetConfigType("yaml")
-		}
-		viper.AutomaticEnv()
-
-		if err := viper.ReadInConfig(); err == nil {
-			fmt.Println("Using config file:", viper.ConfigFileUsed())
-		}
+		log.ReplaceGlobals(log.NewLogger(log.WithConfig(log.Config{
+			Level:  root.level,
+			Format: "console",
+		})))
 	})
 
 	cmd.PersistentFlags().StringVarP(&root.configFile, "config", "c", "", "config file")
+	cmd.PersistentFlags().StringVarP(&root.level, "level", "l", "info", "log level(debug,info,warn,error,dpanic,panic,fatal)")
 	cmd.AddCommand(
-		newConfigCmd().cmd,
 		newSqlCmd().cmd,
 		newBuildCmd().cmd,
 		newGenCmd().cmd,

@@ -2,18 +2,16 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/alecthomas/chroma/quick"
 	"github.com/go-playground/validator/v10"
-	"github.com/things-go/log"
+	"gorm.io/gorm"
 
-	"github.com/things-go/ormat/pkg/config"
-	"github.com/things-go/ormat/pkg/deploy"
 	"github.com/things-go/ormat/pkg/tpl"
-	"github.com/things-go/ormat/runtime"
 	"github.com/things-go/ormat/view"
 	"github.com/things-go/ormat/view/driver"
 )
@@ -24,43 +22,36 @@ func init() {
 	validate.SetTagName("binding")
 }
 
-func GetViewModel(rt *runtime.Runtime) view.DBModel {
-	c := config.Global
-	dbCfg := c.Database
-	switch dbCfg.Dialect {
+type DbConfig struct {
+	DB               *gorm.DB
+	Dialect          string
+	DbName           string
+	TableNames       []string
+	CustomDefineType map[string]string
+	view.Config
+}
+
+func NewFromDatabase(c *DbConfig) (*view.View, error) {
+	var m view.DBModel
+	switch c.Dialect {
 	case "mysql":
-		return &driver.MySQL{
-			DB:               rt.DB,
-			DbName:           dbCfg.DbName(),
+		m = &driver.MySQL{
+			DB:               c.DB,
+			DbName:           c.DbName,
 			TableNames:       c.TableNames,
-			CustomDefineType: c.TypeDefine,
+			CustomDefineType: c.CustomDefineType,
 		}
 	case "sqlite3":
-		return &driver.SQLite{
-			DB:               rt.DB,
-			DbName:           dbCfg.DbName(),
+		m = &driver.SQLite{
+			DB:               c.DB,
+			DbName:           c.DbName,
 			TableNames:       c.TableNames,
-			CustomDefineType: c.TypeDefine,
+			CustomDefineType: c.CustomDefineType,
 		}
 	default:
-		panic("database not found, please check database.dialect (mysql, sqlite3, mssql)")
+		return nil, errors.New("database not found, please check database.dialect (mysql, sqlite3, mssql)")
 	}
-}
-
-func setupBase(c *config.Config) {
-	deploy.MustSetDeploy(c.Deploy)
-	log.ReplaceGlobals(log.NewLogger(log.WithConfig(log.Config{
-		Level:  "info",
-		Format: "console",
-	})))
-}
-
-func setupBase2(dp string) {
-	deploy.MustSetDeploy(dp)
-	log.ReplaceGlobals(log.NewLogger(log.WithConfig(log.Config{
-		Level:  "info",
-		Format: "console",
-	})))
+	return view.New(m, c.Config), nil
 }
 
 func intoFilename(dir, filename, suffix string) string {

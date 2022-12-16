@@ -107,36 +107,36 @@ var nullToSQLNull = map[string]string{
 	"time.Time": "sql.NullTime",
 }
 
-// getFieldDataType get go data type name
-func getFieldDataType(dataType string, isNull, disableNull, isNullToPointer, enableInt, enableIntegerInt, enableBoolInt bool) string {
+// intoFieldDataType get go data type name
+func intoFieldDataType(columnGoType string, isNullable, disableNullToPointer, enableInt, enableIntegerInt, enableBoolInt bool) string {
 	if enableInt {
-		switch dataType {
+		switch columnGoType {
 		case "uint8", "uint16", "uint32":
-			dataType = "uint"
+			columnGoType = "uint"
 		case "int8", "int16", "int32":
-			dataType = "int"
+			columnGoType = "int"
 		}
 	}
 	if enableIntegerInt {
-		switch dataType {
+		switch columnGoType {
 		case "uint32":
-			dataType = "uint"
+			columnGoType = "uint"
 		case "int32":
-			dataType = "int"
+			columnGoType = "int"
 		}
 	}
-	if enableBoolInt && dataType == "bool" {
-		dataType = "int"
+	if enableBoolInt && columnGoType == "bool" {
+		columnGoType = "int"
 	}
 
-	if !disableNull && isNull {
-		cv := nullToSQLNull
-		if isNullToPointer {
-			cv = nullToPointer
+	if isNullable {
+		cv := nullToPointer
+		if disableNullToPointer {
+			cv = nullToSQLNull
 		}
-		if v, ok := cv[dataType]; ok {
+		if v, ok := cv[columnGoType]; ok {
 			return v
 		}
 	}
-	return dataType
+	return columnGoType
 }

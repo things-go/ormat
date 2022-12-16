@@ -1,9 +1,10 @@
 package view
 
 import (
-	"bytes"
 	"strconv"
 	"strings"
+
+	flag "github.com/spf13/pflag"
 
 	"github.com/things-go/ormat/pkg/consts"
 	"github.com/things-go/ormat/pkg/matcher"
@@ -27,16 +28,41 @@ type DBModel interface {
 }
 
 type Config struct {
-	DbTag            string            `yaml:"dbTag" json:"dbTag"`                       // db标签, 默认gorm
-	Tags             map[string]string `yaml:"tags" json:"tags"`                         // web tags 标签列表, support smallCamelCase, camelCase, snakeCase, kebab
-	EnableLint       bool              `yaml:"enableLint" json:"enableLint"`             // 使能lint, id -> ID
-	DisableNull      bool              `yaml:"disableNull" json:"disableNull"`           // 不输出字段为null指针或sql.Nullxxx类型
-	EnableInt        bool              `yaml:"enableInt" json:"enableInt"`               // 使能int8,uint8,int16,uint16,int32,uint32输出为int, uint
-	EnableIntegerInt bool              `yaml:"enableIntegerInt" json:"enableIntegerInt"` // 使能int32,uint32输出为int, uint
-	EnableBoolInt    bool              `yaml:"enableBoolInt" json:"enableBoolInt"`       // 使能bool输出int
-	IsNullToPoint    bool              `yaml:"isNullToPoint" json:"isNullToPoint"`       // 是否字段为null时输出指针类型
-	IsForeignKey     bool              `yaml:"isForeignKey" json:"isForeignKey"`         // 输出外键
-	IsCommentTag     bool              `yaml:"isCommentTag" json:"isCommentTag"`         // 注释同时放入tag标签中
+	DbTag              string            `yaml:"dbTag" json:"dbTag"`                         // db标签,默认gorm
+	Tags               map[string]string `yaml:"tags" json:"tags"`                           // tags标签列表, support smallCamelCase, camelCase, snakeCase, kebab
+	EnableLint         bool              `yaml:"enableLint" json:"enableLint"`               // 使能lint,例id->ID
+	EnableInt          bool              `yaml:"enableInt" json:"enableInt"`                 // 使能int8,uint8,int16,uint16,int32,uint32输出为int,uint
+	EnableIntegerInt   bool              `yaml:"enableIntegerInt" json:"enableIntegerInt"`   // 使能int32,uint32输出为int,uint
+	EnableBoolInt      bool              `yaml:"enableBoolInt" json:"enableBoolInt"`         // 使能bool输出int
+	DisableNullToPoint bool              `yaml:"isNullToPoint" json:"isNullToPoint"`         // 禁用字段为null时输出指针类型,将输出为sql.Nullxx
+	DisableCommentTag  bool              `yaml:"disableCommentTag" json:"disableCommentTag"` // 禁用注释放入tag标签中
+	EnableForeignKey   bool              `yaml:"enableForeignKey" json:"enableForeignKey"`   // 输出外键
+}
+
+func DefaultConfig() Config {
+	return Config{
+		DbTag:              "gorm",
+		Tags:               map[string]string{"json": TagSnakeCase},
+		EnableLint:         false,
+		EnableInt:          false,
+		EnableIntegerInt:   false,
+		EnableBoolInt:      false,
+		DisableNullToPoint: false,
+		EnableForeignKey:   false,
+		DisableCommentTag:  false,
+	}
+}
+
+func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
+	s.StringVarP(&cc.DbTag, "dbTag", "k", "gorm", "db标签")
+	s.StringToStringVarP(&cc.Tags, "tags", "K", map[string]string{"json": TagSnakeCase}, "tags标签,类型支持[smallCamelCase,camelCase,snakeCase,kebab]")
+	s.BoolVarP(&cc.EnableLint, "enableLint", "L", false, "使能lint,例id->ID")
+	s.BoolVarP(&cc.EnableInt, "enableInt", "e", false, "使能int8,uint8,int16,uint16,int32,uint32输出为int,uint")
+	s.BoolVarP(&cc.EnableIntegerInt, "enableIntegerInt", "E", false, "使能int32,uint32输出为int,uint")
+	s.BoolVarP(&cc.EnableBoolInt, "enableBoolInt", "b", false, "使能bool输出int")
+	s.BoolVarP(&cc.DisableNullToPoint, "disableNullToPoint", "B", false, "禁用字段为null时输出指针类型,将输出为sql.Nullxx")
+	s.BoolVarP(&cc.DisableCommentTag, "disableCommentTag", "j", false, "禁用注释放入tag标签中")
+	s.BoolVarP(&cc.EnableForeignKey, "enableForeignKey", "J", false, "使用外键")
 }
 
 // View information
@@ -88,7 +114,7 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 	return files, nil
 }
 
-func (sf *View) GetDBCreateTableSQL() (*ast.SqlFile, error) {
+func (sf *View) GetSqlFile() (*ast.SqlFile, error) {
 	tbAttributes, err := sf.GetTableAttributes()
 	if err != nil {
 		return nil, err
@@ -107,29 +133,12 @@ func (sf *View) GetDBCreateTableSQL() (*ast.SqlFile, error) {
 	}, nil
 }
 
-// GetDBCreateTableSQLContent get all table's create table sql content
-func (sf *View) GetDBCreateTableSQLContent() ([]byte, error) {
-	tbAttributes, err := sf.GetTableAttributes()
-	if err != nil {
-		return nil, err
-	}
-
-	buf := &bytes.Buffer{}
-	for _, ta := range tbAttributes {
-		buf.WriteString(
-			"-- " + ta.Name + " " + strings.ReplaceAll(ta.Comment, "\n", "\n-- ") + "\n" +
-				ta.CreateTableSQL + ";\n\n",
-		)
-	}
-	return buf.Bytes(), nil
-}
-
 // intoColumnFields Get table column's field
 func (sf *View) intoColumnFields(tables []*Table, cols []*Column) []ast.Field {
 	fields := make([]ast.Field, 0, len(cols))
 	for _, col := range cols {
 		fieldName := utils.CamelCase(col.Name, sf.EnableLint)
-		fieldType := getFieldDataType(col.ColumnGoType, col.IsNullable, sf.DisableNull, sf.IsNullToPoint, sf.EnableInt, sf.EnableIntegerInt, sf.EnableBoolInt)
+		fieldType := intoFieldDataType(col.ColumnGoType, col.IsNullable, sf.DisableNullToPoint, sf.EnableInt, sf.EnableIntegerInt, sf.EnableBoolInt)
 		if fieldName == "DeletedAt" &&
 			(col.ColumnGoType == "int64" ||
 				col.ColumnGoType == "uint64" ||
@@ -157,7 +166,7 @@ func (sf *View) intoColumnFields(tables []*Table, cols []*Column) []ast.Field {
 		field.FieldTag = fieldTags.IntoFieldTag()
 		fields = append(fields, field)
 
-		if sf.IsForeignKey && len(col.ForeignKeys) > 0 {
+		if sf.EnableForeignKey && len(col.ForeignKeys) > 0 {
 			fks := sf.intoForeignKeyField(tables, col)
 			fields = append(fields, fks...)
 		}
@@ -200,21 +209,21 @@ func (sf *View) intoForeignKeyField(tables []*Table, col *Column) (fks []ast.Fie
 }
 
 func (*View) getColumnsKeyMulti(tables []*Table, tableName, col string) (isMulti bool, isFind bool, notes string) {
-	for _, v := range tables {
-		if strings.EqualFold(v.Name, tableName) {
-			for _, v1 := range v.Columns {
-				if strings.EqualFold(v1.Name, col) {
-					for _, v2 := range v1.Index {
-						switch v2.KeyType {
+	for _, tb := range tables {
+		if strings.EqualFold(tb.Name, tableName) {
+			for _, column := range tb.Columns {
+				if strings.EqualFold(column.Name, col) {
+					for _, idx := range column.Index {
+						switch idx.KeyType {
 						case ColumnKeyTypePrimary, ColumnKeyTypeUniqueKey:
-							if !v2.IsMulti { // 唯一索引
-								return false, true, v.Comment
+							if !idx.IsMulti { // 唯一索引
+								return false, true, tb.Comment
 							}
 						case ColumnKeyTypeNormalIndex: // index key. 复合索引
 							isMulti = true
 						}
 					}
-					return true, true, v.Comment
+					return true, true, tb.Comment
 				}
 			}
 			break
@@ -285,7 +294,7 @@ func (sf *View) fixFieldTags(fieldTags *ast.FieldTags, field *ast.Field, ci *Col
 			filedTagValues.AddValue(vv)
 		}
 	}
-	if sf.IsCommentTag && field.FieldComment != "" {
+	if !sf.DisableCommentTag && field.FieldComment != "" {
 		comment := strings.TrimSpace(field.FieldComment)
 		comment = strings.ReplaceAll(comment, ";", ",")
 		comment = strings.ReplaceAll(comment, "`", "'")
