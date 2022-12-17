@@ -39,20 +39,6 @@ type Config struct {
 	EnableForeignKey   bool              `yaml:"enableForeignKey" json:"enableForeignKey"`   // 输出外键
 }
 
-func DefaultConfig() Config {
-	return Config{
-		DbTag:              "gorm",
-		Tags:               map[string]string{"json": TagSnakeCase},
-		EnableLint:         false,
-		EnableInt:          false,
-		EnableIntegerInt:   false,
-		EnableBoolInt:      false,
-		DisableNullToPoint: false,
-		EnableForeignKey:   false,
-		DisableCommentTag:  false,
-	}
-}
-
 func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
 	s.StringVarP(&cc.DbTag, "dbTag", "k", "gorm", "db标签")
 	s.StringToStringVarP(&cc.Tags, "tags", "K", map[string]string{"json": TagSnakeCase}, "tags标签,类型支持[smallCamelCase,camelCase,snakeCase,kebab]")
