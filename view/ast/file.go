@@ -9,14 +9,6 @@ type File struct {
 	Structs     []*Struct           // struct list in file
 }
 
-func (p *File) GetProtobufEnums() []*ProtobufEnum {
-	enums := make([]*ProtobufEnum, 0, 64)
-	for _, s := range p.Structs {
-		enums = append(enums, s.ProtoEnum...)
-	}
-	return enums
-}
-
 func IntoImports(s []*Struct) map[string]struct{} {
 	mp := make(map[string]struct{})
 	for _, v := range s {

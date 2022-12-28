@@ -76,7 +76,7 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 		structFields := sf.intoColumnFields(dbInfo.Tables, tb.Columns)
 		tableName := tb.Name
 		abbrTableName := ast.IntoAbbrTableName(tableName)
-		protoMessageFields, protoEnum := ast.ParseProtobuf(structName, tableName, structFields)
+		protoMessageFields := ast.ParseProtobuf(structFields)
 		structs := []*ast.Struct{
 			{
 				StructName:         structName,
@@ -86,7 +86,6 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 				AbbrTableName:      abbrTableName,
 				CreateTableSQL:     tb.CreateTableSQL,
 				ProtoMessageFields: protoMessageFields,
-				ProtoEnum:          protoEnum,
 			},
 		}
 		files = append(files, &ast.File{

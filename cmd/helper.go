@@ -66,9 +66,6 @@ func getModelTemplate(filename, suffix string) (*tpl.TemplateMapping, error) {
 	return getMappingTemplate(tpl.BuiltInModelMapping, filename, suffix)
 }
 
-func getEnumTemplate(filename, suffix string) (*tpl.TemplateMapping, error) {
-	return getMappingTemplate(tpl.BuiltInEnumMapping, filename, suffix)
-}
 func getMappingTemplate(mapping map[string]tpl.TemplateMapping, filename, suffix string) (*tpl.TemplateMapping, error) {
 	if t, ok := mapping[filename]; ok {
 		if suffix != "" {

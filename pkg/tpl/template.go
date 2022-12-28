@@ -26,10 +26,8 @@ var (
 			ParseFS(Static, "template/layout/*"),
 	)
 
-	Model        = Template.Lookup("model.tpl")
-	EnumProtobuf = Template.Lookup("protobuf_enum.tpl")
-	EnumMapping  = Template.Lookup("protobuf_enum_mapping.tpl")
-	SqlDDL       = Template.Lookup("sql_ddl.tpl")
+	Model  = Template.Lookup("model.tpl")
+	SqlDDL = Template.Lookup("sql_ddl.tpl")
 )
 
 type TemplateMapping struct {
@@ -39,10 +37,6 @@ type TemplateMapping struct {
 
 var BuiltInModelMapping = map[string]TemplateMapping{
 	"__in_go": {Model, ".go"},
-}
-var BuiltInEnumMapping = map[string]TemplateMapping{
-	"__in_enum":    {EnumProtobuf, ".proto"},
-	"__in_mapping": {EnumMapping, ".mapping.go"},
 }
 
 func ParseTemplateFromFile(filename string) (*template.Template, error) {

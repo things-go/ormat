@@ -34,7 +34,6 @@ NOTE:
 
 - database filed comment `[@jsontag: realjsontag]` will overwrite the filed json tags.
 - database filed comment `[@affix]` will append `,string` to the filed json tags.
-- database filed comment `[@enum: enumValue]` or `[@status: enumValue]` will generate protobuf enum comment. `enumValue` should be like `{"0":["name","mapping","comment"]}`
 
 ```go
 // SysUser 用户表
@@ -75,7 +74,6 @@ Available Commands:
   build       Generate model from sql
   completion  Generate the autocompletion script for the specified shell
   config      Show/Generate config file
-  expand      Expand annotation from comment
   gen         Generate model/proto from database
   help        Help about any command
   sql         Generate create table sql

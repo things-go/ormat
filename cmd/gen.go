@@ -82,7 +82,7 @@ func newGenCmd() *genCmd {
 				Suffix:        usedTemplate.Suffix,
 				GenFunc:       genModelFile,
 			}
-			genFile.runGenModel()
+			genFile.runGen()
 			return nil
 		},
 	}
@@ -106,60 +106,7 @@ func newGenCmd() *genCmd {
 				Suffix:        root.Suffix,
 				GenFunc:       showInformation,
 			}
-			genFile.runGenModel()
-			return nil
-		},
-	}
-
-	cmdEnum := &cobra.Command{
-		Use:     "enum",
-		Short:   "Generate enum from database",
-		Example: "ormat gen enum",
-		RunE: func(*cobra.Command, []string) error {
-			usedTemplate, err := getEnumTemplate(root.Template, root.Suffix)
-			if err != nil {
-				return err
-			}
-			files, err := getAstFiles()
-			if err != nil {
-				return err
-			}
-			genFile := &generateFile{
-				Files:         files,
-				Template:      usedTemplate.Template,
-				OutputDir:     root.OutputDir,
-				Merge:         root.Merge,
-				MergeFilename: root.MergeFilename,
-				Package:       root.Package,
-				Options:       root.Options,
-				Suffix:        usedTemplate.Suffix,
-				GenFunc:       genEnumFile,
-			}
-			genFile.runGenEnum()
-			return nil
-		},
-	}
-	cmdEnumInfo := &cobra.Command{
-		Use:     "info",
-		Short:   "enum info from database",
-		Example: "ormat gen enum info",
-		RunE: func(*cobra.Command, []string) error {
-			files, err := getAstFiles()
-			if err != nil {
-				return err
-			}
-			genFile := &generateFile{
-				Files:         files,
-				Template:      nil,
-				OutputDir:     root.OutputDir,
-				Merge:         true,
-				MergeFilename: root.MergeFilename,
-				Package:       root.Package,
-				Options:       root.Options,
-				Suffix:        root.Suffix,
-				GenFunc:       showInformation,
-			}
-			genFile.runGenEnum()
+			genFile.runGen()
 			return nil
 		},
 	}
@@ -181,15 +128,9 @@ func newGenCmd() *genCmd {
 	cmd.PersistentFlags().StringVar(&root.Template, "template", "__in_go", "use custom template")
 
 	cmd.MarkPersistentFlagRequired("dsn") // nolint
-
-	cmdEnum.AddCommand(
-		cmdEnumInfo,
-	)
 	cmd.AddCommand(
 		cmdInfo,
-		cmdEnum,
 	)
-
 	root.cmd = cmd
 	return root
 }

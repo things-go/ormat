@@ -54,7 +54,7 @@ func newBuildCmd() *buildCmd {
 				Suffix:        usedTemplate.Suffix,
 				GenFunc:       genModelFile,
 			}
-			genFile.runGenModel()
+			genFile.runGen()
 			return nil
 		},
 	}
@@ -75,53 +75,7 @@ func newBuildCmd() *buildCmd {
 				Suffix:        root.Suffix,
 				GenFunc:       showInformation,
 			}
-			genFile.runGenModel()
-			return nil
-		},
-	}
-
-	cmdEnum := &cobra.Command{
-		Use:     "enum",
-		Short:   "Generate enum from sql",
-		Example: "ormat build enum",
-		RunE: func(*cobra.Command, []string) error {
-			usedTemplate, err := getEnumTemplate(root.Template, root.Suffix)
-			if err != nil {
-				return err
-			}
-			genFile := &generateFile{
-				Files:         parseSqlFromFile(&root.buildOpt),
-				Template:      usedTemplate.Template,
-				OutputDir:     root.OutputDir,
-				Merge:         root.Merge,
-				MergeFilename: root.MergeFilename,
-				Package:       root.Package,
-				Options:       root.Options,
-				Suffix:        usedTemplate.Suffix,
-				GenFunc:       genEnumFile,
-			}
-			genFile.runGenEnum()
-			return nil
-		},
-	}
-
-	cmdEnumInfo := &cobra.Command{
-		Use:     "info",
-		Short:   "enum info from sql",
-		Example: "ormat build enum info",
-		RunE: func(*cobra.Command, []string) error {
-			genFile := &generateFile{
-				Files:         parseSqlFromFile(&root.buildOpt),
-				Template:      nil,
-				OutputDir:     root.OutputDir,
-				Merge:         true,
-				MergeFilename: root.MergeFilename,
-				Package:       root.Package,
-				Options:       root.Options,
-				Suffix:        root.Suffix,
-				GenFunc:       showInformation,
-			}
-			genFile.runGenEnum()
+			genFile.runGen()
 			return nil
 		},
 	}
@@ -140,13 +94,8 @@ func newBuildCmd() *buildCmd {
 	cmd.PersistentFlags().StringVar(&root.Template, "template", "__in_go", "use custom template")
 
 	cmd.MarkPersistentFlagRequired("input") // nolint
-
-	cmdEnum.AddCommand(
-		cmdEnumInfo,
-	)
 	cmd.AddCommand(
 		cmdInfo,
-		cmdEnum,
 	)
 	root.cmd = cmd
 	return root

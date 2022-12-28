@@ -13,10 +13,9 @@ type Struct struct {
 	AbbrTableName      string                 // struct abbreviate table name
 	CreateTableSQL     string                 // create table SQL
 	ProtoMessageFields []ProtobufMessageField // proto message field
-	ProtoEnum          []*ProtobufEnum        // proto enum, parse from comment
 }
 
-func ParseProtobuf(structName, tableName string, structFields []Field) ([]ProtobufMessageField, []*ProtobufEnum) {
+func ParseProtobuf(structFields []Field) []ProtobufMessageField {
 	// 转成注解
 	intoAnnotation := func(annotations []string) string {
 		annotation := ""
@@ -27,7 +26,6 @@ func ParseProtobuf(structName, tableName string, structFields []Field) ([]Protob
 	}
 
 	protobufMessageFields := make([]ProtobufMessageField, 0, len(structFields))
-	protoEnum := make([]*ProtobufEnum, 0, len(structFields))
 	tmpAnnotations := make([]string, 0, 16)
 	for _, field := range structFields {
 		tmpAnnotations = tmpAnnotations[:0]
@@ -75,11 +73,6 @@ func ParseProtobuf(structName, tableName string, structFields []Field) ([]Protob
 			FieldAnnotation: intoAnnotation(tmpAnnotations),
 			IsTimestamp:     false,
 		})
-
-		protobufEnum := ParseEnumComment(structName, tableName, field.FieldName, field.ColumnName, field.FieldComment)
-		if protobufEnum != nil {
-			protoEnum = append(protoEnum, protobufEnum)
-		}
 	}
-	return protobufMessageFields, protoEnum
+	return protobufMessageFields
 }

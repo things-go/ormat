@@ -8,9 +8,8 @@ import (
 )
 
 type RootCmd struct {
-	cmd        *cobra.Command
-	configFile string
-	level      string
+	cmd   *cobra.Command
+	level string
 }
 
 func NewRootCmd() *RootCmd {
@@ -31,13 +30,11 @@ func NewRootCmd() *RootCmd {
 		})))
 	})
 
-	cmd.PersistentFlags().StringVarP(&root.configFile, "config", "c", "", "config file")
 	cmd.PersistentFlags().StringVarP(&root.level, "level", "l", "info", "log level(debug,info,warn,error,dpanic,panic,fatal)")
 	cmd.AddCommand(
 		newSqlCmd().cmd,
 		newBuildCmd().cmd,
 		newGenCmd().cmd,
-		newExpandCmd().cmd,
 		newUpgradeCmd().cmd,
 	)
 	root.cmd = cmd
