@@ -19,7 +19,7 @@ require (
 	golang.org/x/oauth2 v0.3.0
 	gorm.io/driver/mysql v1.4.4
 	gorm.io/driver/postgres v1.4.6
-	gorm.io/driver/sqlite v1.4.3
+	gorm.io/driver/sqlite v1.4.4
 	gorm.io/gorm v1.24.3
 	gorm.io/plugin/dbresolver v1.4.0
 )
