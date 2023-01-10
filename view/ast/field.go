@@ -19,6 +19,8 @@ type Field struct {
 	FieldType    string // field type
 	FieldComment string // field comment
 	FieldTag     string // field tag merge from FieldTags
+	IsNullable   bool   // field is null or not
+	IsTimestamp  bool   // field Go Type is time.Time
 	ColumnGoType string // field column go type
 	ColumnName   string // field column name in database
 }

@@ -15,7 +15,7 @@ type Struct struct {
 	ProtoMessageFields []ProtobufMessageField // proto message field
 }
 
-func ParseProtobuf(structFields []Field) []ProtobufMessageField {
+func ParseProtobuf(structFields []Field, enableGogo bool) []ProtobufMessageField {
 	// 转成注解
 	intoAnnotation := func(annotations []string) string {
 		annotation := ""
@@ -34,22 +34,25 @@ func ParseProtobuf(structFields []Field) []ProtobufMessageField {
 		switch dataType {
 		case "time.Time":
 			dataType = "google.protobuf.Timestamp"
-			protobufMessageFields = append(protobufMessageFields,
-				ProtobufMessageField{
+			if enableGogo {
+				protobufMessageFields = append(protobufMessageFields, ProtobufMessageField{
 					FieldDataType:   dataType,
 					FieldName:       field.ColumnName,
 					FieldComment:    field.FieldComment,
 					FieldAnnotation: intoAnnotation([]string{`(gogoproto.stdtime) = true`, `(gogoproto.nullable) = false`}),
 					IsTimestamp:     false,
 				},
-				ProtobufMessageField{
+				)
+			} else {
+				protobufMessageFields = append(protobufMessageFields, ProtobufMessageField{
 					FieldDataType:   "int64",
 					FieldName:       field.ColumnName,
 					FieldComment:    field.FieldComment,
 					FieldAnnotation: intoAnnotation([]string{`(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`}),
 					IsTimestamp:     true,
 				},
-			)
+				)
+			}
 			continue
 		case "uint16", "uint8", "uint":
 			dataType = "uint32"

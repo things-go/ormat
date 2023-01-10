@@ -7,6 +7,8 @@ type File struct {
 	PackageName string              // package name
 	Imports     map[string]struct{} // import package
 	Structs     []*Struct           // struct list in file
+	HasColumn   bool                // has column
+	HasHelper   bool                // has helper
 }
 
 func IntoImports(s []*Struct) map[string]struct{} {

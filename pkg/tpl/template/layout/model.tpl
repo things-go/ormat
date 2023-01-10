@@ -11,6 +11,8 @@ import (
 )
 {{end}}
 
+{{- $hasColumn := .HasColumn}}
+{{- $hasHelper := .HasHelper}}
 {{- range $e := .Structs}}
 // {{$e.StructName}} {{$e.StructComment}}
 type {{$e.StructName}} struct {
@@ -24,40 +26,59 @@ func (*{{$e.StructName}}) TableName() string {
 	return "{{$e.TableName}}"
 }
 
-/* protobuf and gorm field helper
 {{- $tableName := $e.TableName}}
 {{- $abbrTableName := $e.AbbrTableName}}
-// {{$e.StructName}}Columns database column name.
-var {{$e.StructName}}Columns = []string {
-{{- range $field := $e.ProtoMessageFields}}
+{{- if $hasColumn}}
+// Select{{$e.StructName}} database column name.
+var Select{{$e.StructName}} = []string {
+{{- range $field := $e.StructFields}}
+    {{- $fieldName := snakecase $field.FieldName}}
 	{{- if $field.IsTimestamp}}
-	"UNIX_TIMESTAMP({{$field.FieldName}}) AS {{$field.FieldName}}",
+	{{- if $field.IsNullable}}
+	"IFNULL(UNIX_TIMESTAMP(`{{$fieldName}}`), 0) AS `{{$fieldName}}`",
 	{{- else}}
-	"{{$field.FieldName}}",
+	"UNIX_TIMESTAMP(`{{$fieldName}}`) AS `{{$fieldName}}`",
 	{{- end}}
-{{- end}}
-}
-// {{$e.StructName}}ColumnsWithTable database column name with table prefix
-var {{$e.StructName}}ColumnsWithTable = []string {
-{{- range $field := $e.ProtoMessageFields}}
-	{{- if $field.IsTimestamp}}
-	"UNIX_TIMESTAMP({{$tableName}}.{{$field.FieldName}}) AS {{$tableName}}_{{$field.FieldName}}",
 	{{- else}}
-	"{{$tableName}}.{{$field.FieldName}} AS {{$tableName}}_{{$field.FieldName}}",
-	{{- end}}
-{{- end}}
-}
-// {{$e.StructName}}ColumnsWithAbbrTable database column name with abbr table prefix
-var {{$e.StructName}}ColumnsWithAbbrTable = []string {
-{{- range $field := $e.ProtoMessageFields}}
-	{{- if $field.IsTimestamp}}
-	"UNIX_TIMESTAMP({{$abbrTableName}}.{{$field.FieldName}}) AS {{$abbrTableName}}_{{$field.FieldName}}",
-	{{- else}}
-	"{{$abbrTableName}}.{{$field.FieldName}} AS {{$abbrTableName}}_{{$field.FieldName}}",
+	"`{{$fieldName}}`",
 	{{- end}}
 {{- end}}
 }
 
+// Select{{$e.StructName}}WithTable database column name with table prefix
+var Select{{$e.StructName}}WithTable = []string {
+{{- range $field := $e.StructFields}}
+    {{- $fieldName := snakecase $field.FieldName}}
+	{{- if $field.IsTimestamp}}
+	{{- if $field.IsNullable}}
+	"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`), 0) AS `{{$tableName}}_{{$fieldName}}`",
+	{{- else}}
+	"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`) AS `{{$tableName}}_{{$fieldName}}`",
+	{{- end}}
+	{{- else}}
+	"`{{$tableName}}`.`{{$fieldName}}` AS `{{$tableName}}_{{$fieldName}}`",
+	{{- end}}
+{{- end}}
+}
+// Select{{$e.StructName}}WithAbbrTable database column name with abbr table prefix
+var Select{{$e.StructName}}WithAbbrTable = []string {
+{{- range $field := $e.StructFields}}
+    {{- $fieldName := snakecase $field.FieldName}}
+	{{- if $field.IsTimestamp}}
+	{{- if $field.IsNullable}}
+	"IFNULL(UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$fieldName}}`), 0) AS `{{$abbrTableName}}_{{$fieldName}}`",
+	{{- else}}
+	"UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$fieldName}}`) AS `{{$abbrTableName}}_{{$fieldName}}`",
+	{{- end}}
+	{{- else}}
+	"`{{$abbrTableName}}`.`{{$fieldName}}` AS `{{$abbrTableName}}_{{$fieldName}}`",
+	{{- end}}
+{{- end}}
+}
+{{- end}}
+
+{{- if $hasHelper}}
+/* protobuf field helper
 // {{$e.StructName}} {{.StructComment}}
 message {{$e.StructName}} {
 {{- range $index, $field := $e.ProtoMessageFields}}
@@ -86,6 +107,6 @@ message {{$e.StructName}}WithAbbrTable {
 {{- end}}
 }
 */
-
+{{- end}}
 {{- end}}
 

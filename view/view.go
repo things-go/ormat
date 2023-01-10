@@ -37,6 +37,9 @@ type Config struct {
 	DisableNullToPoint bool              `yaml:"isNullToPoint" json:"isNullToPoint"`         // 禁用字段为null时输出指针类型,将输出为sql.Nullxx
 	DisableCommentTag  bool              `yaml:"disableCommentTag" json:"disableCommentTag"` // 禁用注释放入tag标签中
 	EnableForeignKey   bool              `yaml:"enableForeignKey" json:"enableForeignKey"`   // 输出外键
+	HasColumn          bool              `yaml:"hasColumn" json:"hasColumn"`                 // 是否输出字段
+	HasHelper          bool              `yaml:"hasHelper" json:"hasHelper"`                 // 是否输出 proto 帮助
+	EnableGogo         bool              `yaml:"enableGogo" json:"enableGogo"`               // 使能用 gogo proto (仅 hasHelper = true 有效果)
 }
 
 func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
@@ -49,6 +52,9 @@ func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
 	s.BoolVarP(&cc.DisableNullToPoint, "disableNullToPoint", "B", false, "禁用字段为null时输出指针类型,将输出为sql.Nullxx")
 	s.BoolVarP(&cc.DisableCommentTag, "disableCommentTag", "j", false, "禁用注释放入tag标签中")
 	s.BoolVarP(&cc.EnableForeignKey, "enableForeignKey", "J", false, "使用外键")
+	s.BoolVar(&cc.HasColumn, "hasColumn", false, "是否输出字段")
+	s.BoolVar(&cc.HasHelper, "hasHelper", false, "是否输出 proto 帮助")
+	s.BoolVar(&cc.EnableGogo, "enableGogo", false, "使能用 gogo proto (仅 hasHelper = true 有效果)")
 }
 
 // View information
@@ -76,7 +82,7 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 		structFields := sf.intoColumnFields(dbInfo.Tables, tb.Columns)
 		tableName := tb.Name
 		abbrTableName := ast.IntoAbbrTableName(tableName)
-		protoMessageFields := ast.ParseProtobuf(structFields)
+		protoMessageFields := ast.ParseProtobuf(structFields, sf.EnableGogo)
 		structs := []*ast.Struct{
 			{
 				StructName:         structName,
@@ -94,6 +100,8 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 			PackageName: pkgName,
 			Imports:     ast.IntoImports(structs),
 			Structs:     structs,
+			HasColumn:   sf.HasColumn,
+			HasHelper:   sf.HasHelper,
 		})
 	}
 	return files, nil
@@ -143,6 +151,8 @@ func (sf *View) intoColumnFields(tables []*Table, cols []*Column) []ast.Field {
 			FieldType:    fieldType,
 			FieldComment: ast.IntoComment(col.Comment, "", "\n", ","),
 			FieldTag:     "",
+			IsNullable:   col.IsNullable,
+			IsTimestamp:  col.ColumnGoType == "time.Time",
 			ColumnGoType: col.ColumnGoType,
 			ColumnName:   col.Name,
 		}
