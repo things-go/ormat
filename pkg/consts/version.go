@@ -5,7 +5,7 @@ import (
 	"runtime"
 )
 
-const Version = "v0.5.1"
+const Version = "v0.5.2"
 
 func BuildVersion() string {
 	return fmt.Sprintf("%s\nGo Version: %s\nGo Os: %s\nGo Arch: %s\n",

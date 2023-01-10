@@ -35,12 +35,12 @@ var Select{{$e.StructName}} = []string {
     {{- $fieldName := snakecase $field.FieldName}}
 	{{- if $field.IsTimestamp}}
 	{{- if $field.IsNullable}}
-	"IFNULL(UNIX_TIMESTAMP(`{{$fieldName}}`), 0) AS `{{$fieldName}}`",
+	"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`), 0) AS `{{$fieldName}}`",
 	{{- else}}
-	"UNIX_TIMESTAMP(`{{$fieldName}}`) AS `{{$fieldName}}`",
+	"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`) AS `{{$fieldName}}`",
 	{{- end}}
 	{{- else}}
-	"`{{$fieldName}}`",
+	"`{{$tableName}}`.`{{$fieldName}}`",
 	{{- end}}
 {{- end}}
 }
