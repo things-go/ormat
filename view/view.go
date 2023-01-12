@@ -38,6 +38,7 @@ type Config struct {
 	DisableCommentTag  bool              `yaml:"disableCommentTag" json:"disableCommentTag"` // 禁用注释放入tag标签中
 	EnableForeignKey   bool              `yaml:"enableForeignKey" json:"enableForeignKey"`   // 输出外键
 	HasColumn          bool              `yaml:"hasColumn" json:"hasColumn"`                 // 是否输出字段
+	SkipColumns        []string          `yaml:"skipColumns" json:"skipColumns"`             // 忽略输出字段, 格式 table.column
 	HasHelper          bool              `yaml:"hasHelper" json:"hasHelper"`                 // 是否输出 proto 帮助
 	EnableGogo         bool              `yaml:"enableGogo" json:"enableGogo"`               // 使能用 gogo proto (仅 hasHelper = true 有效果)
 }
@@ -53,8 +54,10 @@ func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
 	s.BoolVarP(&cc.DisableCommentTag, "disableCommentTag", "j", false, "禁用注释放入tag标签中")
 	s.BoolVarP(&cc.EnableForeignKey, "enableForeignKey", "J", false, "使用外键")
 	s.BoolVar(&cc.HasColumn, "hasColumn", false, "是否输出字段")
+	s.StringSliceVar(&cc.SkipColumns, "skipColumns", nil, "忽略输出字段(仅 hasColumn = true 有效), 格式 table.column(只作用于指定表字段) 或  column(作用于所有表)")
+
 	s.BoolVar(&cc.HasHelper, "hasHelper", false, "是否输出 proto 帮助")
-	s.BoolVar(&cc.EnableGogo, "enableGogo", false, "使能用 gogo proto (仅 hasHelper = true 有效果)")
+	s.BoolVar(&cc.EnableGogo, "enableGogo", false, "使能用 gogo proto (仅 hasHelper = true 有效)")
 }
 
 // View information
@@ -70,6 +73,11 @@ func New(m DBModel, c Config) *View {
 
 // GetDbFile ast file
 func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
+	skipColumns := make(map[string]struct{})
+	for _, column := range sf.SkipColumns {
+		skipColumns[utils.SnakeCase(column, false)] = struct{}{}
+	}
+
 	dbInfo, err := sf.GetDatabase()
 	if err != nil {
 		return nil, err
@@ -79,7 +87,7 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 	for _, tb := range dbInfo.Tables {
 		structName := utils.CamelCase(tb.Name, sf.EnableLint)
 		structComment := ast.IntoComment(tb.Comment, "...", "\n", "\r\n// ")
-		structFields := sf.intoColumnFields(dbInfo.Tables, tb.Columns)
+		structFields := sf.intoColumnFields(tb.Name, dbInfo.Tables, tb.Columns, skipColumns)
 		tableName := tb.Name
 		abbrTableName := ast.IntoAbbrTableName(tableName)
 		protoMessageFields := ast.ParseProtobuf(structFields, sf.EnableGogo)
@@ -127,7 +135,7 @@ func (sf *View) GetSqlFile() (*ast.SqlFile, error) {
 }
 
 // intoColumnFields Get table column's field
-func (sf *View) intoColumnFields(tables []*Table, cols []*Column) []ast.Field {
+func (sf *View) intoColumnFields(tbName string, tables []*Table, cols []*Column, skipColumns map[string]struct{}) []ast.Field {
 	fields := make([]ast.Field, 0, len(cols))
 	for _, col := range cols {
 		fieldName := utils.CamelCase(col.Name, sf.EnableLint)
@@ -146,6 +154,11 @@ func (sf *View) intoColumnFields(tables []*Table, cols []*Column) []ast.Field {
 			fieldType = "soft_delete.DeletedAt"
 		}
 
+		isSkipColumn := false
+		if _, isSkipColumn = skipColumns[col.Name]; !isSkipColumn {
+			_, isSkipColumn = skipColumns[tbName+"."+col.Name]
+		}
+
 		field := ast.Field{
 			FieldName:    fieldName,
 			FieldType:    fieldType,
@@ -155,6 +168,7 @@ func (sf *View) intoColumnFields(tables []*Table, cols []*Column) []ast.Field {
 			IsTimestamp:  col.ColumnGoType == "time.Time",
 			ColumnGoType: col.ColumnGoType,
 			ColumnName:   col.Name,
+			IsSkipColumn: isSkipColumn,
 		}
 		fieldTags := ast.NewFieldTags()
 		sf.fixFieldTags(fieldTags, &field, col)

@@ -35,12 +35,12 @@ var Select{{$e.StructName}} = []string {
     {{- $fieldName := snakecase $field.FieldName}}
 	{{- if $field.IsTimestamp}}
 	{{- if $field.IsNullable}}
-	"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`), 0) AS `{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`), 0) AS `{{$fieldName}}`",
 	{{- else}}
-	"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`) AS `{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`) AS `{{$fieldName}}`",
 	{{- end}}
 	{{- else}}
-	"`{{$tableName}}`.`{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"`{{$tableName}}`.`{{$fieldName}}`",
 	{{- end}}
 {{- end}}
 }
@@ -51,12 +51,12 @@ var Select{{$e.StructName}}WithTable = []string {
     {{- $fieldName := snakecase $field.FieldName}}
 	{{- if $field.IsTimestamp}}
 	{{- if $field.IsNullable}}
-	"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`), 0) AS `{{$tableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`), 0) AS `{{$tableName}}_{{$fieldName}}`",
 	{{- else}}
-	"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`) AS `{{$tableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`) AS `{{$tableName}}_{{$fieldName}}`",
 	{{- end}}
 	{{- else}}
-	"`{{$tableName}}`.`{{$fieldName}}` AS `{{$tableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"`{{$tableName}}`.`{{$fieldName}}` AS `{{$tableName}}_{{$fieldName}}`",
 	{{- end}}
 {{- end}}
 }
@@ -66,12 +66,12 @@ var Select{{$e.StructName}}WithAbbrTable = []string {
     {{- $fieldName := snakecase $field.FieldName}}
 	{{- if $field.IsTimestamp}}
 	{{- if $field.IsNullable}}
-	"IFNULL(UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$fieldName}}`), 0) AS `{{$abbrTableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$fieldName}}`), 0) AS `{{$abbrTableName}}_{{$fieldName}}`",
 	{{- else}}
-	"UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$fieldName}}`) AS `{{$abbrTableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$fieldName}}`) AS `{{$abbrTableName}}_{{$fieldName}}`",
 	{{- end}}
 	{{- else}}
-	"`{{$abbrTableName}}`.`{{$fieldName}}` AS `{{$abbrTableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"`{{$abbrTableName}}`.`{{$fieldName}}` AS `{{$abbrTableName}}_{{$fieldName}}`",
 	{{- end}}
 {{- end}}
 }

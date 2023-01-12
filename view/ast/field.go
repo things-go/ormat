@@ -23,4 +23,5 @@ type Field struct {
 	IsTimestamp  bool   // field Go Type is time.Time
 	ColumnGoType string // field column go type
 	ColumnName   string // field column name in database
+	IsSkipColumn bool   // skip filed use for output column
 }
