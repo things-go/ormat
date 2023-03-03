@@ -39,6 +39,8 @@ type Config struct {
 	EnableForeignKey   bool              `yaml:"enableForeignKey" json:"enableForeignKey"`   // 输出外键
 	HasColumn          bool              `yaml:"hasColumn" json:"hasColumn"`                 // 是否输出字段
 	SkipColumns        []string          `yaml:"skipColumns" json:"skipColumns"`             // 忽略输出字段, 格式 table.column
+	Package            string            `yaml:"package" json:"package"`                     // 包名
+	Options            map[string]string `yaml:"options" json:"options"`                     // 选项
 	HasHelper          bool              `yaml:"hasHelper" json:"hasHelper"`                 // 是否输出 proto 帮助
 	EnableGogo         bool              `yaml:"enableGogo" json:"enableGogo"`               // 使能用 gogo proto (仅 hasHelper = true 有效果)
 }
@@ -55,6 +57,8 @@ func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
 	s.BoolVarP(&cc.EnableForeignKey, "enableForeignKey", "J", false, "使用外键")
 	s.BoolVar(&cc.HasColumn, "hasColumn", false, "是否输出字段")
 	s.StringSliceVar(&cc.SkipColumns, "skipColumns", nil, "忽略输出字段(仅 hasColumn = true 有效), 格式 table.column(只作用于指定表字段) 或  column(作用于所有表)")
+	s.StringVar(&cc.Package, "package", "", "package name")
+	s.StringToStringVar(&cc.Options, "options", nil, "options key value")
 
 	s.BoolVar(&cc.HasHelper, "hasHelper", false, "是否输出 proto 帮助")
 	s.BoolVar(&cc.EnableGogo, "enableGogo", false, "使能用 gogo proto (仅 hasHelper = true 有效)")
@@ -108,6 +112,8 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 			PackageName: pkgName,
 			Imports:     ast.IntoImports(structs),
 			Structs:     structs,
+			Package:     sf.Package,
+			Options:     sf.Options,
 			HasColumn:   sf.HasColumn,
 			HasHelper:   sf.HasHelper,
 		})

@@ -32,6 +32,8 @@ func (g *generateFile) runGen() {
 		PackageName: packageName,
 		Imports:     make(map[string]struct{}),
 		Structs:     make([]*ast.Struct, 0, 512),
+		Package:     g.Package,
+		Options:     g.Options,
 	}
 	for _, v := range g.Files {
 		if g.Merge {

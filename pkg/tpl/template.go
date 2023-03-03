@@ -27,6 +27,7 @@ var (
 	)
 
 	Model  = Template.Lookup("model.tpl")
+	Mapper = Template.Lookup("mapper.tpl")
 	SqlDDL = Template.Lookup("sql_ddl.tpl")
 )
 
@@ -36,7 +37,8 @@ type TemplateMapping struct {
 }
 
 var BuiltInModelMapping = map[string]TemplateMapping{
-	"__in_go": {Model, ".go"},
+	"__in_go":     {Model, ".go"},
+	"__in_mapper": {Mapper, ".proto"},
 }
 
 func ParseTemplateFromFile(filename string) (*template.Template, error) {

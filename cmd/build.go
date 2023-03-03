@@ -20,8 +20,6 @@ type buildOpt struct {
 
 	Merge         bool
 	MergeFilename string
-	Package       string
-	Options       map[string]string
 	Suffix        string
 	Template      string
 }
@@ -49,8 +47,8 @@ func newBuildCmd() *buildCmd {
 				Template:      usedTemplate.Template,
 				Merge:         root.Merge,
 				MergeFilename: root.MergeFilename,
-				Package:       root.Package,
-				Options:       root.Options,
+				Package:       root.View.Package,
+				Options:       root.View.Options,
 				Suffix:        usedTemplate.Suffix,
 				GenFunc:       genModelFile,
 			}
@@ -70,8 +68,8 @@ func newBuildCmd() *buildCmd {
 				OutputDir:     root.OutputDir,
 				Merge:         true,
 				MergeFilename: root.MergeFilename,
-				Package:       root.Package,
-				Options:       root.Options,
+				Package:       root.View.Package,
+				Options:       root.View.Options,
 				Suffix:        root.Suffix,
 				GenFunc:       showInformation,
 			}
@@ -88,8 +86,6 @@ func newBuildCmd() *buildCmd {
 
 	cmd.PersistentFlags().BoolVar(&root.Merge, "merge", false, "merge in a file or not")
 	cmd.PersistentFlags().StringVar(&root.MergeFilename, "filename", "", "merge filename")
-	cmd.PersistentFlags().StringVar(&root.Package, "package", "", "package name")
-	cmd.PersistentFlags().StringToStringVar(&root.Options, "options", nil, "options key value")
 	cmd.PersistentFlags().StringVar(&root.Suffix, "suffix", "", "filename suffix")
 	cmd.PersistentFlags().StringVar(&root.Template, "template", "__in_go", "use custom template")
 
