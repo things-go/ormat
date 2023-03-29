@@ -58,8 +58,6 @@ type Column struct {
 }
 
 func (c *Column) IntoSqlDefined() string {
-	// bigint NOT NULL AUTO_INCREMENT
-
 	b := strings.Builder{}
 	b.Grow(64)
 
@@ -70,8 +68,9 @@ func (c *Column) IntoSqlDefined() string {
 	} else {
 		b.WriteString("NOT NULL")
 	}
-	b.WriteString(" ")
+
 	if c.IsAutoIncrement {
+		b.WriteString(" ")
 		b.WriteString("AUTO_INCREMENT")
 	} else {
 		dv := ""
@@ -90,6 +89,7 @@ func (c *Column) IntoSqlDefined() string {
 			dv = "DEFAULT ''"
 		}
 		if dv != "" {
+			b.WriteString(" ")
 			b.WriteString(dv)
 		}
 	}
