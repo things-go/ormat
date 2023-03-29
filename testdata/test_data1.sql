@@ -5,7 +5,7 @@ CREATE TABLE `test_data1` (
     `value1` float unsigned NOT NULL DEFAULT '1' COMMENT '值1,[0:空,1:键1,2:键2,3:键3]',
     `value2` float(10,1) unsigned NOT NULL DEFAULT '2' COMMENT '值2,0:空,1:键1,2:键2,3:键3',
     `value3` double(16,2) NOT NULL DEFAULT '3' COMMENT '值3',
-    `value4` enum('00','SH') NOT NULL DEFAULT '4' COMMENT '值4',
+    `value4` enum('00','SH') NOT NULL DEFAULT '00' COMMENT '值4',
 	`created_at` datetime NOT NULL COMMENT '发布时间',
 	`updated_at` datetime NOT NULL,
     PRIMARY KEY (`id`),

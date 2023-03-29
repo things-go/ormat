@@ -1,5 +1,12 @@
 package view
 
+import (
+	"fmt"
+	"strings"
+
+	"golang.org/x/exp/slices"
+)
+
 // ColumnKeyType column key type
 type ColumnKeyType int
 
@@ -48,6 +55,46 @@ type Column struct {
 	Comment         string       // column comment
 	Index           []Index      // index list
 	ForeignKeys     []ForeignKey // Foreign key list
+}
+
+func (c *Column) IntoSqlDefined() string {
+	// bigint NOT NULL AUTO_INCREMENT
+
+	b := strings.Builder{}
+	b.Grow(64)
+
+	b.WriteString(c.ColumnType)
+	b.WriteString(" ")
+	if c.IsNullable {
+		b.WriteString("DEFAULT NULL")
+	} else {
+		b.WriteString("NOT NULL")
+	}
+	b.WriteString(" ")
+	if c.IsAutoIncrement {
+		b.WriteString("AUTO_INCREMENT")
+	} else {
+		dv := ""
+		if c.Default != nil {
+			dv = fmt.Sprintf("DEFAULT '%s'", *c.Default)
+		} else if slices.Contains(
+			[]string{
+				"bool",
+				"int8", "uint8", "int16", "uint16",
+				"int32", "uint32", "int64", "uint64",
+				"int", "uint", "float32", "float64",
+			},
+			c.ColumnGoType) {
+			dv = "DEFAULT '0'"
+		} else if c.ColumnGoType == "string" {
+			dv = "DEFAULT ''"
+		}
+		if dv != "" {
+			b.WriteString(dv)
+		}
+	}
+
+	return b.String()
 }
 
 type ColumnSlice []*Column

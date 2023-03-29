@@ -14,10 +14,10 @@ var Static embed.FS
 var (
 	TemplateFuncs = template.FuncMap{
 		"add":            func(a, b int) int { return a + b },
-		"snakecase":      func(s string) string { return utils.SnakeCase(s, false) },
-		"kebabcase":      func(s string) string { return utils.Kebab(s, false) },
-		"camelcase":      func(s string) string { return utils.CamelCase(s, false) },
-		"smallcamelcase": func(s string) string { return utils.SmallCamelCase(s, false) },
+		"snakecase":      func(s string) string { return utils.SnakeCase(s) },
+		"kebabcase":      func(s string) string { return utils.Kebab(s) },
+		"camelcase":      func(s string) string { return utils.CamelCase(s) },
+		"smallcamelcase": func(s string) string { return utils.SmallCamelCase(s) },
 	}
 
 	Template = template.Must(

@@ -30,7 +30,6 @@ type DBModel interface {
 type Config struct {
 	DbTag              string            `yaml:"dbTag" json:"dbTag"`                         // db标签,默认gorm
 	Tags               map[string]string `yaml:"tags" json:"tags"`                           // tags标签列表, support smallCamelCase, camelCase, snakeCase, kebab
-	EnableLint         bool              `yaml:"enableLint" json:"enableLint"`               // 使能lint,例id->ID
 	EnableInt          bool              `yaml:"enableInt" json:"enableInt"`                 // 使能int8,uint8,int16,uint16,int32,uint32输出为int,uint
 	EnableIntegerInt   bool              `yaml:"enableIntegerInt" json:"enableIntegerInt"`   // 使能int32,uint32输出为int,uint
 	EnableBoolInt      bool              `yaml:"enableBoolInt" json:"enableBoolInt"`         // 使能bool输出int
@@ -43,12 +42,12 @@ type Config struct {
 	Options            map[string]string `yaml:"options" json:"options"`                     // 选项
 	HasHelper          bool              `yaml:"hasHelper" json:"hasHelper"`                 // 是否输出 proto 帮助
 	EnableGogo         bool              `yaml:"enableGogo" json:"enableGogo"`               // 使能用 gogo proto (仅 hasHelper = true 有效果)
+	EnableSea          bool              `yaml:"enableSea" json:"enableSea"`                 // 使能用 seaql(仅 hasHelper = true 有效果)
 }
 
 func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
 	s.StringVarP(&cc.DbTag, "dbTag", "k", "gorm", "db标签")
 	s.StringToStringVarP(&cc.Tags, "tags", "K", map[string]string{"json": TagSnakeCase}, "tags标签,类型支持[smallCamelCase,camelCase,snakeCase,kebab]")
-	s.BoolVarP(&cc.EnableLint, "enableLint", "L", false, "使能lint,例id->ID")
 	s.BoolVarP(&cc.EnableInt, "enableInt", "e", false, "使能int8,uint8,int16,uint16,int32,uint32输出为int,uint")
 	s.BoolVarP(&cc.EnableIntegerInt, "enableIntegerInt", "E", false, "使能int32,uint32输出为int,uint")
 	s.BoolVarP(&cc.EnableBoolInt, "enableBoolInt", "b", false, "使能bool输出int")
@@ -62,6 +61,7 @@ func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
 
 	s.BoolVar(&cc.HasHelper, "hasHelper", false, "是否输出 proto 帮助")
 	s.BoolVar(&cc.EnableGogo, "enableGogo", false, "使能用 gogo proto (仅 hasHelper = true 有效)")
+	s.BoolVar(&cc.EnableSea, "enableSea", false, "使能用 seaql (仅 hasHelper = true 有效)")
 }
 
 // View information
@@ -79,7 +79,7 @@ func New(m DBModel, c Config) *View {
 func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 	skipColumns := make(map[string]struct{})
 	for _, column := range sf.SkipColumns {
-		skipColumns[utils.SnakeCase(column, false)] = struct{}{}
+		skipColumns[utils.SnakeCase(column)] = struct{}{}
 	}
 
 	dbInfo, err := sf.GetDatabase()
@@ -89,12 +89,12 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 
 	files := make([]*ast.File, 0, len(dbInfo.Tables))
 	for _, tb := range dbInfo.Tables {
-		structName := utils.CamelCase(tb.Name, sf.EnableLint)
+		structName := utils.CamelCase(tb.Name)
 		structComment := ast.IntoComment(tb.Comment, "...", "\n", "\r\n// ")
 		structFields := sf.intoColumnFields(tb.Name, dbInfo.Tables, tb.Columns, skipColumns)
 		tableName := tb.Name
 		abbrTableName := ast.IntoAbbrTableName(tableName)
-		protoMessageFields := ast.ParseProtobuf(structFields, sf.EnableGogo)
+		protoMessageFields := ast.ParseProtobuf(structFields, sf.EnableGogo, sf.EnableSea)
 		structs := []*ast.Struct{
 			{
 				StructName:         structName,
@@ -144,7 +144,7 @@ func (sf *View) GetSqlFile() (*ast.SqlFile, error) {
 func (sf *View) intoColumnFields(tbName string, tables []*Table, cols []*Column, skipColumns map[string]struct{}) []ast.Field {
 	fields := make([]ast.Field, 0, len(cols))
 	for _, col := range cols {
-		fieldName := utils.CamelCase(col.Name, sf.EnableLint)
+		fieldName := utils.CamelCase(col.Name)
 		fieldType := intoFieldDataType(col.ColumnGoType, col.IsNullable, sf.DisableNullToPoint, sf.EnableInt, sf.EnableIntegerInt, sf.EnableBoolInt)
 		if fieldName == "DeletedAt" &&
 			(col.ColumnGoType == "int64" ||
@@ -174,6 +174,7 @@ func (sf *View) intoColumnFields(tbName string, tables []*Table, cols []*Column,
 			IsTimestamp:  col.ColumnGoType == "time.Time",
 			ColumnGoType: col.ColumnGoType,
 			ColumnName:   col.Name,
+			Type:         col.IntoSqlDefined(),
 			IsSkipColumn: isSkipColumn,
 		}
 		fieldTags := ast.NewFieldTags()
@@ -202,7 +203,7 @@ func (sf *View) intoForeignKeyField(tables []*Table, col *Column) (fks []ast.Fie
 		if found {
 			var field ast.Field
 
-			name := utils.CamelCase(v.TableName, sf.EnableLint)
+			name := utils.CamelCase(v.TableName)
 			if isMulti {
 				field.FieldName = name + "List"
 				field.FieldType = "[]" + name
@@ -215,7 +216,7 @@ func (sf *View) intoForeignKeyField(tables []*Table, col *Column) (fks []ast.Fie
 				AddTagValue(tagDb, "joinForeignKey:"+col.Name).
 				AddTagValue(tagDb, "foreignKey:"+v.ColumnName)
 
-			fixFieldTags(fieldTags, &field, v.TableName, sf.Tags, sf.EnableLint)
+			fixFieldTags(fieldTags, &field, v.TableName, sf.Tags)
 			field.FieldTag = fieldTags.IntoFieldTag()
 			fks = append(fks, field)
 		}
@@ -321,21 +322,21 @@ func (sf *View) fixFieldTags(fieldTags *ast.FieldTags, field *ast.Field, ci *Col
 	fieldTags.Add(tagDb, filedTagValues)
 
 	// web tag
-	fixFieldTags(fieldTags, field, ci.Name, sf.Tags, sf.EnableLint)
+	fixFieldTags(fieldTags, field, ci.Name, sf.Tags)
 }
 
-func fixFieldTags(fieldTags *ast.FieldTags, field *ast.Field, columnName string, tags map[string]string, enableLint bool) {
-	intoWebTagName := func(kind, columnName string, enableLint bool) string {
+func fixFieldTags(fieldTags *ast.FieldTags, field *ast.Field, columnName string, tags map[string]string) {
+	intoWebTagName := func(kind, columnName string) string {
 		vv := ""
 		switch kind {
 		case TagSmallCamelCase:
-			vv = utils.SmallCamelCase(columnName, enableLint)
+			vv = utils.SmallCamelCase(columnName)
 		case TagCamelCase:
-			vv = utils.CamelCase(columnName, enableLint)
+			vv = utils.CamelCase(columnName)
 		case TagSnakeCase:
-			vv = utils.SnakeCase(columnName, enableLint)
+			vv = utils.SnakeCase(columnName)
 		case TagKebab:
-			vv = utils.Kebab(columnName, enableLint)
+			vv = utils.Kebab(columnName)
 		}
 		return vv
 	}
@@ -352,7 +353,7 @@ func fixFieldTags(fieldTags *ast.FieldTags, field *ast.Field, columnName string,
 				continue
 			}
 		}
-		vv := intoWebTagName(kind, columnName, enableLint)
+		vv := intoWebTagName(kind, columnName)
 		if vv == "" {
 			continue
 		}

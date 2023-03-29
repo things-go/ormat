@@ -1,221 +1,62 @@
 package utils
 
 import (
-	"bytes"
-	"strconv"
 	"strings"
 	"unicode"
 )
 
-var (
-	// commonInitialisms is a set of common initialisms.
-	// source: https://github.com/golang/lint/blob/master/lint.go
-	commonInitialisms = map[string]struct{}{
-		"ACL":   {},
-		"API":   {},
-		"ASCII": {},
-		"CPU":   {},
-		"CSS":   {},
-		"DNS":   {},
-		"EOF":   {},
-		"GUID":  {},
-		"HTML":  {},
-		"HTTP":  {},
-		"HTTPS": {},
-		"ID":    {},
-		"IP":    {},
-		"JSON":  {},
-		"LHS":   {},
-		"QPS":   {},
-		"RAM":   {},
-		"RHS":   {},
-		"RPC":   {},
-		"SLA":   {},
-		"SMTP":  {},
-		"SQL":   {},
-		"SSH":   {},
-		"TCP":   {},
-		"TLS":   {},
-		"TTL":   {},
-		"UDP":   {},
-		"UI":    {},
-		"UID":   {},
-		"UUID":  {},
-		"URI":   {},
-		"URL":   {},
-		"UTF8":  {},
-		"VM":    {},
-		"XML":   {},
-		"XMPP":  {},
-		"XSRF":  {},
-		"XSS":   {},
-	}
-	defaultReplacer *strings.Replacer
-)
-
-func init() {
-	initialismForReplacer := make([]string, 0, len(commonInitialisms)*2)
-	for s := range commonInitialisms {
-		initialismForReplacer = append(initialismForReplacer, s, strings.Title(strings.ToLower(s))) // nolint
-	}
-
-	defaultReplacer = strings.NewReplacer(initialismForReplacer...)
-}
-
-// Recombine 转换驼峰字符串为用delimiter分隔的字符串, 特殊字符由DefaultInitialisms决定取代
+// SplitCase 转换驼峰字符串为用delimiter分隔的字符串
 // example: delimiter = '_'
 // 空字符 -> 空字符
 // HelloWorld -> hello_world
 // Hello_World -> hello_world
 // HiHello_World -> hi_hello_world
-// IDCom -> id_com
-// IDcom -> idcom
-// nameIDCom -> name_id_com
-// nameIDcom -> name_idcom
-func Recombine(str string, delimiter byte, enableLint bool) string {
+// IdCom -> id_com
+// Idcom -> idcom
+// nameIdCom -> name_id_com
+// nameIdcom -> name_idcom
+func SplitCase(str string, delimiter byte) string {
 	str = strings.TrimSpace(str)
 	if str == "" {
 		return ""
 	}
-	if enableLint {
-		str = defaultReplacer.Replace(str)
-	}
+	var isPrevSpecial bool
 
-	var isLastCaseUpper bool
-	var isCurrCaseUpper bool
-	var isNextCaseUpper bool
-	var isNextNumberUpper bool
-	var buf = strings.Builder{}
-
-	for i, v := range str[:len(str)-1] {
-		isNextCaseUpper = str[i+1] >= 'A' && str[i+1] <= 'Z'
-		isNextNumberUpper = str[i+1] >= '0' && str[i+1] <= '9'
-
-		if i > 0 {
-			if isCurrCaseUpper {
-				if isLastCaseUpper && (isNextCaseUpper || isNextNumberUpper) {
-					buf.WriteRune(v)
-				} else {
-					if str[i-1] != delimiter && str[i+1] != delimiter {
-						buf.WriteRune(rune(delimiter))
-					}
-					buf.WriteRune(v)
-				}
-			} else {
-				buf.WriteRune(v)
-				if i == len(str)-2 && (isNextCaseUpper && !isNextNumberUpper) {
-					buf.WriteRune(rune(delimiter))
-				}
+	t := make([]byte, 0, len(str)+8)
+	// Invariant: if the next letter is lower case, it must be converted
+	// to upper case.
+	// That is, we process a word at a time, where words are marked by _ or
+	// upper case letter. Digits are treated as words.
+	for i := 0; i < len(str); i++ {
+		c := str[i]
+		isCureNumber := isASCIIDigit(c)
+		if isCureNumber {
+			if i == 0 {
+				t = append(t, 'x', delimiter)
 			}
 		} else {
-			isCurrCaseUpper = true
-			buf.WriteRune(v)
-		}
-		isLastCaseUpper = isCurrCaseUpper
-		isCurrCaseUpper = isNextCaseUpper
-	}
-
-	buf.WriteByte(str[len(str)-1])
-
-	return strings.ToLower(buf.String())
-}
-
-// UnRecombine 转换sep分隔的字符串为驼峰字符串
-// example: delimiter = '_'
-// 空字符 -> 空字符
-// hello_world -> HelloWorld
-func UnRecombine(str string, delimiter byte, enableLint bool) string {
-	str = strings.TrimSpace(str)
-	if str == "" {
-		return ""
-	}
-
-	var b strings.Builder
-	var words []string
-
-	for i, s := 0, str; s != ""; s = s[i:] { // split on upper letter or _
-		i = strings.IndexFunc(s[1:], unicode.IsUpper) + 1
-		if i <= 0 {
-			i = len(s)
-		}
-		word := s[:i]
-		words = append(words, strings.Split(word, string(delimiter))...)
-	}
-
-	for i, word := range words {
-		if enableLint {
-			u := strings.ToUpper(word)
-			if _, ok := commonInitialisms[u]; ok {
-				b.WriteString(u)
-				continue
+			if isASCIIUpper(c) {
+				c += 'a' - 'A'
+				if i > 0 && !isPrevSpecial {
+					t = append(t, delimiter)
+				}
 			}
 		}
-
-		word = removeInvalidChars(word, i == 0) // on 0 remove first digits
-		if word == "" {
-			continue
-		}
-
-		out := strings.ToUpper(string(word[0]))
-		if len(word) > 1 {
-			out += strings.ToLower(word[1:])
-		}
-		b.WriteString(out)
+		isPrevSpecial = isCureNumber || c == delimiter
+		t = append(t, c) // Guaranteed not lower case.
 	}
-
-	if b.Len() == 0 { // check if this is number
-		if _, err := strconv.Atoi(str); err == nil {
-			b.WriteString("Key")
-			b.WriteString(str)
-		}
-	}
-
-	return b.String()
+	return string(t)
 }
 
-// SnakeCase 转换驼峰字符串为用'_'分隔的字符串,特殊字符由DefaultInitialisms决定取代
-// example2: delimiter = '_' initialisms = DefaultInitialisms
-// IDCom -> id_com
-// IDcom -> idcom
-// nameIDCom -> name_id_com
-// nameIDcom -> name_idcom
-func SnakeCase(str string, enableLint bool) string {
-	return Recombine(str, '_', enableLint)
-}
-
-// Kebab 转换驼峰字符串为用'-'分隔的字符串,特殊字符由DefaultInitialisms决定取代
-// example2: delimiter = '-' initialisms = DefaultInitialisms
-// IDCom -> id-com
-// IDcom -> idcom
-// nameIDCom -> name-id-com
-// nameIDcom -> name-idcom
-func Kebab(str string, enableLint bool) string {
-	return Recombine(str, '-', enableLint)
-}
-
-// Is c an ASCII lower-case letter?
-func isASCIILower(c byte) bool {
-	return 'a' <= c && c <= 'z'
-}
-
-// Is c an ASCII digit?
-func isASCIIDigit(c byte) bool {
-	return '0' <= c && c <= '9'
-}
-
-// CamelCase to camel case string
-// id_com -> IDCom
-// idcom -> Idcom
-// name_id_com -> NameIDCom
-// name_idcom -> NameIdcom
-func CamelCase(s string, enableLint bool) string {
+func JoinCase(s string, delimiter byte) string {
+	s = strings.TrimSpace(s)
 	if s == "" {
 		return ""
 	}
 	t := make([]byte, 0, 32)
 	i := 0
-	if s[0] == '_' {
-		// Need a capital letter; drop the '_'.
+	if s[0] == delimiter {
+		// Need a capital letter; drop the delimiter.
 		t = append(t, 'X')
 		i++
 	}
@@ -225,7 +66,7 @@ func CamelCase(s string, enableLint bool) string {
 	// upper case letter. Digits are treated as words.
 	for ; i < len(s); i++ {
 		c := s[i]
-		if c == '_' && i+1 < len(s) && isASCIILower(s[i+1]) {
+		if c == delimiter && i+1 < len(s) && isASCIILower(s[i+1]) {
 			continue // Skip the underscore in s.
 		}
 		if isASCIIDigit(c) {
@@ -247,44 +88,62 @@ func CamelCase(s string, enableLint bool) string {
 	return string(t)
 }
 
+// SnakeCase 转换驼峰字符串为用'_'分隔的字符串
+// example2: delimiter = '_' initialisms = DefaultInitialisms
+// IdCom -> id_com
+// Idcom -> idcom
+// nameIdCom -> name_id_com
+// nameIdcom -> name_idcom
+func SnakeCase(str string) string {
+	return SplitCase(str, '_')
+}
+
+// Kebab 转换驼峰字符串为用'-'分隔的字符串
+// example2: delimiter = '-' initialisms = DefaultInitialisms
+// IdCom -> id-com
+// Idcom -> idcom
+// nameIdCom -> name-id-com
+// nameIdcom -> name-idcom
+func Kebab(str string) string {
+	return SplitCase(str, '-')
+}
+
 // SmallCamelCase to small camel case string
 // id_com -> idCom
 // idcom -> idcom
-// name_id_com -> nameIDCom
+// name_id_com -> nameIdCom
 // name_idcom -> nameIdcom
-func SmallCamelCase(fieldName string, enableLint bool) string {
-	fieldName = CamelCase(fieldName, enableLint)
-	if enableLint {
-		for k := range commonInitialisms {
-			if strings.HasPrefix(fieldName, k) {
-				return strings.Replace(fieldName, k, strings.ToLower(k), 1)
-			}
-		}
-	}
-	return LowTitle(fieldName)
+func SmallCamelCase(fieldName string) string {
+	return LowTitle(CamelCase(fieldName))
 }
 
-func removeInvalidChars(s string, removeFirstDigit bool) string {
-	var buf bytes.Buffer
+// CamelCase returns the CamelCased name.
+// If there is an interior underscore followed by a lower case letter,
+// drop the underscore and convert the letter to upper case.
+// There is a remote possibility of this rewrite causing a name collision,
+// but it's so remote we're prepared to pretend it's nonexistent - since the
+// C++ generator lowercases names, it's extremely unlikely to have two fields
+// with different capitalizations.
+// In short, _my_field_name_2 becomes XMyFieldName_2.
+func CamelCase(s string) string {
+	return JoinCase(s, '_')
+}
 
-	for _, b := range []byte(s) {
-		if b >= 97 && b <= 122 { // a-z
-			buf.WriteByte(b)
-			continue
+// LowTitle 首字母小写
+// see strings.Title
+func LowTitle(s string) string {
+	// Use a closure here to remember state.
+	// Hackish but effective. Depends on Map scanning in order and calling
+	// the closure once per rune.
+	prev := ' '
+	return strings.Map(func(r rune) rune {
+		if isSeparator(prev) {
+			prev = r
+			return unicode.ToLower(r)
 		}
-		if b >= 65 && b <= 90 { // A-Z
-			buf.WriteByte(b)
-			continue
-		}
-		if b >= 48 && b <= 57 { // 0-9
-			if !removeFirstDigit || buf.Len() > 0 {
-				buf.WriteByte(b)
-				continue
-			}
-		}
-	}
-
-	return buf.String()
+		prev = r
+		return r
+	}, s)
 }
 
 // isSeparator reports whether the rune could mark a word boundary.
@@ -314,19 +173,17 @@ func isSeparator(r rune) bool {
 	return unicode.IsSpace(r)
 }
 
-// LowTitle 首字母小写
-// see strings.Title
-func LowTitle(s string) string {
-	// Use a closure here to remember state.
-	// Hackish but effective. Depends on Map scanning in order and calling
-	// the closure once per rune.
-	prev := ' '
-	return strings.Map(func(r rune) rune {
-		if isSeparator(prev) {
-			prev = r
-			return unicode.ToLower(r)
-		}
-		prev = r
-		return r
-	}, s)
+// Is c an ASCII upper-case letter?
+func isASCIIUpper(c byte) bool {
+	return 'A' <= c && c <= 'Z'
+}
+
+// Is c an ASCII lower-case letter?
+func isASCIILower(c byte) bool {
+	return 'a' <= c && c <= 'z'
+}
+
+// Is c an ASCII digit?
+func isASCIIDigit(c byte) bool {
+	return '0' <= c && c <= '9'
 }
