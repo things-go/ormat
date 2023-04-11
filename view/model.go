@@ -62,31 +62,36 @@ func (c *Column) IntoSqlDefined() string {
 	b.Grow(64)
 
 	b.WriteString(c.ColumnType)
-	b.WriteString(" ")
-	if c.IsNullable {
-		b.WriteString("DEFAULT NULL")
-	} else {
+	if !c.IsNullable {
+		b.WriteString(" ")
 		b.WriteString("NOT NULL")
 	}
-
 	if c.IsAutoIncrement {
 		b.WriteString(" ")
 		b.WriteString("AUTO_INCREMENT")
 	} else {
 		dv := ""
-		if c.Default != nil {
-			dv = fmt.Sprintf("DEFAULT '%s'", *c.Default)
-		} else if slices.Contains(
-			[]string{
-				"bool",
-				"int8", "uint8", "int16", "uint16",
-				"int32", "uint32", "int64", "uint64",
-				"int", "uint", "float32", "float64",
-			},
-			c.ColumnGoType) {
-			dv = "DEFAULT '0'"
-		} else if c.ColumnGoType == "string" {
-			dv = "DEFAULT ''"
+		if c.IsNullable {
+			dv = "DEFAULT NULL"
+			if c.Default != nil && *c.Default != "null" {
+				dv = fmt.Sprintf("DEFAULT '%s'", *c.Default)
+
+			}
+		} else {
+			if c.Default != nil {
+				dv = fmt.Sprintf("DEFAULT '%s'", *c.Default)
+			} else if slices.Contains(
+				[]string{
+					"bool",
+					"int8", "uint8", "int16", "uint16",
+					"int32", "uint32", "int64", "uint64",
+					"int", "uint", "float32", "float64",
+				},
+				c.ColumnGoType) {
+				dv = "DEFAULT '0'"
+			} else if c.ColumnGoType == "string" {
+				dv = "DEFAULT ''"
+			}
 		}
 		if dv != "" {
 			b.WriteString(" ")
