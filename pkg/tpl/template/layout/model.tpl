@@ -13,6 +13,7 @@ import (
 
 {{- $hasColumn := .HasColumn}}
 {{- $hasHelper := .HasHelper}}
+{{- $hasAssist := .HasAssist}}
 {{- range $e := .Structs}}
 // {{$e.StructName}} {{$e.StructComment}}
 type {{$e.StructName}} struct {
@@ -32,15 +33,14 @@ func (*{{$e.StructName}}) TableName() string {
 // Select{{$e.StructName}} database column name.
 var Select{{$e.StructName}} = []string {
 {{- range $field := $e.StructFields}}
-    {{- $fieldName := snakecase $field.FieldName}}
 	{{- if $field.IsTimestamp}}
 	{{- if $field.IsNullable}}
-	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`), 0) AS `{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$field.ColumnName}}`), 0) AS `{{$field.ColumnName}}`",
 	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`) AS `{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$field.ColumnName}}`) AS `{{$field.ColumnName}}`",
 	{{- end}}
 	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}"`{{$tableName}}`.`{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"`{{$tableName}}`.`{{$field.ColumnName}}`",
 	{{- end}}
 {{- end}}
 }
@@ -48,33 +48,99 @@ var Select{{$e.StructName}} = []string {
 // Select{{$e.StructName}}WithTable database column name with table prefix
 var Select{{$e.StructName}}WithTable = []string {
 {{- range $field := $e.StructFields}}
-    {{- $fieldName := snakecase $field.FieldName}}
 	{{- if $field.IsTimestamp}}
 	{{- if $field.IsNullable}}
-	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`), 0) AS `{{$tableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$field.ColumnName}}`), 0) AS `{{$tableName}}_{{$field.ColumnName}}`",
 	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$fieldName}}`) AS `{{$tableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$field.ColumnName}}`) AS `{{$tableName}}_{{$field.ColumnName}}`",
 	{{- end}}
 	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}"`{{$tableName}}`.`{{$fieldName}}` AS `{{$tableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"`{{$tableName}}`.`{{$field.ColumnName}}` AS `{{$tableName}}_{{$field.ColumnName}}`",
 	{{- end}}
 {{- end}}
 }
 // Select{{$e.StructName}}WithAbbrTable database column name with abbr table prefix
 var Select{{$e.StructName}}WithAbbrTable = []string {
 {{- range $field := $e.StructFields}}
-    {{- $fieldName := snakecase $field.FieldName}}
 	{{- if $field.IsTimestamp}}
 	{{- if $field.IsNullable}}
-	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$fieldName}}`), 0) AS `{{$abbrTableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$field.ColumnName}}`), 0) AS `{{$abbrTableName}}_{{$field.ColumnName}}`",
 	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$fieldName}}`) AS `{{$abbrTableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$field.ColumnName}}`) AS `{{$abbrTableName}}_{{$field.ColumnName}}`",
 	{{- end}}
 	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}"`{{$abbrTableName}}`.`{{$fieldName}}` AS `{{$abbrTableName}}_{{$fieldName}}`",
+	{{if $field.IsSkipColumn}}// {{end}}"`{{$abbrTableName}}`.`{{$field.ColumnName}}` AS `{{$abbrTableName}}_{{$field.ColumnName}}`",
 	{{- end}}
 {{- end}}
 }
+{{- end}}
+
+{{- if $hasAssist}}
+type {{$e.StructName}}Impl struct {
+	// private fields
+	xTableName string 
+
+	ALL assist.Asterisk
+{{- range $field := $e.StructFields}}
+    {{$field.FieldName}} assist.{{$field.AssistType}}
+{{- end}}
+
+}
+
+func x_New_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
+	return {{$e.StructName}}Impl{
+		xTableName: tableName,
+
+		ALL:  assist.NewAsterisk(tableName),
+
+	{{- range $field := $e.StructFields}}
+		{{$field.FieldName}}: assist.New{{$field.AssistType}}(tableName, "{{$field.ColumnName}}"),
+	{{- end}}			
+	}
+}
+
+func New_{{$e.StructName}}() {{$e.StructName}}Impl {
+	return x_New_{{$e.StructName}}("{{$e.TableName}}")
+}
+
+func (*{{$e.StructName}}Impl) As(alias string) {{$e.StructName}}Impl {
+	return x_New_{{$e.StructName}}(alias)
+}
+
+func (x *{{$e.StructName}}Impl) Active_Model() any {
+	return &{{$e.StructName}}{}
+}
+
+func (d *{{$e.StructName}}Impl) Active_TableName() string {
+	return d.xTableName
+}
+
+func SelectActive{{$e.StructName}}() assist.Condition {
+	x := x_New_{{$e.StructName}}("{{$e.TableName}}")
+	return assist.Select(
+{{- range $field := $e.StructFields}}
+	{{- if $field.IsTimestamp}}
+	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As("{{$field.ColumnName}}"),
+	{{- else}}
+	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
+	{{- end}}
+{{- end}}
+	)
+}
+
+func SelectActive{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
+	if prefix == "" {
+		return SelectActive{{$e.StructName}}()
+	}
+	x := x_New_{{$e.StructName}}("{{$e.TableName}}")
+	return assist.Select(
+{{- range $field := $e.StructFields}}
+	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(prefix+"_{{$field.ColumnName}}"),
+{{- end}}
+	)
+}
+
+
 {{- end}}
 
 {{- if $hasHelper}}

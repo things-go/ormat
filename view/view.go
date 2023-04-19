@@ -41,6 +41,7 @@ type Config struct {
 	Package            string            `yaml:"package" json:"package"`                     // 包名
 	Options            map[string]string `yaml:"options" json:"options"`                     // 选项
 	HasHelper          bool              `yaml:"hasHelper" json:"hasHelper"`                 // 是否输出 proto 帮助
+	HasAssist          bool              `yaml:"hasAssist" json:"hasAssist"`                 // 是否提供辅助工具集
 	EnableGogo         bool              `yaml:"enableGogo" json:"enableGogo"`               // 使能用 gogo proto (仅 hasHelper = true 有效果)
 	EnableSea          bool              `yaml:"enableSea" json:"enableSea"`                 // 使能用 seaql(仅 hasHelper = true 有效果)
 }
@@ -60,6 +61,7 @@ func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
 	s.StringToStringVar(&cc.Options, "options", nil, "options key value")
 
 	s.BoolVar(&cc.HasHelper, "hasHelper", false, "是否输出 proto 帮助")
+	s.BoolVar(&cc.HasAssist, "hasAssist", false, "是否提供辅助工具集")
 	s.BoolVar(&cc.EnableGogo, "enableGogo", false, "使能用 gogo proto (仅 hasHelper = true 有效)")
 	s.BoolVar(&cc.EnableSea, "enableSea", false, "使能用 seaql (仅 hasHelper = true 有效)")
 }
@@ -106,16 +108,21 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 				ProtoMessageFields: protoMessageFields,
 			},
 		}
+		imports := ast.IntoImports(structs)
+		if sf.HasAssist {
+			imports[`assist "github.com/things-go/gorm-assist"`] = struct{}{}
+		}
 		files = append(files, &ast.File{
 			Version:     consts.Version,
 			Filename:    tb.Name,
 			PackageName: pkgName,
-			Imports:     ast.IntoImports(structs),
+			Imports:     imports,
 			Structs:     structs,
 			Package:     sf.Package,
 			Options:     sf.Options,
 			HasColumn:   sf.HasColumn,
 			HasHelper:   sf.HasHelper,
+			HasAssist:   sf.HasAssist,
 		})
 	}
 	return files, nil
@@ -159,6 +166,7 @@ func (sf *View) intoColumnFields(tbName string, tables []*Table, cols []*Column,
 				col.ColumnGoType == "int") {
 			fieldType = "soft_delete.DeletedAt"
 		}
+		assistType := intoFieldAssistType(col.ColumnGoType, col.ColumnType, sf.EnableInt, sf.EnableIntegerInt, sf.EnableBoolInt)
 
 		isSkipColumn := false
 		if _, isSkipColumn = skipColumns[col.Name]; !isSkipColumn {
@@ -174,8 +182,9 @@ func (sf *View) intoColumnFields(tbName string, tables []*Table, cols []*Column,
 			IsTimestamp:  col.ColumnGoType == "time.Time",
 			ColumnGoType: col.ColumnGoType,
 			ColumnName:   col.Name,
-			Type:         col.IntoSqlDefined(),
+			Type:         col.IntoDefinedSQL(),
 			IsSkipColumn: isSkipColumn,
+			AssistType:   assistType,
 		}
 		fieldTags := ast.NewFieldTags()
 		sf.fixFieldTags(fieldTags, &field, col)

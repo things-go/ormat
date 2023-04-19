@@ -56,10 +56,12 @@ type FieldTags struct {
 }
 
 func NewFieldTags() *FieldTags {
-	return &FieldTags{make(map[string]*FieldTagValues)}
+	return &FieldTags{
+		inner: make(map[string]*FieldTagValues),
+	}
 }
 
-// Get Add a tag
+// Get get a tag.
 func (f *FieldTags) Get(key string) *FieldTagValues {
 	fieldTagValue, ok := f.inner[key]
 	if !ok {

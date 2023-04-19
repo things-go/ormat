@@ -12,6 +12,7 @@ type File struct {
 	Options   map[string]string // options
 	HasColumn bool              // has column
 	HasHelper bool              // has helper
+	HasAssist bool              // has assist
 }
 
 func IntoImports(s []*Struct) map[string]struct{} {

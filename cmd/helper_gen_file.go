@@ -36,11 +36,13 @@ func (g *generateFile) runGen() {
 		Options:     g.Options,
 		HasColumn:   false,
 		HasHelper:   false,
+		HasAssist:   false,
 	}
 	for _, v := range g.Files {
 		if g.Merge {
 			mergeFile.HasHelper = v.HasHelper
 			mergeFile.HasColumn = v.HasColumn
+			mergeFile.HasAssist = v.HasAssist
 			for k := range v.Imports {
 				mergeFile.Imports[k] = struct{}{}
 			}

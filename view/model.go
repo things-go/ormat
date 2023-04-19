@@ -2,6 +2,7 @@ package view
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"golang.org/x/exp/slices"
@@ -57,7 +58,8 @@ type Column struct {
 	ForeignKeys     []ForeignKey // Foreign key list
 }
 
-func (c *Column) IntoSqlDefined() string {
+// IntoDefinedSQL 转换为定义的字段 SQL
+func (c *Column) IntoDefinedSQL() string {
 	b := strings.Builder{}
 	b.Grow(64)
 
@@ -75,7 +77,6 @@ func (c *Column) IntoSqlDefined() string {
 			dv = "DEFAULT NULL"
 			if c.Default != nil && *c.Default != "null" {
 				dv = fmt.Sprintf("DEFAULT '%s'", *c.Default)
-
 			}
 		} else {
 			if c.Default != nil {
@@ -191,4 +192,61 @@ func intoFieldDataType(columnGoType string, isNullable, disableNullToPointer, en
 		}
 	}
 	return columnGoType
+}
+
+var goTypeToAssistType = map[string]string{
+	"bool":           "Bool",
+	"int8":           "Int8",
+	"uint8":          "Uint8",
+	"int16":          "Int16",
+	"uint16":         "Uint16",
+	"int32":          "Int32",
+	"uint32":         "Uint32",
+	"int64":          "Int64",
+	"uint64":         "Uint64",
+	"int":            "Int",
+	"uint":           "Uint",
+	"float32":        "Float32",
+	"float64":        "Float64",
+	"decimal":        "Decimal",
+	"string":         "String",
+	"[]byte":         "Byte",
+	"datatypes.Date": "Time",
+	"time.Time":      "Time",
+}
+
+var d = regexp.MustCompile(`^(decimal)\b[(]\d+,\d+[)]`)
+
+func IsDecimal(t string) bool {
+	return d.MatchString(t)
+}
+
+// intoFieldAssistType get go data assist type name
+func intoFieldAssistType(columnGoType, columnType string, enableInt, enableIntegerInt, enableBoolInt bool) string {
+	if enableInt {
+		switch columnGoType {
+		case "uint8", "uint16", "uint32":
+			columnGoType = "uint"
+		case "int8", "int16", "int32":
+			columnGoType = "int"
+		}
+	}
+	if enableIntegerInt {
+		switch columnGoType {
+		case "uint32":
+			columnGoType = "uint"
+		case "int32":
+			columnGoType = "int"
+		}
+	}
+	if enableBoolInt && columnGoType == "bool" {
+		columnGoType = "int"
+	}
+	if IsDecimal(columnType) {
+		columnGoType = "decimal"
+	}
+	if t, ok := goTypeToAssistType[columnGoType]; ok {
+		return t
+	}
+	return "Field"
 }
