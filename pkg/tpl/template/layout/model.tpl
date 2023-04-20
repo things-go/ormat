@@ -28,7 +28,6 @@ func (*{{$e.StructName}}) TableName() string {
 }
 
 {{- $tableName := $e.TableName}}
-{{- $abbrTableName := $e.AbbrTableName}}
 {{- if $hasColumn}}
 // Select{{$e.StructName}} database column name.
 var Select{{$e.StructName}} = []string {
@@ -41,35 +40,6 @@ var Select{{$e.StructName}} = []string {
 	{{- end}}
 	{{- else}}
 	{{if $field.IsSkipColumn}}// {{end}}"`{{$tableName}}`.`{{$field.ColumnName}}`",
-	{{- end}}
-{{- end}}
-}
-
-// Select{{$e.StructName}}WithTable database column name with table prefix
-var Select{{$e.StructName}}WithTable = []string {
-{{- range $field := $e.StructFields}}
-	{{- if $field.IsTimestamp}}
-	{{- if $field.IsNullable}}
-	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$tableName}}`.`{{$field.ColumnName}}`), 0) AS `{{$tableName}}_{{$field.ColumnName}}`",
-	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$tableName}}`.`{{$field.ColumnName}}`) AS `{{$tableName}}_{{$field.ColumnName}}`",
-	{{- end}}
-	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}"`{{$tableName}}`.`{{$field.ColumnName}}` AS `{{$tableName}}_{{$field.ColumnName}}`",
-	{{- end}}
-{{- end}}
-}
-// Select{{$e.StructName}}WithAbbrTable database column name with abbr table prefix
-var Select{{$e.StructName}}WithAbbrTable = []string {
-{{- range $field := $e.StructFields}}
-	{{- if $field.IsTimestamp}}
-	{{- if $field.IsNullable}}
-	{{if $field.IsSkipColumn}}// {{end}}"IFNULL(UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$field.ColumnName}}`), 0) AS `{{$abbrTableName}}_{{$field.ColumnName}}`",
-	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}"UNIX_TIMESTAMP(`{{$abbrTableName}}`.`{{$field.ColumnName}}`) AS `{{$abbrTableName}}_{{$field.ColumnName}}`",
-	{{- end}}
-	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}"`{{$abbrTableName}}`.`{{$field.ColumnName}}` AS `{{$abbrTableName}}_{{$field.ColumnName}}`",
 	{{- end}}
 {{- end}}
 }
@@ -152,24 +122,6 @@ message {{$e.StructName}} {
   // {{$field.FieldComment}}
   {{- end}}
   {{$field.FieldDataType}} {{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
-{{- end}}
-}
-// {{$e.StructName}}WithTable {{.StructComment}}
-message {{$e.StructName}}WithTable {
-{{- range $index, $field := $e.ProtoMessageFields}}
-  {{- if $field.FieldComment}}
-  // {{$field.FieldComment}}
-  {{- end}}
-  {{$field.FieldDataType}} {{$tableName}}_{{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
-{{- end}}
-}
-// {{$e.StructName}}WithAbbrTable {{.StructComment}}
-message {{$e.StructName}}WithAbbrTable {
-{{- range $index, $field := $e.ProtoMessageFields}}
-  {{- if $field.FieldComment}}
-  // {{$field.FieldComment}}
-  {{- end}}
-  {{$field.FieldDataType}} {{$abbrTableName}}_{{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
 {{- end}}
 }
 */
