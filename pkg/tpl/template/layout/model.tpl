@@ -81,7 +81,7 @@ func (x *{{$e.StructName}}Impl) Active_Model() any {
 	return &{{$e.StructName}}{}
 }
 
-func (x *{{$e.StructName}}Impl) Active_X_Model() Condition {
+func (x *{{$e.StructName}}Impl) Active_X_Model() assist.Condition {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Model(&{{$e.StructName}}{})
 	}
