@@ -81,6 +81,12 @@ func (x *{{$e.StructName}}Impl) Active_Model() any {
 	return &{{$e.StructName}}{}
 }
 
+func (x *{{$e.StructName}}Impl) Active_X_Model() Condition {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Model(&{{$e.StructName}}{})
+	}
+}
+
 func (d *{{$e.StructName}}Impl) Active_TableName() string {
 	return d.xTableName
 }
