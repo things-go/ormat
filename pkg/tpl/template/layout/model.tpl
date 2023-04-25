@@ -57,7 +57,7 @@ type {{$e.StructName}}Impl struct {
 
 }
 
-func x_New_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
+func new_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
 	return {{$e.StructName}}Impl{
 		xTableName: tableName,
 
@@ -70,29 +70,29 @@ func x_New_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
 }
 
 func New_{{$e.StructName}}() {{$e.StructName}}Impl {
-	return x_New_{{$e.StructName}}("{{$e.TableName}}")
+	return new_X_{{$e.StructName}}("{{$e.TableName}}")
 }
 
 func (*{{$e.StructName}}Impl) As(alias string) {{$e.StructName}}Impl {
-	return x_New_{{$e.StructName}}(alias)
+	return new_X_{{$e.StructName}}(alias)
 }
 
-func (x *{{$e.StructName}}Impl) Active_Model() any {
+func (x *{{$e.StructName}}Impl) X_Model() *{{$e.StructName}} {
 	return &{{$e.StructName}}{}
 }
 
-func (x *{{$e.StructName}}Impl) Active_X_Model() assist.Condition {
+func (x *{{$e.StructName}}Impl) Xc_Model() assist.Condition {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Model(&{{$e.StructName}}{})
 	}
 }
 
-func (d *{{$e.StructName}}Impl) Active_TableName() string {
+func (d *{{$e.StructName}}Impl) X_TableName() string {
 	return d.xTableName
 }
 
 func SelectActive{{$e.StructName}}() assist.Condition {
-	x := x_New_{{$e.StructName}}("{{$e.TableName}}")
+	x := new_X_{{$e.StructName}}("{{$e.TableName}}")
 	return assist.Select(
 {{- range $field := $e.StructFields}}
 	{{- if $field.IsTimestamp}}
@@ -108,14 +108,13 @@ func SelectActive{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
 	if prefix == "" {
 		return SelectActive{{$e.StructName}}()
 	}
-	x := x_New_{{$e.StructName}}("{{$e.TableName}}")
+	x := new_X_{{$e.StructName}}("{{$e.TableName}}")
 	return assist.Select(
 {{- range $field := $e.StructFields}}
 	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(prefix+"_{{$field.ColumnName}}"),
 {{- end}}
 	)
 }
-
 
 {{- end}}
 
