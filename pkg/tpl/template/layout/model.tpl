@@ -69,7 +69,7 @@ func new_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
 	}
 }
 
-func New_{{$e.StructName}}() {{$e.StructName}}Impl {
+func New_X_{{$e.StructName}}() {{$e.StructName}}Impl {
 	return new_X_{{$e.StructName}}("{{$e.TableName}}")
 }
 
