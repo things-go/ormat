@@ -94,7 +94,7 @@ func (x *{{$e.StructName}}Impl) X_TableName() string {
 }
 
 func SelectActive{{$e.StructName}}() assist.Condition {
-	x := &X_{{$e.StructName}}
+	x := &xx_{{$e.StructName}}
 	return assist.Select(
 {{- range $field := $e.StructFields}}
 	{{- if $field.IsTimestamp}}
@@ -110,7 +110,7 @@ func SelectActive{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
 	if prefix == "" {
 		return SelectActive{{$e.StructName}}()
 	}
-	x := &X_{{$e.StructName}}
+	x := &xx_{{$e.StructName}}
 	return assist.Select(
 {{- range $field := $e.StructFields}}
 	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.AsWithPrefix(prefix),
