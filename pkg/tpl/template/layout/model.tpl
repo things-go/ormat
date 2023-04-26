@@ -111,7 +111,7 @@ func SelectActive{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
 	x := new_X_{{$e.StructName}}("{{$e.TableName}}")
 	return assist.Select(
 {{- range $field := $e.StructFields}}
-	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(prefix+"_{{$field.ColumnName}}"),
+	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.AsWithPrefix(prefix),
 {{- end}}
 	)
 }
