@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/go-playground/validator/v10 v10.12.0
-	github.com/go-sql-driver/mysql v1.7.0
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/google/go-github/v48 v48.2.0
 	github.com/kierdavis/ansi v0.0.0-20180105022324-90d93b0fcae2
 	github.com/spf13/cast v1.5.0
