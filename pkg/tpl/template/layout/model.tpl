@@ -57,20 +57,22 @@ type {{$e.StructName}}Impl struct {
 
 }
 
+var xx_{{$e.StructName}} = new_X_{{$e.StructName}}("{{$e.TableName}}")
+
 func new_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
 	return {{$e.StructName}}Impl{
 		xTableName: tableName,
 
 		ALL:  assist.NewAsterisk(tableName),
 
-	{{- range $field := $e.StructFields}}
+	{{range $field := $e.StructFields}}
 		{{$field.FieldName}}: assist.New{{$field.AssistType}}(tableName, "{{$field.ColumnName}}"),
 	{{- end}}			
 	}
 }
 
 func New_X_{{$e.StructName}}() {{$e.StructName}}Impl {
-	return new_X_{{$e.StructName}}("{{$e.TableName}}")
+	return xx_{{$e.StructName}}
 }
 
 func (*{{$e.StructName}}Impl) As(alias string) {{$e.StructName}}Impl {
@@ -87,12 +89,12 @@ func (x *{{$e.StructName}}Impl) Xc_Model() assist.Condition {
 	}
 }
 
-func (d *{{$e.StructName}}Impl) X_TableName() string {
-	return d.xTableName
+func (x *{{$e.StructName}}Impl) X_TableName() string {
+	return x.xTableName
 }
 
 func SelectActive{{$e.StructName}}() assist.Condition {
-	x := new_X_{{$e.StructName}}("{{$e.TableName}}")
+	x := &X_{{$e.StructName}}
 	return assist.Select(
 {{- range $field := $e.StructFields}}
 	{{- if $field.IsTimestamp}}
@@ -108,7 +110,7 @@ func SelectActive{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
 	if prefix == "" {
 		return SelectActive{{$e.StructName}}()
 	}
-	x := new_X_{{$e.StructName}}("{{$e.TableName}}")
+	x := &X_{{$e.StructName}}
 	return assist.Select(
 {{- range $field := $e.StructFields}}
 	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.AsWithPrefix(prefix),
