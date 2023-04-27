@@ -93,9 +93,9 @@ func (x *{{$e.StructName}}Impl) X_TableName() string {
 	return x.xTableName
 }
 
-func X_Select{{$e.StructName}}() assist.Condition {
+func X_Select{{$e.StructName}}() []assist.Expr {
 	x := &xx_{{$e.StructName}}
-	return assist.Select(
+	return []assist.Expr{
 {{- range $field := $e.StructFields}}
 	{{- if $field.IsTimestamp}}
 	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As("{{$field.ColumnName}}"),
@@ -103,19 +103,19 @@ func X_Select{{$e.StructName}}() assist.Condition {
 	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
 	{{- end}}
 {{- end}}
-	)
+	}
 }
 
-func X_Select{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
+func X_Select{{$e.StructName}}WithPrefix(prefix string) []assist.Expr {
 	if prefix == "" {
 		return X_Select{{$e.StructName}}()
 	}
 	x := &xx_{{$e.StructName}}
-	return assist.Select(
+	return []assist.Expr{
 {{- range $field := $e.StructFields}}
 	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.AsWithPrefix(prefix),
 {{- end}}
-	)
+	}
 }
 
 {{- end}}
