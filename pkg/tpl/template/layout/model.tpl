@@ -108,7 +108,7 @@ func X_Select{{$e.StructName}}() assist.Condition {
 
 func X_Select{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
 	if prefix == "" {
-		return SelectActive{{$e.StructName}}()
+		return X_Select{{$e.StructName}}()
 	}
 	x := &xx_{{$e.StructName}}
 	return assist.Select(
