@@ -118,6 +118,14 @@ func X_Select{{$e.StructName}}WithPrefix(prefix string) []assist.Expr {
 	}
 }
 
+func X_Select{{$e.StructName}}Fields() assist.Condition {
+	return assist.Select(X_Select{{$e.StructName}}()...)
+}
+
+func X_Select{{$e.StructName}}FieldsWithPrefix(prefix string) assist.Condition {
+	return assist.Select(X_Select{{$e.StructName}}WithPrefix(prefix string)...)
+}
+
 {{- end}}
 
 {{- if $hasHelper}}
