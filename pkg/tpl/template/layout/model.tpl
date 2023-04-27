@@ -93,7 +93,7 @@ func (x *{{$e.StructName}}Impl) X_TableName() string {
 	return x.xTableName
 }
 
-func Select_X_{{$e.StructName}}() assist.Condition {
+func X_Select{{$e.StructName}}() assist.Condition {
 	x := &xx_{{$e.StructName}}
 	return assist.Select(
 {{- range $field := $e.StructFields}}
@@ -106,7 +106,7 @@ func Select_X_{{$e.StructName}}() assist.Condition {
 	)
 }
 
-func Select_X_{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
+func X_Select{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
 	if prefix == "" {
 		return SelectActive{{$e.StructName}}()
 	}
