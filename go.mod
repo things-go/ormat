@@ -15,7 +15,7 @@ require (
 	github.com/things-go/log v0.0.2
 	github.com/tj/go-update v2.2.5-0.20200519121640-62b4b798fd68+incompatible
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2
-	golang.org/x/exp v0.0.0-20230418202329-0354be287a23
+	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
 	golang.org/x/oauth2 v0.7.0
 	gorm.io/driver/mysql v1.5.0
 	gorm.io/driver/postgres v1.5.0
