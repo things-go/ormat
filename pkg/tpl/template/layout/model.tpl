@@ -57,9 +57,13 @@ type {{$e.StructName}}Impl struct {
 
 }
 
-var xx_{{$e.StructName}} = new_X_{{$e.StructName}}("{{$e.TableName}}")
+var xx_{{$e.StructName}} = New_X_{{$e.StructName}}("{{$e.TableName}}")
 
-func new_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
+func X_{{$e.StructName}}() {{$e.StructName}}Impl {
+	return xx_{{$e.StructName}}
+}
+
+func New_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
 	return {{$e.StructName}}Impl{
 		xTableName: tableName,
 
@@ -71,19 +75,15 @@ func new_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
 	}
 }
 
-func New_X_{{$e.StructName}}() {{$e.StructName}}Impl {
-	return xx_{{$e.StructName}}
-}
-
 func (*{{$e.StructName}}Impl) As(alias string) {{$e.StructName}}Impl {
-	return new_X_{{$e.StructName}}(alias)
+	return New_X_{{$e.StructName}}(alias)
 }
 
-func (x *{{$e.StructName}}Impl) X_Model() *{{$e.StructName}} {
+func (*{{$e.StructName}}Impl) X_Model() *{{$e.StructName}} {
 	return &{{$e.StructName}}{}
 }
 
-func (x *{{$e.StructName}}Impl) Xc_Model() assist.Condition {
+func (*{{$e.StructName}}Impl) Xc_Model() assist.Condition {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Model(&{{$e.StructName}}{})
 	}
@@ -93,7 +93,7 @@ func (x *{{$e.StructName}}Impl) X_TableName() string {
 	return x.xTableName
 }
 
-func SelectActive{{$e.StructName}}() assist.Condition {
+func Select_X_{{$e.StructName}}() assist.Condition {
 	x := &xx_{{$e.StructName}}
 	return assist.Select(
 {{- range $field := $e.StructFields}}
@@ -106,7 +106,7 @@ func SelectActive{{$e.StructName}}() assist.Condition {
 	)
 }
 
-func SelectActive{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
+func Select_X_{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
 	if prefix == "" {
 		return SelectActive{{$e.StructName}}()
 	}
