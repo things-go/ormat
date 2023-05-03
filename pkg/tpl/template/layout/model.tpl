@@ -102,16 +102,16 @@ func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.AsWithPrefix(prefix),
 	{{- end}}
 		}
-	}
-
-	return []assist.Expr{
-{{- range $field := $e.StructFields}}
-	{{- if $field.IsTimestamp}}
-	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As("{{$field.ColumnName}}"),
-	{{- else}}
-	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
+	} else {
+		return []assist.Expr{
+	{{- range $field := $e.StructFields}}
+		{{- if $field.IsTimestamp}}
+		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As("{{$field.ColumnName}}"),
+		{{- else}}
+		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
+		{{- end}}
 	{{- end}}
-{{- end}}
+		}
 	}
 }
 
