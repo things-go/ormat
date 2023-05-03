@@ -93,8 +93,17 @@ func (x *{{$e.StructName}}Impl) X_TableName() string {
 	return x.xTableName
 }
 
-func X_Select{{$e.StructName}}() []assist.Expr {
+func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	x := &xx_{{$e.StructName}}
+	if len(prefixes) > 0 && prefixes[0] != "" {
+		prefix := prefixes[0]
+		return []assist.Expr{
+	{{- range $field := $e.StructFields}}
+		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.AsWithPrefix(prefix),
+	{{- end}}
+		}
+	}
+
 	return []assist.Expr{
 {{- range $field := $e.StructFields}}
 	{{- if $field.IsTimestamp}}
@@ -106,24 +115,8 @@ func X_Select{{$e.StructName}}() []assist.Expr {
 	}
 }
 
-func X_Select{{$e.StructName}}WithPrefix(prefix string) []assist.Expr {
-	if prefix == "" {
-		return X_Select{{$e.StructName}}()
-	}
-	x := &xx_{{$e.StructName}}
-	return []assist.Expr{
-{{- range $field := $e.StructFields}}
-	{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.AsWithPrefix(prefix),
-{{- end}}
-	}
-}
-
-func Xc_Select{{$e.StructName}}() assist.Condition {
-	return assist.Select(X_Select{{$e.StructName}}()...)
-}
-
-func Xc_Select{{$e.StructName}}WithPrefix(prefix string) assist.Condition {
-	return assist.Select(X_Select{{$e.StructName}}WithPrefix(prefix)...)
+func Xc_Select{{$e.StructName}}(prefixes ...string) assist.Condition {
+	return assist.Select(X_Select{{$e.StructName}}(prefixes...)...)
 }
 
 {{- end}}
