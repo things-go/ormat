@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	lodash "github.com/samber/lo"
 	flag "github.com/spf13/pflag"
 
 	"github.com/things-go/ormat/pkg/consts"
@@ -79,31 +80,26 @@ func New(m DBModel, c Config) *View {
 
 // GetDbFile ast file
 func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
-	skipColumns := make(map[string]struct{})
-	for _, column := range sf.SkipColumns {
-		skipColumns[utils.SnakeCase(column)] = struct{}{}
-	}
+	skipColumns := lodash.Associate(sf.SkipColumns, func(column string) (string, struct{}) {
+		return utils.SnakeCase(column), struct{}{}
+	})
 
 	dbInfo, err := sf.GetDatabase()
 	if err != nil {
 		return nil, err
 	}
 
-	files := make([]*ast.File, 0, len(dbInfo.Tables))
-	for _, tb := range dbInfo.Tables {
+	files := lodash.Map(dbInfo.Tables, func(tb *Table, _ int) *ast.File {
 		structName := utils.CamelCase(tb.Name)
-		structComment := ast.IntoComment(tb.Comment, "...", "\n", "\r\n// ")
+		structComment := strings.ReplaceAll(strings.TrimSpace(tb.Comment), "\n", "\r\n// ")
 		structFields := sf.intoColumnFields(tb.Name, dbInfo.Tables, tb.Columns, skipColumns)
-		tableName := tb.Name
-		abbrTableName := ast.IntoAbbrTableName(tableName)
 		protoMessageFields := ast.ParseProtobuf(structFields, sf.EnableGogo, sf.EnableSea)
 		structs := []*ast.Struct{
 			{
 				StructName:         structName,
 				StructComment:      structComment,
 				StructFields:       structFields,
-				TableName:          tableName,
-				AbbrTableName:      abbrTableName,
+				TableName:          tb.Name,
 				CreateTableSQL:     tb.CreateTableSQL,
 				ProtoMessageFields: protoMessageFields,
 			},
@@ -112,7 +108,7 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 		if sf.HasAssist {
 			imports[`assist "github.com/things-go/gorm-assist"`] = struct{}{}
 		}
-		files = append(files, &ast.File{
+		return &ast.File{
 			Version:     consts.Version,
 			Filename:    tb.Name,
 			PackageName: pkgName,
@@ -123,8 +119,8 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 			HasColumn:   sf.HasColumn,
 			HasHelper:   sf.HasHelper,
 			HasAssist:   sf.HasAssist,
-		})
-	}
+		}
+	})
 	return files, nil
 }
 
@@ -133,14 +129,13 @@ func (sf *View) GetSqlFile() (*ast.SqlFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	tbAttrs := make([]ast.TableAttribute, 0, len(tbAttributes))
-	for _, v := range tbAttributes {
-		tbAttrs = append(tbAttrs, ast.TableAttribute{
+	tbAttrs := lodash.Map(tbAttributes, func(v TableAttribute, _ int) ast.TableAttribute {
+		return ast.TableAttribute{
 			Name:           v.Name,
 			Comment:        strings.ReplaceAll(v.Comment, "\n", "\n-- "),
 			CreateTableSQL: v.CreateTableSQL,
-		})
-	}
+		}
+	})
 	return &ast.SqlFile{
 		Version: consts.Version,
 		Tables:  tbAttrs,
@@ -176,7 +171,7 @@ func (sf *View) intoColumnFields(tbName string, tables []*Table, cols []*Column,
 		field := ast.Field{
 			FieldName:    fieldName,
 			FieldType:    fieldType,
-			FieldComment: ast.IntoComment(col.Comment, "", "\n", ","),
+			FieldComment: strings.ReplaceAll(strings.TrimSpace(col.Comment), "\n", ","),
 			FieldTag:     "",
 			IsNullable:   col.IsNullable,
 			IsTimestamp:  col.ColumnGoType == "time.Time",

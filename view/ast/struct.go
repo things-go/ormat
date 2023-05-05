@@ -11,7 +11,6 @@ type Struct struct {
 	StructComment      string                 // struct comment
 	StructFields       []Field                // struct field list
 	TableName          string                 // struct table name in database.
-	AbbrTableName      string                 // struct abbreviate table name
 	CreateTableSQL     string                 // create table SQL
 	ProtoMessageFields []ProtobufMessageField // proto message field
 }

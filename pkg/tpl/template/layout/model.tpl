@@ -75,6 +75,10 @@ func New_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
 	}
 }
 
+func (x *{{$e.StructName}}Impl) X_TableName() string {
+	return x.xTableName
+}
+
 func (*{{$e.StructName}}Impl) As(alias string) {{$e.StructName}}Impl {
 	return New_X_{{$e.StructName}}(alias)
 }
@@ -87,10 +91,6 @@ func (*{{$e.StructName}}Impl) Xc_Model() assist.Condition {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Model(&{{$e.StructName}}{})
 	}
-}
-
-func (x *{{$e.StructName}}Impl) X_TableName() string {
-	return x.xTableName
 }
 
 func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {

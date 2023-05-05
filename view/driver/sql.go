@@ -150,6 +150,7 @@ func (sf *SQL) GetDatabase() (*view.Database, error) {
 		Tables: []*view.Table{sf.table},
 	}, nil
 }
+
 func (sf *SQL) GetTableAttributes() ([]view.TableAttribute, error) {
 	err := sf.Parse()
 	if err != nil {
@@ -157,6 +158,7 @@ func (sf *SQL) GetTableAttributes() ([]view.TableAttribute, error) {
 	}
 	return []view.TableAttribute{sf.table.TableAttribute}, nil
 }
+
 func (sf *SQL) GetTables(tb view.TableAttribute) (*view.Table, error) {
 	err := sf.Parse()
 	if err != nil {
@@ -164,6 +166,7 @@ func (sf *SQL) GetTables(tb view.TableAttribute) (*view.Table, error) {
 	}
 	return sf.table, nil
 }
+
 func (sf *SQL) GetCreateTableSQL(tbName string) (string, error) {
 	return sf.CreateTableSQL, nil
 }
