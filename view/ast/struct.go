@@ -3,6 +3,8 @@ package ast
 import (
 	"fmt"
 	"strings"
+
+	lodash "github.com/samber/lo"
 )
 
 // Struct define a struct
@@ -25,10 +27,8 @@ func ParseProtobuf(structFields []Field, enableGogo, enableSea bool) []ProtobufM
 		return annotation
 	}
 
-	protobufMessageFields := make([]ProtobufMessageField, 0, len(structFields))
-	tmpAnnotations := make([]string, 0, 16)
-	for _, field := range structFields {
-		tmpAnnotations = tmpAnnotations[:0]
+	protobufMessageFields := lodash.Map(structFields, func(field Field, _ int) ProtobufMessageField {
+		tmpAnnotations := make([]string, 0, 16)
 		dataType := field.ColumnGoType
 		// 转换成 proto 类型
 		switch dataType {
@@ -40,17 +40,6 @@ func ParseProtobuf(structFields []Field, enableGogo, enableSea bool) []ProtobufM
 				dataType = "int64"
 				tmpAnnotations = append(tmpAnnotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
 			}
-			if enableSea {
-				tmpAnnotations = append(tmpAnnotations, fmt.Sprintf(`(things_go.seaql.field) = { type: "%s" }`, field.Type))
-			}
-			protobufMessageFields = append(protobufMessageFields, ProtobufMessageField{
-				FieldDataType:   dataType,
-				FieldName:       field.ColumnName,
-				FieldComment:    field.FieldComment,
-				FieldAnnotation: intoAnnotation(tmpAnnotations),
-				IsTimestamp:     !enableGogo,
-			})
-			continue
 		case "uint16", "uint8", "uint":
 			dataType = "uint32"
 		case "int16", "int8", "int":
@@ -62,20 +51,18 @@ func ParseProtobuf(structFields []Field, enableGogo, enableSea bool) []ProtobufM
 		case "[]byte":
 			dataType = "bytes"
 		case "int64", "uint64":
-			tmpAnnotations = append(tmpAnnotations,
-				`(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
+			tmpAnnotations = append(tmpAnnotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
 		}
 		if enableSea {
 			tmpAnnotations = append(tmpAnnotations, fmt.Sprintf(`(things_go.seaql.field) = { type: "%s" }`, field.Type))
 		}
 
-		protobufMessageFields = append(protobufMessageFields, ProtobufMessageField{
+		return ProtobufMessageField{
 			FieldDataType:   dataType,
 			FieldName:       field.ColumnName,
 			FieldComment:    field.FieldComment,
 			FieldAnnotation: intoAnnotation(tmpAnnotations),
-			IsTimestamp:     false,
-		})
-	}
+		}
+	})
 	return protobufMessageFields
 }
