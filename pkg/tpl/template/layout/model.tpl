@@ -46,13 +46,13 @@ var Select{{$e.StructName}} = []string {
 {{- end}}
 
 {{- if $hasAssist}}
-type X_{{$e.StructName}}Columns struct {
+type {{$e.StructName}}Field_x struct {
 	{{- range $field := $e.StructFields}}
     {{$field.FieldName}} string
 	{{- end}}
 }
 
-type {{$e.StructName}}Impl struct {
+type {{$e.StructName}}Impl_x struct {
 	// private fields
 	xTableName string 
 
@@ -63,19 +63,19 @@ type {{$e.StructName}}Impl struct {
 }
 
 var xx_{{$e.StructName}} = New_X_{{$e.StructName}}("{{$e.TableName}}")
-var xx_{{$e.StructName}}Columns = X_{{$e.StructName}}Columns {
+var xx_{{$e.StructName}}_Field = &{{$e.StructName}}Field_x {
 	{{- range $field := $e.StructFields}}
     {{$field.FieldName}}: "{{$field.ColumnName}}",
 	{{- end}}
 }
 
-func X_{{$e.StructName}}() {{$e.StructName}}Impl {
+func X_{{$e.StructName}}() {{$e.StructName}}Impl_x {
 	return xx_{{$e.StructName}}
 }
 
-func New_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
-	xCols := &xx_{{$e.StructName}}Columns
-	return {{$e.StructName}}Impl{
+func New_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl_x {
+	xCols := xx_{{$e.StructName}}_Field
+	return {{$e.StructName}}Impl_x{
 		xTableName: tableName,
 
 		ALL:  assist.NewAsterisk(tableName),
@@ -86,36 +86,37 @@ func New_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
 	}
 }
 
-func (x *{{$e.StructName}}Impl) X_TableName() string {
+func (x *{{$e.StructName}}Impl_x) X_TableName() string {
 	return x.xTableName
 }
 
-func (*{{$e.StructName}}Impl) As(alias string) {{$e.StructName}}Impl {
+func (*{{$e.StructName}}Impl_x) As(alias string) {{$e.StructName}}Impl_x {
 	return New_X_{{$e.StructName}}(alias)
 }
 
-func (*{{$e.StructName}}Impl) X_Model() *{{$e.StructName}} {
+func (*{{$e.StructName}}Impl_x) X_Model() *{{$e.StructName}} {
 	return &{{$e.StructName}}{}
 }
 
-func (*{{$e.StructName}}Impl) X_Columns() X_{{$e.StructName}}Columns {
-	return xx_{{$e.StructName}}Columns
-}
-
-func (*{{$e.StructName}}Impl) Xc_Model() assist.Condition {
+func (*{{$e.StructName}}Impl_x) Xc_Model() assist.Condition {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Model(&{{$e.StructName}}{})
 	}
 }
 
-func X_Columns{{$e.StructName}}() X_{{$e.StructName}}Columns {
-	return xx_{{$e.StructName}}Columns
+{{- range $field := $e.StructFields}}
+func (*{{$e.StructName}}Impl_x) Field_{{$field.FieldName}}(prefixes ...string) string {
+	if len(prefixes) > 0 {
+		return prefixes[0] + "_" + xx_{{$e.StructName}}_Field.{{$field.FieldName}}
+	}
+	return xx_{{$e.StructName}}_Field.{{$field.FieldName}}
 }
+{{- end}}
 
 func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	x := &xx_{{$e.StructName}}
-	xCols := &xx_{{$e.StructName}}Columns
-	if len(prefixes) > 0 && prefixes[0] != "" {
+	xCols := xx_{{$e.StructName}}_Field
+	if len(prefixes) > 0 {
 		prefix := prefixes[0] + "_"
 		return []assist.Expr{
 	{{- range $field := $e.StructFields}}
