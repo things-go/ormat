@@ -46,11 +46,14 @@ var Select{{$e.StructName}} = []string {
 {{- end}}
 
 {{- if $hasAssist}}
-type {{$e.StructName}}Field_x struct {
-	{{- range $field := $e.StructFields}}
-    {{$field.FieldName}} string
-	{{- end}}
-}
+
+const (
+{{- range $field := $e.StructFields}}
+    xx_{{$e.StructName}}_{{$field.FieldName}} = "{{$field.ColumnName}}"
+{{- end}}
+)
+
+var xx_{{$e.StructName}} = New_X_{{$e.StructName}}("{{$e.TableName}}")
 
 type {{$e.StructName}}Impl_x struct {
 	// private fields
@@ -62,26 +65,18 @@ type {{$e.StructName}}Impl_x struct {
 {{- end}}
 }
 
-var xx_{{$e.StructName}} = New_X_{{$e.StructName}}("{{$e.TableName}}")
-var xx_{{$e.StructName}}_Field = &{{$e.StructName}}Field_x {
-	{{- range $field := $e.StructFields}}
-    {{$field.FieldName}}: "{{$field.ColumnName}}",
-	{{- end}}
-}
-
 func X_{{$e.StructName}}() {{$e.StructName}}Impl_x {
 	return xx_{{$e.StructName}}
 }
 
 func New_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl_x {
-	xCols := xx_{{$e.StructName}}_Field
 	return {{$e.StructName}}Impl_x{
 		xTableName: tableName,
 
 		ALL:  assist.NewAsterisk(tableName),
 
 	{{range $field := $e.StructFields}}
-		{{$field.FieldName}}: assist.New{{$field.AssistType}}(tableName, xCols.{{$field.FieldName}}),
+		{{$field.FieldName}}: assist.New{{$field.AssistType}}(tableName, xx_{{$e.StructName}}_{{$field.FieldName}}),
 	{{- end}}			
 	}
 }
@@ -107,27 +102,26 @@ func (*{{$e.StructName}}Impl_x) Xc_Model() assist.Condition {
 {{- range $field := $e.StructFields}}
 func (*{{$e.StructName}}Impl_x) Field_{{$field.FieldName}}(prefixes ...string) string {
 	if len(prefixes) > 0 {
-		return prefixes[0] + "_" + xx_{{$e.StructName}}_Field.{{$field.FieldName}}
+		return prefixes[0] + "_" + xx_{{$e.StructName}}_{{$field.FieldName}}
 	}
-	return xx_{{$e.StructName}}_Field.{{$field.FieldName}}
+	return xx_{{$e.StructName}}_{{$field.FieldName}}
 }
 {{- end}}
 
 func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	x := &xx_{{$e.StructName}}
-	xCols := xx_{{$e.StructName}}_Field
 	if len(prefixes) > 0 {
 		prefix := prefixes[0] + "_"
 		return []assist.Expr{
 	{{- range $field := $e.StructFields}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(prefix + xCols.{{$field.FieldName}}),
+		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(prefix + xx_{{$e.StructName}}_{{$field.FieldName}}),
 	{{- end}}
 		}
 	} else {
 		return []assist.Expr{
 	{{- range $field := $e.StructFields}}
 		{{- if $field.IsTimestamp}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xCols.{{$field.FieldName}}),
+		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_{{$field.FieldName}}),
 		{{- else}}
 		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
 		{{- end}}
