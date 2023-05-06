@@ -46,6 +46,12 @@ var Select{{$e.StructName}} = []string {
 {{- end}}
 
 {{- if $hasAssist}}
+type X_{{$e.StructName}}Columns struct {
+	{{- range $field := $e.StructFields}}
+    {{$field.FieldName}} string
+	{{- end}}
+}
+
 type {{$e.StructName}}Impl struct {
 	// private fields
 	xTableName string 
@@ -54,23 +60,28 @@ type {{$e.StructName}}Impl struct {
 {{- range $field := $e.StructFields}}
     {{$field.FieldName}} assist.{{$field.AssistType}}
 {{- end}}
-
 }
 
 var xx_{{$e.StructName}} = New_X_{{$e.StructName}}("{{$e.TableName}}")
+var xx_{{$e.StructName}}Columns = X_{{$e.StructName}}Columns {
+	{{- range $field := $e.StructFields}}
+    {{$field.FieldName}}: "{{$field.ColumnName}}",
+	{{- end}}
+}
 
 func X_{{$e.StructName}}() {{$e.StructName}}Impl {
 	return xx_{{$e.StructName}}
 }
 
 func New_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl {
+	xCols := &xx_{{$e.StructName}}Columns
 	return {{$e.StructName}}Impl{
 		xTableName: tableName,
 
 		ALL:  assist.NewAsterisk(tableName),
 
 	{{range $field := $e.StructFields}}
-		{{$field.FieldName}}: assist.New{{$field.AssistType}}(tableName, "{{$field.ColumnName}}"),
+		{{$field.FieldName}}: assist.New{{$field.AssistType}}(tableName, xCols.{{$field.FieldName}}),
 	{{- end}}			
 	}
 }
@@ -87,26 +98,35 @@ func (*{{$e.StructName}}Impl) X_Model() *{{$e.StructName}} {
 	return &{{$e.StructName}}{}
 }
 
+func (*{{$e.StructName}}Impl) X_Columns() X_{{$e.StructName}}Columns {
+	return xx_{{$e.StructName}}Columns
+}
+
 func (*{{$e.StructName}}Impl) Xc_Model() assist.Condition {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Model(&{{$e.StructName}}{})
 	}
 }
 
+func X_Columns{{$e.StructName}}() X_{{$e.StructName}}Columns {
+	return xx_{{$e.StructName}}Columns
+}
+
 func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	x := &xx_{{$e.StructName}}
+	xCols := &xx_{{$e.StructName}}Columns
 	if len(prefixes) > 0 && prefixes[0] != "" {
-		prefix := prefixes[0]
+		prefix := prefixes[0] + "_"
 		return []assist.Expr{
 	{{- range $field := $e.StructFields}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(prefix + "_{{$field.ColumnName}}"),
+		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(prefix + xCols.{{$field.FieldName}}),
 	{{- end}}
 		}
 	} else {
 		return []assist.Expr{
 	{{- range $field := $e.StructFields}}
 		{{- if $field.IsTimestamp}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As("{{$field.ColumnName}}"),
+		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xCols.{{$field.FieldName}}),
 		{{- else}}
 		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
 		{{- end}}

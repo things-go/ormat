@@ -8,6 +8,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/google/go-github/v48 v48.2.0
 	github.com/kierdavis/ansi v0.0.0-20180105022324-90d93b0fcae2
+	github.com/samber/lo v1.38.1
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
@@ -52,7 +53,6 @@ require (
 	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/samber/lo v1.38.1 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
