@@ -134,7 +134,7 @@ func (*{{$e.StructName}}Impl_x) Field_{{$field.FieldName}}(prefixes ...string) s
 {{- end}}
 
 func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
-	x := &xx_{{$e.StructName}}
+	x := &xxx_{{$e.StructName}}_Model
 	if len(prefixes) > 0 {
 		prefix := prefixes[0] + "_"
 		return []assist.Expr{
