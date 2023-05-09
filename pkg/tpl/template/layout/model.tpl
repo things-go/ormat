@@ -133,8 +133,7 @@ func (*{{$e.StructName}}Impl_x) Field_{{$field.FieldName}}(prefixes ...string) s
 }
 {{- end}}
 
-func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
-	x := &xxx_{{$e.StructName}}_Model
+func x_Select{{$e.StructName}}(x *{{$e.StructName}}Impl_x, prefixes ...string) []assist.Expr {
 	if len(prefixes) > 0 {
 		prefix := prefixes[0] + "_"
 		return []assist.Expr{
@@ -153,36 +152,22 @@ func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	{{- end}}
 		}
 	}
+}
+
+func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
+	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)
 }
 
 func X_Active_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
-	x := &xxx_{{$e.StructName}}_ActiveModel
-	if len(prefixes) > 0 {
-		prefix := prefixes[0] + "_"
-		return []assist.Expr{
-	{{- range $field := $e.StructFields}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(prefix + xx_{{$e.StructName}}_{{$field.FieldName}}),
-	{{- end}}
-		}
-	} else {
-		return []assist.Expr{
-	{{- range $field := $e.StructFields}}
-		{{- if $field.IsTimestamp}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_{{$field.FieldName}}),
-		{{- else}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
-		{{- end}}
-	{{- end}}
-		}
-	}
+	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_ActiveModel, prefixes...)
 }
 
 func Xc_Select{{$e.StructName}}(prefixes ...string) assist.Condition {
-	return assist.Select(X_Select{{$e.StructName}}(prefixes...)...)
+	return assist.Select(x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)...)
 }
 
 func Xc_Active_Select{{$e.StructName}}(prefixes ...string) assist.Condition {
-	return assist.Select(X_Active_Select{{$e.StructName}}(prefixes...)...)
+	return assist.Select(x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_ActiveModel, prefixes...)...)
 }
 
 {{- end}}
