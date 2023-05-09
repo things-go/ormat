@@ -100,7 +100,7 @@ func New_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
 	}
 }
 
-// X_TableName hold table name when call New_X_{{$e.StructName}} or {{$e.StructName}}Impl_x.As.
+// X_TableName hold table name when call New_X_{{$e.StructName}} or {{$e.StructName}}Impl_x.As that you defined.
 func (x *{{$e.StructName}}Impl_x) X_TableName() string {
 	return x.xTableName
 }
@@ -158,22 +158,22 @@ func x_Select{{$e.StructName}}(x *{{$e.StructName}}Impl_x, prefixes ...string) [
 	}
 }
 
-// X_Select{{$e.StructName}} select fields use table name.
+// X_Select{{$e.StructName}} select fields with table name.
 func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)
 }
 
-// X_Active_Select{{$e.StructName}} select field without use table name.
+// X_Active_Select{{$e.StructName}} select field without table name.
 func X_Active_Select{{$e.StructName}}() []assist.Expr {
 	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_ActiveModel)
 }
 
-// Xc_Select{{$e.StructName}} condition, select fields use table name.
+// Xc_Select{{$e.StructName}} condition, select fields with table name.
 func Xc_Select{{$e.StructName}}(prefixes ...string) assist.Condition {
 	return assist.Select(x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)...)
 }
 
-// Xc_Active_Select{{$e.StructName}} condition, select field without use table name.
+// Xc_Active_Select{{$e.StructName}} condition, select field without table name.
 func Xc_Active_Select{{$e.StructName}}() assist.Condition {
 	return assist.Select(x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_ActiveModel)...)
 }
