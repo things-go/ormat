@@ -48,12 +48,16 @@ var Select{{$e.StructName}} = []string {
 {{- if $hasAssist}}
 
 const (
+	// hold model `{{$e.StructName}}` table name
+	xx_{{$e.StructName}}_TableName = "{{$e.TableName}}"
+	// hold model `{{$e.StructName}}` column name
 {{- range $field := $e.StructFields}}
     xx_{{$e.StructName}}_{{$field.FieldName}} = "{{$field.ColumnName}}"
 {{- end}}
 )
 
-var xx_{{$e.StructName}} = New_X_{{$e.StructName}}("{{$e.TableName}}")
+var xxx_{{$e.StructName}}_Model = new_X_{{$e.StructName}}(xx_{{$e.StructName}}_TableName)
+var xxx_{{$e.StructName}}_ActiveModel = new_X_{{$e.StructName}}("")
 
 type {{$e.StructName}}Impl_x struct {
 	// private fields
@@ -65,11 +69,17 @@ type {{$e.StructName}}Impl_x struct {
 {{- end}}
 }
 
+// X_{{$e.StructName}} model with TableName `{{$e.TableName}}`.
 func X_{{$e.StructName}}() {{$e.StructName}}Impl_x {
-	return xx_{{$e.StructName}}
+	return xxx_{{$e.StructName}}_Model
 }
 
-func New_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl_x {
+// X_Active_{{$e.StructName}} active model without TableName.
+func X_Active_{{$e.StructName}}() {{$e.StructName}}Impl_x {
+	return xxx_{{$e.StructName}}_ActiveModel
+}
+
+func new_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl_x {
 	return {{$e.StructName}}Impl_x{
 		xTableName: tableName,
 
@@ -81,6 +91,15 @@ func New_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl_x {
 	}
 }
 
+func New_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
+	if xTableName == "" {
+		return xxx_{{$e.StructName}}_ActiveModel
+	} else {
+		return new_X_{{$e.StructName}}(xTableName)
+	}
+}
+
+// TableName hold table name when call New_X_{{$e.StructName}} or {{$e.StructName}}Impl_x.As.
 func (x *{{$e.StructName}}Impl_x) X_TableName() string {
 	return x.xTableName
 }
@@ -99,7 +118,13 @@ func (*{{$e.StructName}}Impl_x) Xc_Model() assist.Condition {
 	}
 }
 
+// TableName hold model `{{$e.StructName}}` table name returns `{{$e.TableName}}`.
+func (x *{{$e.StructName}}Impl_x) TableName() string {
+	return xx_{{$e.StructName}}_TableName
+}
 {{- range $field := $e.StructFields}}
+// Field_{{$field.FieldName}} hold model `{{$e.StructName}}` column name.
+// if prefixes not exist returns `{{$field.ColumnName}}`, others `{prefixes[0]}_{{$field.ColumnName}}`
 func (*{{$e.StructName}}Impl_x) Field_{{$field.FieldName}}(prefixes ...string) string {
 	if len(prefixes) > 0 {
 		return prefixes[0] + "_" + xx_{{$e.StructName}}_{{$field.FieldName}}
