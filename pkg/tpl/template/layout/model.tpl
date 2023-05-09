@@ -81,12 +81,12 @@ func X_Active_{{$e.StructName}}() {{$e.StructName}}Impl_x {
 
 func new_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl_x {
 	return {{$e.StructName}}Impl_x{
-		xTableName: tableName,
+		xTableName: xTableName,
 
-		ALL:  assist.NewAsterisk(tableName),
+		ALL:  assist.NewAsterisk(xTableName),
 
 	{{range $field := $e.StructFields}}
-		{{$field.FieldName}}: assist.New{{$field.AssistType}}(tableName, xx_{{$e.StructName}}_{{$field.FieldName}}),
+		{{$field.FieldName}}: assist.New{{$field.AssistType}}(xTableName, xx_{{$e.StructName}}_{{$field.FieldName}}),
 	{{- end}}			
 	}
 }
