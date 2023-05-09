@@ -155,7 +155,7 @@ func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	}
 }
 
-func X_SelectActive{{$e.StructName}}(prefixes ...string) []assist.Expr {
+func X_Active_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	x := &xxx_{{$e.StructName}}_ActiveModel
 	if len(prefixes) > 0 {
 		prefix := prefixes[0] + "_"
@@ -181,8 +181,8 @@ func Xc_Select{{$e.StructName}}(prefixes ...string) assist.Condition {
 	return assist.Select(X_Select{{$e.StructName}}(prefixes...)...)
 }
 
-func Xc_SelectActive{{$e.StructName}}(prefixes ...string) assist.Condition {
-	return assist.Select(X_SelectActive{{$e.StructName}}(prefixes...)...)
+func Xc_Active_Select{{$e.StructName}}(prefixes ...string) assist.Condition {
+	return assist.Select(X_Active_Select{{$e.StructName}}(prefixes...)...)
 }
 
 {{- end}}
