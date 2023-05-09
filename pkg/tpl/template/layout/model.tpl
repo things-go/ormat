@@ -79,7 +79,7 @@ func X_Active_{{$e.StructName}}() {{$e.StructName}}Impl_x {
 	return xxx_{{$e.StructName}}_ActiveModel
 }
 
-func new_X_{{$e.StructName}}(tableName string) {{$e.StructName}}Impl_x {
+func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
 	return {{$e.StructName}}Impl_x{
 		xTableName: xTableName,
 
