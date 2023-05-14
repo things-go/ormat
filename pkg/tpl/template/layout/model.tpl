@@ -74,7 +74,7 @@ func X_{{$e.StructName}}() {{$e.StructName}}Impl_x {
 	return xxx_{{$e.StructName}}_Model
 }
 
-// X_Native_{{$e.StructName}} Native model without TableName.
+// X_Native_{{$e.StructName}} native model without TableName.
 func X_Native_{{$e.StructName}}() {{$e.StructName}}Impl_x {
 	return xxx_{{$e.StructName}}_NativeModel
 }
