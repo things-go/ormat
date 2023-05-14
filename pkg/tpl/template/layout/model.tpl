@@ -57,7 +57,7 @@ const (
 )
 
 var xxx_{{$e.StructName}}_Model = new_X_{{$e.StructName}}(xx_{{$e.StructName}}_TableName)
-var xxx_{{$e.StructName}}_ActiveModel = new_X_{{$e.StructName}}("")
+var xxx_{{$e.StructName}}_NativeModel = new_X_{{$e.StructName}}("")
 
 type {{$e.StructName}}Impl_x struct {
 	// private fields
@@ -74,9 +74,9 @@ func X_{{$e.StructName}}() {{$e.StructName}}Impl_x {
 	return xxx_{{$e.StructName}}_Model
 }
 
-// X_Active_{{$e.StructName}} active model without TableName.
-func X_Active_{{$e.StructName}}() {{$e.StructName}}Impl_x {
-	return xxx_{{$e.StructName}}_ActiveModel
+// X_Native_{{$e.StructName}} Native model without TableName.
+func X_Native_{{$e.StructName}}() {{$e.StructName}}Impl_x {
+	return xxx_{{$e.StructName}}_NativeModel
 }
 
 func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
@@ -94,7 +94,7 @@ func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
 // New_X_{{$e.StructName}} new instance.
 func New_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
 	if xTableName == "" {
-		return xxx_{{$e.StructName}}_ActiveModel
+		return xxx_{{$e.StructName}}_NativeModel
 	} else {
 		return new_X_{{$e.StructName}}(xTableName)
 	}
@@ -113,13 +113,6 @@ func (*{{$e.StructName}}Impl_x) As(alias string) {{$e.StructName}}Impl_x {
 // X_Model model
 func (*{{$e.StructName}}Impl_x) X_Model() *{{$e.StructName}} {
 	return &{{$e.StructName}}{}
-}
-
-// Xc_Model condition.
-func (*{{$e.StructName}}Impl_x) Xc_Model() assist.Condition {
-	return func(db *gorm.DB) *gorm.DB {
-		return db.Model(&{{$e.StructName}}{})
-	}
 }
 
 // TableName hold model `{{$e.StructName}}` table name returns `{{$e.TableName}}`.
@@ -163,20 +156,11 @@ func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)
 }
 
-// X_Active_Select{{$e.StructName}} select field without table name.
-func X_Active_Select{{$e.StructName}}() []assist.Expr {
-	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_ActiveModel)
+// X_Native_Select{{$e.StructName}} select field without table name.
+func X_Native_Select{{$e.StructName}}() []assist.Expr {
+	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_NativeModel)
 }
 
-// Xc_Select{{$e.StructName}} condition, select fields with table name.
-func Xc_Select{{$e.StructName}}(prefixes ...string) assist.Condition {
-	return assist.Select(x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)...)
-}
-
-// Xc_Active_Select{{$e.StructName}} condition, select field without table name.
-func Xc_Active_Select{{$e.StructName}}() assist.Condition {
-	return assist.Select(x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_ActiveModel)...)
-}
 {{- end}}
 
 {{- if $hasHelper}}
