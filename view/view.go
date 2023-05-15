@@ -42,7 +42,6 @@ type Config struct {
 	Package            string            `yaml:"package" json:"package"`                     // 包名
 	Options            map[string]string `yaml:"options" json:"options"`                     // 选项
 	HasHelper          bool              `yaml:"hasHelper" json:"hasHelper"`                 // 是否输出 proto 帮助
-	HasAssist          bool              `yaml:"hasAssist" json:"hasAssist"`                 // 是否提供辅助工具集
 	EnableGogo         bool              `yaml:"enableGogo" json:"enableGogo"`               // 使能用 gogo proto (仅 hasHelper = true 有效果)
 	EnableSea          bool              `yaml:"enableSea" json:"enableSea"`                 // 使能用 seaql(仅 hasHelper = true 有效果)
 }
@@ -62,7 +61,6 @@ func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
 	s.StringToStringVar(&cc.Options, "options", nil, "options key value")
 
 	s.BoolVar(&cc.HasHelper, "hasHelper", false, "是否输出 proto 帮助")
-	s.BoolVar(&cc.HasAssist, "hasAssist", false, "是否提供辅助工具集")
 	s.BoolVar(&cc.EnableGogo, "enableGogo", false, "使能用 gogo proto (仅 hasHelper = true 有效)")
 	s.BoolVar(&cc.EnableSea, "enableSea", false, "使能用 seaql (仅 hasHelper = true 有效)")
 }
@@ -105,9 +103,6 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 			},
 		}
 		imports := ast.IntoImports(structs)
-		if sf.HasAssist {
-			imports[`assist "github.com/things-go/gorm-assist"`] = struct{}{}
-		}
 		return &ast.File{
 			Version:     consts.Version,
 			Filename:    tb.Name,
@@ -118,7 +113,6 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 			Options:     sf.Options,
 			HasColumn:   sf.HasColumn,
 			HasHelper:   sf.HasHelper,
-			HasAssist:   sf.HasAssist,
 		}
 	})
 	return files, nil

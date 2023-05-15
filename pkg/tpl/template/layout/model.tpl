@@ -13,7 +13,7 @@ import (
 
 {{- $hasColumn := .HasColumn}}
 {{- $hasHelper := .HasHelper}}
-{{- $hasAssist := .HasAssist}}
+
 {{- range $e := .Structs}}
 // {{$e.StructName}} {{$e.StructComment}}
 type {{$e.StructName}} struct {
@@ -43,127 +43,6 @@ var Select{{$e.StructName}} = []string {
 	{{- end}}
 {{- end}}
 }
-{{- end}}
-
-{{- if $hasAssist}}
-
-const (
-	// hold model `{{$e.StructName}}` table name
-	xx_{{$e.StructName}}_TableName = "{{$e.TableName}}"
-	// hold model `{{$e.StructName}}` column name
-{{- range $field := $e.StructFields}}
-    xx_{{$e.StructName}}_{{$field.FieldName}} = "{{$field.ColumnName}}"
-{{- end}}
-)
-
-var xxx_{{$e.StructName}}_Model = new_X_{{$e.StructName}}(xx_{{$e.StructName}}_TableName)
-var xxx_{{$e.StructName}}_Native_Model = new_X_{{$e.StructName}}("")
-
-type {{$e.StructName}}Impl_x struct {
-	// private fields
-	xTableName string 
-
-	ALL assist.Asterisk
-{{- range $field := $e.StructFields}}
-    {{$field.FieldName}} assist.{{$field.AssistType}}
-{{- end}}
-}
-
-// X_{{$e.StructName}} model with TableName `{{$e.TableName}}`.
-func X_{{$e.StructName}}() {{$e.StructName}}Impl_x {
-	return xxx_{{$e.StructName}}_Model
-}
-
-// X_Native_{{$e.StructName}} native model without TableName.
-func X_Native_{{$e.StructName}}() {{$e.StructName}}Impl_x {
-	return xxx_{{$e.StructName}}_Native_Model
-}
-
-func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
-	return {{$e.StructName}}Impl_x{
-		xTableName: xTableName,
-
-		ALL:  assist.NewAsterisk(xTableName),
-
-	{{range $field := $e.StructFields}}
-		{{$field.FieldName}}: assist.New{{$field.AssistType}}(xTableName, xx_{{$e.StructName}}_{{$field.FieldName}}),
-	{{- end}}			
-	}
-}
-
-// New_X_{{$e.StructName}} new instance.
-func New_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
-	switch xTableName {
-	case "":
-		return xxx_{{$e.StructName}}_Native_Model
-	case xx_{{$e.StructName}}_TableName:
-		return xxx_{{$e.StructName}}_Model
-	default:
-		return new_X_{{$e.StructName}}(xTableName)
-	}
-}
-
-// X_TableName hold table name when call New_X_{{$e.StructName}} or {{$e.StructName}}Impl_x.As that you defined.
-func (x *{{$e.StructName}}Impl_x) X_TableName() string {
-	return x.xTableName
-}
-
-// As alias
-func (*{{$e.StructName}}Impl_x) As(alias string) {{$e.StructName}}Impl_x {
-	return New_X_{{$e.StructName}}(alias)
-}
-
-// X_Model model
-func (*{{$e.StructName}}Impl_x) X_Model() *{{$e.StructName}} {
-	return &{{$e.StructName}}{}
-}
-
-// TableName hold model `{{$e.StructName}}` table name returns `{{$e.TableName}}`.
-func (x *{{$e.StructName}}Impl_x) TableName() string {
-	return xx_{{$e.StructName}}_TableName
-}
-{{- range $field := $e.StructFields}}
-// Field_{{$field.FieldName}} hold model `{{$e.StructName}}` column name.
-// if prefixes not exist returns `{{$field.ColumnName}}`, others `{prefixes[0]}_{{$field.ColumnName}}`
-func (*{{$e.StructName}}Impl_x) Field_{{$field.FieldName}}(prefixes ...string) string {
-	if len(prefixes) > 0 {
-		return prefixes[0] + "_" + xx_{{$e.StructName}}_{{$field.FieldName}}
-	}
-	return xx_{{$e.StructName}}_{{$field.FieldName}}
-}
-{{- end}}
-
-func x_Select{{$e.StructName}}(x *{{$e.StructName}}Impl_x, prefixes ...string) []assist.Expr {
-	if len(prefixes) > 0 {
-		prefix := prefixes[0] + "_"
-		return []assist.Expr{
-	{{- range $field := $e.StructFields}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(prefix + xx_{{$e.StructName}}_{{$field.FieldName}}),
-	{{- end}}
-		}
-	} else {
-		return []assist.Expr{
-	{{- range $field := $e.StructFields}}
-		{{- if $field.IsTimestamp}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_{{$field.FieldName}}),
-		{{- else}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
-		{{- end}}
-	{{- end}}
-		}
-	}
-}
-
-// X_Select{{$e.StructName}} select fields with table name.
-func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
-	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)
-}
-
-// X_Native_Select{{$e.StructName}} select field without table name.
-func X_Native_Select{{$e.StructName}}() []assist.Expr {
-	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Native_Model)
-}
-
 {{- end}}
 
 {{- if $hasHelper}}

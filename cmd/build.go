@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/things-go/log"
 
+	"github.com/things-go/ormat/pkg/tpl"
 	"github.com/things-go/ormat/pkg/utils"
 	"github.com/things-go/ormat/view"
 	"github.com/things-go/ormat/view/ast"
@@ -22,6 +23,7 @@ type buildOpt struct {
 	MergeFilename string
 	Suffix        string
 	Template      string
+	HasAssist     bool // 是否提供辅助工具集
 }
 
 type buildCmd struct {
@@ -42,15 +44,18 @@ func newBuildCmd() *buildCmd {
 				return err
 			}
 			genFile := &generateFile{
-				Files:         parseSqlFromFile(&root.buildOpt),
-				OutputDir:     root.OutputDir,
-				Template:      usedTemplate.Template,
-				Merge:         root.Merge,
-				MergeFilename: root.MergeFilename,
-				Package:       root.View.Package,
-				Options:       root.View.Options,
-				Suffix:        usedTemplate.Suffix,
-				GenFunc:       genModelFile,
+				Files:          parseSqlFromFile(&root.buildOpt),
+				OutputDir:      root.OutputDir,
+				Template:       usedTemplate.Template,
+				Merge:          root.Merge,
+				MergeFilename:  root.MergeFilename,
+				Package:        root.View.Package,
+				Options:        root.View.Options,
+				Suffix:         usedTemplate.Suffix,
+				GenFunc:        genModelFile,
+				HasAssist:      root.HasAssist,
+				AssistTemplate: tpl.Assist,
+				AssistGenFunc:  genModelFile,
 			}
 			genFile.runGen()
 			return nil
@@ -88,6 +93,7 @@ func newBuildCmd() *buildCmd {
 	cmd.PersistentFlags().StringVar(&root.MergeFilename, "filename", "", "merge filename")
 	cmd.PersistentFlags().StringVar(&root.Suffix, "suffix", "", "filename suffix")
 	cmd.PersistentFlags().StringVar(&root.Template, "template", "__in_go", "use custom template")
+	cmd.PersistentFlags().BoolVar(&root.HasAssist, "hasAssist", false, "是否提供辅助工具集")
 
 	cmd.MarkPersistentFlagRequired("input") // nolint
 	cmd.AddCommand(

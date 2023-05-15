@@ -13,15 +13,18 @@ import (
 )
 
 type generateFile struct {
-	Files         []*ast.File
-	Template      *template.Template
-	OutputDir     string
-	Merge         bool
-	MergeFilename string
-	Package       string
-	Options       map[string]string
-	Suffix        string
-	GenFunc       func(filename string, t *template.Template, data any)
+	Files          []*ast.File
+	Template       *template.Template
+	OutputDir      string
+	Merge          bool
+	MergeFilename  string
+	Package        string
+	Options        map[string]string
+	Suffix         string
+	GenFunc        func(filename string, t *template.Template, data any)
+	HasAssist      bool
+	AssistTemplate *template.Template
+	AssistGenFunc  func(filename string, t *template.Template, data any)
 }
 
 func (g *generateFile) runGen() {
@@ -36,13 +39,11 @@ func (g *generateFile) runGen() {
 		Options:     g.Options,
 		HasColumn:   false,
 		HasHelper:   false,
-		HasAssist:   false,
 	}
 	for _, v := range g.Files {
 		if g.Merge {
 			mergeFile.HasHelper = v.HasHelper
 			mergeFile.HasColumn = v.HasColumn
-			mergeFile.HasAssist = v.HasAssist
 			for k := range v.Imports {
 				mergeFile.Imports[k] = struct{}{}
 			}
@@ -53,6 +54,13 @@ func (g *generateFile) runGen() {
 				g.Template,
 				v,
 			)
+			if g.HasAssist {
+				g.AssistGenFunc(
+					intoFilename(g.OutputDir, v.Filename, ".assist.go"),
+					g.AssistTemplate,
+					v,
+				)
+			}
 		}
 	}
 	if g.Merge && len(mergeFile.Structs) > 0 {
@@ -64,6 +72,13 @@ func (g *generateFile) runGen() {
 			g.Template,
 			mergeFile,
 		)
+		if g.HasAssist {
+			g.AssistGenFunc(
+				intoFilename(g.OutputDir, mergeFile.Filename, ".assist.go"),
+				g.AssistTemplate,
+				mergeFile,
+			)
+		}
 	}
 
 	log.Info("😄 generate success !!!")
