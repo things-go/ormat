@@ -9,7 +9,7 @@ require (
 	github.com/google/go-github/v48 v48.2.0
 	github.com/kierdavis/ansi v0.0.0-20180105022324-90d93b0fcae2
 	github.com/samber/lo v1.38.1
-	github.com/spf13/cast v1.5.0
+	github.com/spf13/cast v1.5.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.2
