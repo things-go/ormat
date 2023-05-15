@@ -57,7 +57,7 @@ const (
 )
 
 var xxx_{{$e.StructName}}_Model = new_X_{{$e.StructName}}(xx_{{$e.StructName}}_TableName)
-var xxx_{{$e.StructName}}_NativeModel = new_X_{{$e.StructName}}("")
+var xxx_{{$e.StructName}}_Native_Model = new_X_{{$e.StructName}}("")
 
 type {{$e.StructName}}Impl_x struct {
 	// private fields
@@ -76,7 +76,7 @@ func X_{{$e.StructName}}() {{$e.StructName}}Impl_x {
 
 // X_Native_{{$e.StructName}} native model without TableName.
 func X_Native_{{$e.StructName}}() {{$e.StructName}}Impl_x {
-	return xxx_{{$e.StructName}}_NativeModel
+	return xxx_{{$e.StructName}}_Native_Model
 }
 
 func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
@@ -93,9 +93,12 @@ func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
 
 // New_X_{{$e.StructName}} new instance.
 func New_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
-	if xTableName == "" {
-		return xxx_{{$e.StructName}}_NativeModel
-	} else {
+	switch xTableName {
+	case "":
+		return xxx_{{$e.StructName}}_Native_Model
+	case xx_{{$e.StructName}}_TableName:
+		return xxx_{{$e.StructName}}_Model
+	default:
 		return new_X_{{$e.StructName}}(xTableName)
 	}
 }
@@ -158,7 +161,7 @@ func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 
 // X_Native_Select{{$e.StructName}} select field without table name.
 func X_Native_Select{{$e.StructName}}() []assist.Expr {
-	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_NativeModel)
+	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Native_Model)
 }
 
 {{- end}}
