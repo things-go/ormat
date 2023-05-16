@@ -20,7 +20,7 @@ const (
 var xxx_{{$e.StructName}}_Model = new_X_{{$e.StructName}}(xx_{{$e.StructName}}_TableName)
 var xxx_{{$e.StructName}}_Native_Model = new_X_{{$e.StructName}}("")
 
-type {{$e.StructName}}Impl_x struct {
+type {{$e.StructName}}_Active struct {
 	// private fields
 	xTableName string 
 
@@ -31,17 +31,17 @@ type {{$e.StructName}}Impl_x struct {
 }
 
 // X_{{$e.StructName}} model with TableName `{{$e.TableName}}`.
-func X_{{$e.StructName}}() {{$e.StructName}}Impl_x {
+func X_{{$e.StructName}}() {{$e.StructName}}_Active {
 	return xxx_{{$e.StructName}}_Model
 }
 
 // X_Native_{{$e.StructName}} native model without TableName.
-func X_Native_{{$e.StructName}}() {{$e.StructName}}Impl_x {
+func X_Native_{{$e.StructName}}() {{$e.StructName}}_Active {
 	return xxx_{{$e.StructName}}_Native_Model
 }
 
-func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
-	return {{$e.StructName}}Impl_x{
+func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}_Active {
+	return {{$e.StructName}}_Active{
 		xTableName: xTableName,
 
 		ALL:  assist.NewAsterisk(xTableName),
@@ -53,7 +53,7 @@ func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
 }
 
 // New_X_{{$e.StructName}} new instance.
-func New_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
+func New_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}_Active {
 	switch xTableName {
 	case "":
 		return xxx_{{$e.StructName}}_Native_Model
@@ -64,29 +64,29 @@ func New_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}Impl_x {
 	}
 }
 
-// X_TableName hold table name when call New_X_{{$e.StructName}} or {{$e.StructName}}Impl_x.As that you defined.
-func (x *{{$e.StructName}}Impl_x) X_TableName() string {
+// X_TableName hold table name when call New_X_{{$e.StructName}} or {{$e.StructName}}_Active.As that you defined.
+func (x *{{$e.StructName}}_Active) X_TableName() string {
 	return x.xTableName
 }
 
 // As alias
-func (*{{$e.StructName}}Impl_x) As(alias string) {{$e.StructName}}Impl_x {
+func (*{{$e.StructName}}_Active) As(alias string) {{$e.StructName}}_Active {
 	return New_X_{{$e.StructName}}(alias)
 }
 
 // X_Model model
-func (*{{$e.StructName}}Impl_x) X_Model() *{{$e.StructName}} {
+func (*{{$e.StructName}}_Active) X_Model() *{{$e.StructName}} {
 	return &{{$e.StructName}}{}
 }
 
 // TableName hold model `{{$e.StructName}}` table name returns `{{$e.TableName}}`.
-func (x *{{$e.StructName}}Impl_x) TableName() string {
+func (x *{{$e.StructName}}_Active) TableName() string {
 	return xx_{{$e.StructName}}_TableName
 }
 {{- range $field := $e.StructFields}}
 // Field_{{$field.FieldName}} hold model `{{$e.StructName}}` column name.
 // if prefixes not exist returns `{{$field.ColumnName}}`, others `{prefixes[0]}_{{$field.ColumnName}}`
-func (*{{$e.StructName}}Impl_x) Field_{{$field.FieldName}}(prefixes ...string) string {
+func (*{{$e.StructName}}_Active) Field_{{$field.FieldName}}(prefixes ...string) string {
 	if len(prefixes) > 0 {
 		return prefixes[0] + "_" + xx_{{$e.StructName}}_{{$field.FieldName}}
 	}
@@ -94,7 +94,7 @@ func (*{{$e.StructName}}Impl_x) Field_{{$field.FieldName}}(prefixes ...string) s
 }
 {{- end}}
 
-func x_Select{{$e.StructName}}(x *{{$e.StructName}}Impl_x, prefixes ...string) []assist.Expr {
+func x_Select{{$e.StructName}}(x *{{$e.StructName}}_Active, prefixes ...string) []assist.Expr {
 	if len(prefixes) > 0 {
 		prefix := prefixes[0] + "_"
 		return []assist.Expr{
