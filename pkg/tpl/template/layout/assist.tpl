@@ -13,11 +13,11 @@ const (
 	xx_{{$e.StructName}}_TableName = "{{$e.TableName}}"
 	// hold model `{{$e.StructName}}` column name
 {{- range $field := $e.StructFields}}
-    xx_{{$e.StructName}}_Native_{{$field.FieldName}} = "{{$field.ColumnName}}"
+    xx_{{$e.StructName}}_{{$field.FieldName}} = "{{$field.ColumnName}}"
 {{- end}}
 	// hold model `{{$e.StructName}}` column name with table name(`{{$e.TableName}}`) prefix
 {{- range $field := $e.StructFields}}
-    xx_{{$e.StructName}}_{{$field.FieldName}} = xx_{{$e.StructName}}_TableName + "_" + xx_{{$e.StructName}}_Native_{{$field.FieldName}}
+    xx_{{$e.StructName}}_{{$field.FieldName}}_WithTableName = xx_{{$e.StructName}}_TableName + "_" + xx_{{$e.StructName}}_{{$field.FieldName}}
 {{- end}}
 )
 
@@ -50,7 +50,7 @@ func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}_Active {
 
 		ALL:  assist.NewAsterisk(xTableName),
 	{{range $field := $e.StructFields}}
-		{{$field.FieldName}}: assist.New{{$field.AssistType}}(xTableName, xx_{{$e.StructName}}_Native_{{$field.FieldName}}),
+		{{$field.FieldName}}: assist.New{{$field.AssistType}}(xTableName, xx_{{$e.StructName}}_{{$field.FieldName}}),
 	{{- end}}			
 	}
 }
@@ -91,12 +91,12 @@ func (x *{{$e.StructName}}_Active) TableName() string {
 // if prefixes not exist returns `{{$field.ColumnName}}`, others `{prefixes[0]}_{{$field.ColumnName}}`
 func (*{{$e.StructName}}_Active) Field_{{$field.FieldName}}(prefixes ...string) string {
 	if len(prefixes) == 0 {
-		return xx_{{$e.StructName}}_Native_{{$field.FieldName}}
-	}
-	if prefixes[0] == xx_{{$e.StructName}}_TableName {
 		return xx_{{$e.StructName}}_{{$field.FieldName}}
 	}
-	return prefixes[0] + "_" + xx_{{$e.StructName}}_Native_{{$field.FieldName}}
+	if prefixes[0] == xx_{{$e.StructName}}_TableName {
+		return xx_{{$e.StructName}}_{{$field.FieldName}}_WithTableName
+	}
+	return prefixes[0] + "_" + xx_{{$e.StructName}}_{{$field.FieldName}}
 }
 {{- end}}
 
@@ -111,7 +111,7 @@ func x_Select{{$e.StructName}}(x *{{$e.StructName}}_Active, prefixes ...string) 
 		return []assist.Expr{
 	{{- range $field := $e.StructFields}}
 		{{- if $field.IsTimestamp}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_Native_{{$field.FieldName}}),
+		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_{{$field.FieldName}}),
 		{{- else}}
 		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
 		{{- end}}
