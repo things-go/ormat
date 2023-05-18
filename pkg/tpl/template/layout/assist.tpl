@@ -13,12 +13,16 @@ const (
 	xx_{{$e.StructName}}_TableName = "{{$e.TableName}}"
 	// hold model `{{$e.StructName}}` column name
 {{- range $field := $e.StructFields}}
-    xx_{{$e.StructName}}_{{$field.FieldName}} = "{{$field.ColumnName}}"
+    xx_{{$e.StructName}}_Native_{{$field.FieldName}} = "{{$field.ColumnName}}"
+{{- end}}
+	// hold model `{{$e.StructName}}` column name with table name(`{{$e.TableName}}`) prefix
+{{- range $field := $e.StructFields}}
+    xx_{{$e.StructName}}_{{$field.FieldName}} = xx_{{$e.StructName}}_TableName + "_" + xx_{{$e.StructName}}_Native_{{$field.FieldName}}
 {{- end}}
 )
 
-var xxx_{{$e.StructName}}_Model = new_X_{{$e.StructName}}(xx_{{$e.StructName}}_TableName)
 var xxx_{{$e.StructName}}_Native_Model = new_X_{{$e.StructName}}("")
+var xxx_{{$e.StructName}}_Model = new_X_{{$e.StructName}}(xx_{{$e.StructName}}_TableName)
 
 type {{$e.StructName}}_Active struct {
 	// private fields
@@ -30,14 +34,14 @@ type {{$e.StructName}}_Active struct {
 {{- end}}
 }
 
-// X_{{$e.StructName}} model with TableName `{{$e.TableName}}`.
-func X_{{$e.StructName}}() {{$e.StructName}}_Active {
-	return xxx_{{$e.StructName}}_Model
-}
-
 // X_Native_{{$e.StructName}} native model without TableName.
 func X_Native_{{$e.StructName}}() {{$e.StructName}}_Active {
 	return xxx_{{$e.StructName}}_Native_Model
+}
+
+// X_{{$e.StructName}} model with TableName `{{$e.TableName}}`.
+func X_{{$e.StructName}}() {{$e.StructName}}_Active {
+	return xxx_{{$e.StructName}}_Model
 }
 
 func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}_Active {
@@ -45,9 +49,8 @@ func new_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}_Active {
 		xTableName: xTableName,
 
 		ALL:  assist.NewAsterisk(xTableName),
-
 	{{range $field := $e.StructFields}}
-		{{$field.FieldName}}: assist.New{{$field.AssistType}}(xTableName, xx_{{$e.StructName}}_{{$field.FieldName}}),
+		{{$field.FieldName}}: assist.New{{$field.AssistType}}(xTableName, xx_{{$e.StructName}}_Native_{{$field.FieldName}}),
 	{{- end}}			
 	}
 }
@@ -87,26 +90,28 @@ func (x *{{$e.StructName}}_Active) TableName() string {
 // Field_{{$field.FieldName}} hold model `{{$e.StructName}}` column name.
 // if prefixes not exist returns `{{$field.ColumnName}}`, others `{prefixes[0]}_{{$field.ColumnName}}`
 func (*{{$e.StructName}}_Active) Field_{{$field.FieldName}}(prefixes ...string) string {
-	if len(prefixes) > 0 {
-		return prefixes[0] + "_" + xx_{{$e.StructName}}_{{$field.FieldName}}
+	if len(prefixes) == 0 {
+		return xx_{{$e.StructName}}_Native_{{$field.FieldName}}
 	}
-	return xx_{{$e.StructName}}_{{$field.FieldName}}
+	if prefixes[0] == xx_{{$e.StructName}}_TableName {
+		return xx_{{$e.StructName}}_{{$field.FieldName}}
+	}
+	return prefixes[0] + "_" + xx_{{$e.StructName}}_Native_{{$field.FieldName}}
 }
 {{- end}}
 
 func x_Select{{$e.StructName}}(x *{{$e.StructName}}_Active, prefixes ...string) []assist.Expr {
 	if len(prefixes) > 0 {
-		prefix := prefixes[0] + "_"
 		return []assist.Expr{
 	{{- range $field := $e.StructFields}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(prefix + xx_{{$e.StructName}}_{{$field.FieldName}}),
+		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(x.Field_{{$field.FieldName}}(prefixes...)),
 	{{- end}}
 		}
 	} else {
 		return []assist.Expr{
 	{{- range $field := $e.StructFields}}
 		{{- if $field.IsTimestamp}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_{{$field.FieldName}}),
+		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_Native_{{$field.FieldName}}),
 		{{- else}}
 		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
 		{{- end}}
@@ -115,13 +120,13 @@ func x_Select{{$e.StructName}}(x *{{$e.StructName}}_Active, prefixes ...string) 
 	}
 }
 
-// X_Select{{$e.StructName}} select fields with table name.
-func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
-	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)
-}
-
 // X_Native_Select{{$e.StructName}} select field without table name.
 func X_Native_Select{{$e.StructName}}() []assist.Expr {
 	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Native_Model)
+}
+
+// X_Select{{$e.StructName}} select fields with table name.
+func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
+	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)
 }
 {{- end}}
