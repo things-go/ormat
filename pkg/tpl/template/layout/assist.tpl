@@ -120,12 +120,12 @@ func x_Select{{$e.StructName}}(x *{{$e.StructName}}_Active, prefixes ...string) 
 	}
 }
 
-// X_Native_Select{{$e.StructName}} select field without table name.
+// X_Native_Select{{$e.StructName}} select field use use X_Native_{{$e.StructName}}().
 func X_Native_Select{{$e.StructName}}() []assist.Expr {
 	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Native_Model)
 }
 
-// X_Select{{$e.StructName}} select fields with table name.
+// X_Select{{$e.StructName}} select fields use X_{{$e.StructName}}().
 func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)
 }
