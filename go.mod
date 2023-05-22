@@ -19,7 +19,7 @@ require (
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
 	golang.org/x/oauth2 v0.8.0
 	gorm.io/driver/mysql v1.5.0
-	gorm.io/driver/postgres v1.5.0
+	gorm.io/driver/postgres v1.5.2
 	gorm.io/driver/sqlite v1.5.0
 	gorm.io/gorm v1.25.1
 	gorm.io/plugin/dbresolver v1.4.1
