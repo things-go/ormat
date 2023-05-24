@@ -42,13 +42,13 @@ func (x *{{$e.StructName}}_Executor) PreProcess(funcs ...func(*gorm.DB) *gorm.DB
 	return x
 }
 
-// Condition additional condition
-func (x *{{$e.StructName}}_Executor) Condition(funcs ...func(*gorm.DB) *gorm.DB) *{{$e.StructName}}_Executor {
+// Condition additional conditions
+func (x *{{$e.StructName}}_Executor) Scopes(funcs ...func(*gorm.DB) *gorm.DB) *{{$e.StructName}}_Executor {
 	x.funcs = append(x.funcs, funcs...)
 	return x
 }
 
-// Condition additional condition to executor
+// Where additional conditions
 func (x *{{$e.StructName}}_Executor) Where(query any, args ...any) *{{$e.StructName}}_Executor {
 	f := func(db *gorm.DB) *gorm.DB {
 		return db.Where(query, args...)
