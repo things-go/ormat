@@ -24,29 +24,36 @@ func New_{{$e.StructName}}(db *gorm.DB) *{{$e.StructName}}_Entity {
 	}
 }
 
-// PreProcess on db
-func (x *{{$e.StructName}}_Entity) PreProcess(funcs ...func(*gorm.DB) *gorm.DB) *{{$e.StructName}}_Executor {
-	db := x.db
-	for _, f := range funcs {
-		db = f(db)
-	}
+// Executor new executor
+func (x *{{$e.StructName}}_Entity) Executor() *{{$e.StructName}}_Executor {
 	return &{{$e.StructName}}_Executor{
-		db: db,
+		db: x.db,
 		funcs: make([]func(*gorm.DB) *gorm.DB, 0, 16),
 	}
 }
 
-// Condition additional condition to executor
-func (x *{{$e.StructName}}_Entity) Condition(funcs ...func(*gorm.DB) *gorm.DB) *{{$e.StructName}}_Executor {
-	return &{{$e.StructName}}_Executor{
-		db: x.db,
-		funcs: funcs,
+// PreProcess on db
+func (x *{{$e.StructName}}_Executor) PreProcess(funcs ...func(*gorm.DB) *gorm.DB) *{{$e.StructName}}_Executor {
+	db := x.db
+	for _, f := range funcs {
+		db = f(db)
 	}
+	x.db = db
+	return x
 }
 
 // Condition additional condition
 func (x *{{$e.StructName}}_Executor) Condition(funcs ...func(*gorm.DB) *gorm.DB) *{{$e.StructName}}_Executor {
 	x.funcs = append(x.funcs, funcs...)
+	return x
+}
+
+// Condition additional condition to executor
+func (x *{{$e.StructName}}_Executor) Where(query any, args ...any) *{{$e.StructName}}_Executor {
+	f := func(db *gorm.DB) *gorm.DB {
+		return db.Where(query, args...)
+	}
+	x.funcs = append(x.funcs, f)
 	return x
 }
 
@@ -70,7 +77,7 @@ func (x *{{$e.StructName}}_Executor) TakeOne() (*{{$e.StructName}}, error) {
 	return &row, nil
 }
 
-func (x *{{$e.StructName}}_Executor) LastOne(query any) (*{{$e.StructName}}, error) {
+func (x *{{$e.StructName}}_Executor) LastOne() (*{{$e.StructName}}, error) {
 	var row {{$e.StructName}}
 
 	err := x.Last(&row)
@@ -88,6 +95,13 @@ func (x *{{$e.StructName}}_Executor) ScanOne() (*{{$e.StructName}}, error) {
 		return nil, err
 	}
 	return &row, nil
+}
+
+func (x *{{$e.StructName}}_Executor) Count() (count int64, err error) {
+	err = x.db.Model(&{{$e.StructName}}{}).
+		Scopes(x.funcs...).
+		Count(&count).Error
+	return count, err
 }
 
 func (x *{{$e.StructName}}_Executor) First(dest any) error {
@@ -120,7 +134,7 @@ func (x *{{$e.StructName}}_Executor) Pluck(column string, value any) error {
 		Pluck(column, value).Error
 }
 
-func (x *{{$e.StructName}}_Executor) Exist() (exist bool,err error) {
+func (x *{{$e.StructName}}_Executor) Exist() (exist bool, err error) {
 	err = x.db.Model(&{{$e.StructName}}{}).
 		Select("1").
 		Scopes(x.funcs...).
@@ -188,4 +202,5 @@ func (x *{{$e.StructName}}_Executor) Delete() error {
 		Scopes(x.funcs...).
 		Delete(&{{$e.StructName}}{}).Error
 }
+
 {{- end}}
