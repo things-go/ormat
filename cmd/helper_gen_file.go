@@ -25,6 +25,9 @@ type generateFile struct {
 	HasAssist      bool
 	AssistTemplate *template.Template
 	AssistGenFunc  func(filename string, t *template.Template, data any)
+	HasEntity      bool
+	EntityTemplate *template.Template
+	EntityGenFunc  func(filename string, t *template.Template, data any)
 }
 
 func (g *generateFile) runGen() {
@@ -61,6 +64,13 @@ func (g *generateFile) runGen() {
 					v,
 				)
 			}
+			if g.HasEntity {
+				g.EntityGenFunc(
+					intoFilename(g.OutputDir, v.Filename, ".entity.go"),
+					g.EntityTemplate,
+					v,
+				)
+			}
 		}
 	}
 	if g.Merge && len(mergeFile.Structs) > 0 {
@@ -76,6 +86,13 @@ func (g *generateFile) runGen() {
 			g.AssistGenFunc(
 				intoFilename(g.OutputDir, mergeFile.Filename, ".assist.go"),
 				g.AssistTemplate,
+				mergeFile,
+			)
+		}
+		if g.HasEntity {
+			g.EntityGenFunc(
+				intoFilename(g.OutputDir, mergeFile.Filename, ".entity.go"),
+				g.EntityTemplate,
 				mergeFile,
 			)
 		}

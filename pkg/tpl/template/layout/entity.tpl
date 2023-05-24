@@ -19,56 +19,83 @@ func New_{{$e.StructName}}(db *gorm.DB) *{{$e.StructName}}_Entity {
 	}
 }
 
-func (x *{{$e.StructName}}_Entity) First(query any, funcs ...func(*gorm.DB) *gorm.DB) (*{{$e.StructName}}, error) {
+func (x *{{$e.StructName}}_Entity) FirstOne(funcs ...func(*gorm.DB) *gorm.DB) (*{{$e.StructName}}, error) {
 	var row {{$e.StructName}}
 
-	err := x.db.Model(&{{$e.StructName}}{}).
-		Scopes(funcs...).
-		Where(query).
-		First(&row).Error
+	err := x.First(&row, funcs...)
 	if err != nil {
 		return nil, err
 	}
 	return &row, nil
 }
 
-func (x *{{$e.StructName}}_Entity) Take(query any, funcs ...func(*gorm.DB) *gorm.DB) (*{{$e.StructName}}, error) {
+func (x *{{$e.StructName}}_Entity) First(dest any, funcs ...func(*gorm.DB) *gorm.DB) error {
+	return x.db.Model(&{{$e.StructName}}{}).
+		Scopes(funcs...).
+		First(dest).Error
+}
+
+func (x *{{$e.StructName}}_Entity) TakeOne(funcs ...func(*gorm.DB) *gorm.DB) (*{{$e.StructName}}, error) {
 	var row {{$e.StructName}}
 
-	err := x.db.Model(&{{$e.StructName}}{}).
-		Scopes(funcs...).
-		Where(query).
-		Take(&row).Error
+	err := x.Take(&row, funcs...)
 	if err != nil {
 		return nil, err
 	}
 	return &row, nil
 }
 
-func (x *{{$e.StructName}}_Entity) Last(query any, funcs ...func(*gorm.DB) *gorm.DB) (*{{$e.StructName}}, error) {
+func (x *{{$e.StructName}}_Entity) Take(dest any, funcs ...func(*gorm.DB) *gorm.DB) error {
+	return x.db.Model(&{{$e.StructName}}{}).
+		Scopes(funcs...).
+		Take(dest).Error
+}
+
+func (x *{{$e.StructName}}_Entity) LastOne(query any, funcs ...func(*gorm.DB) *gorm.DB) (*{{$e.StructName}}, error) {
 	var row {{$e.StructName}}
 
-	err := x.db.Model(&{{$e.StructName}}{}).
-		Scopes(funcs...).
-		Where(query).
-		Last(&row).Error
+	err := x.Last(&row, funcs...)
 	if err != nil {
 		return nil, err
 	}
 	return &row, nil
 }
 
-func (x *{{$e.StructName}}_Entity) Scan(query any, funcs ...func(*gorm.DB) *gorm.DB) (*{{$e.StructName}}, error) {
+func (x *{{$e.StructName}}_Entity) Last(dest any, funcs ...func(*gorm.DB) *gorm.DB) error {
+	return x.db.Model(&{{$e.StructName}}{}).
+		Scopes(funcs...).
+		Last(dest).Error
+}
+
+func (x *{{$e.StructName}}_Entity) ScanOne(funcs ...func(*gorm.DB) *gorm.DB) (*{{$e.StructName}}, error) {
 	var row {{$e.StructName}}
 
-	err := x.db.Model(&{{$e.StructName}}{}).
-		Scopes(funcs...).
-		Where(query).
-		Scan(&row).Error
+	err := x.Scan(&row, funcs...)
 	if err != nil {
 		return nil, err
 	}
 	return &row, nil
+}
+
+func (x *{{$e.StructName}}_Entity) Scan(dest any, funcs ...func(*gorm.DB) *gorm.DB) error {
+	return x.db.Model(&{{$e.StructName}}{}).
+		Scopes(funcs...).
+		Scan(dest).Error
+}
+
+func (x *{{$e.StructName}}_Entity) Pluck(column string, value any, funcs ...func(*gorm.DB) *gorm.DB) error {
+	return x.db.Model(&{{$e.StructName}}{}).
+		Scopes(funcs...).
+		Pluck(column, value).Error
+}
+
+func (x *{{$e.StructName}}_Entity) Exist(funcs ...func(*gorm.DB) *gorm.DB) (exist bool,err error) {
+	err = x.db.Model(&{{$e.StructName}}{}).
+		Select("1").
+		Scopes(funcs...).
+		Limit(1).
+		Scan(&exist).Error
+	return exist, err
 }
 
 func (x *{{$e.StructName}}_Entity) FindAll(funcs ...func(*gorm.DB) *gorm.DB) ([]*{{$e.StructName}}, error) {
@@ -130,5 +157,4 @@ func (x *{{$e.StructName}}_Entity) Delete(funcs ...func(*gorm.DB) *gorm.DB) erro
 		Scopes(funcs...).
 		Delete(&{{$e.StructName}}{}).Error
 }
-
 {{- end}}
