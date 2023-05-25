@@ -57,9 +57,6 @@ func newBuildCmd() *buildCmd {
 				HasAssist:      root.HasAssist,
 				AssistTemplate: tpl.Assist,
 				AssistGenFunc:  genModelFile,
-				HasEntity:      root.HasEntity,
-				EntityTemplate: tpl.Entity,
-				EntityGenFunc:  genModelFile,
 			}
 			genFile.runGen()
 			return nil

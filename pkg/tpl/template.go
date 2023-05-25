@@ -26,7 +26,6 @@ var (
 			ParseFS(Static, "template/layout/*"),
 	)
 
-	Entity = Template.Lookup("entity.tpl")
 	Assist = Template.Lookup("assist.tpl")
 	Model  = Template.Lookup("model.tpl")
 	Mapper = Template.Lookup("mapper.tpl")

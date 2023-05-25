@@ -8,6 +8,7 @@ import (
 )
 
 {{- range $e := .Structs}}
+
 const (
 	// hold model `{{$e.StructName}}` table name
 	xx_{{$e.StructName}}_TableName = "{{$e.TableName}}"
@@ -129,4 +130,12 @@ func X_Native_Select{{$e.StructName}}() []assist.Expr {
 func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)
 }
+
+/************************** entity executor ***********************************/
+
+// X_{{$e.StructName}}_Executor executor suggest use only once
+func X_{{$e.StructName}}_Executor(db *gorm.DB) *assist.Executor[{{$e.StructName}}] {
+	return assist.NewExecutor[{{$e.StructName}}](db)
+}
+
 {{- end}}
