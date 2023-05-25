@@ -69,19 +69,24 @@ func New_X_{{$e.StructName}}(xTableName string) {{$e.StructName}}_Active {
 	}
 }
 
-// X_TableName hold table name when call New_X_{{$e.StructName}} or {{$e.StructName}}_Active.As that you defined.
-func (x *{{$e.StructName}}_Active) X_TableName() string {
-	return x.xTableName
-}
-
 // As alias
 func (*{{$e.StructName}}_Active) As(alias string) {{$e.StructName}}_Active {
 	return New_X_{{$e.StructName}}(alias)
 }
 
+// X_TableName hold table name when call New_X_{{$e.StructName}} or {{$e.StructName}}_Active.As that you defined.
+func (x *{{$e.StructName}}_Active) X_TableName() string {
+	return x.xTableName
+}
+
 // X_Model model
 func (*{{$e.StructName}}_Active) X_Model() *{{$e.StructName}} {
 	return &{{$e.StructName}}{}
+}
+
+// X_Executor new entity executor which suggest use only once.
+func (*{{$e.StructName}}_Active) X_Executor(db *gorm.DB) *assist.Executor[{{$e.StructName}}] {
+	return assist.NewExecutor[{{$e.StructName}}](db)
 }
 
 // TableName hold model `{{$e.StructName}}` table name returns `{{$e.TableName}}`.
@@ -130,13 +135,6 @@ func X_Native_Select{{$e.StructName}}() []assist.Expr {
 // X_Select{{$e.StructName}} select fields use X_{{$e.StructName}}().
 func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
 	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)
-}
-
-/************************** entity executor ***********************************/
-
-// X_{{$e.StructName}}_Executor executor suggest use only once
-func X_{{$e.StructName}}_Executor(db *gorm.DB) *assist.Executor[{{$e.StructName}}] {
-	return assist.NewExecutor[{{$e.StructName}}](db)
 }
 
 {{- end}}
