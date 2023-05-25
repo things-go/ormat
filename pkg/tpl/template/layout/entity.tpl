@@ -238,9 +238,9 @@ func (x *{{$e.StructName}}_Executor) LockingShare() *{{$e.StructName}}_Executor 
 
 func (x *{{$e.StructName}}_Executor) chains() (db *gorm.DB) {
 	if x.table == nil {
-		db = x.db.Scopes(x.table).Scopes(x.funcs...)
-	} else {
 		db = x.db.Model(&{{$e.StructName}}{}).Scopes(x.funcs...)
+	} else {
+		db = x.db.Scopes(x.table).Scopes(x.funcs...)
 	}
 	return db
 }
