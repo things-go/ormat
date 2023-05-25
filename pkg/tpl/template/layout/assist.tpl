@@ -83,7 +83,7 @@ func (*{{$e.StructName}}_Active) X_Model() *{{$e.StructName}} {
 }
 
 // TableName hold model `{{$e.StructName}}` table name returns `{{$e.TableName}}`.
-func (x *{{$e.StructName}}_Active) TableName() string {
+func (*{{$e.StructName}}_Active) TableName() string {
 	return xx_{{$e.StructName}}_TableName
 }
 {{- range $field := $e.StructFields}}
