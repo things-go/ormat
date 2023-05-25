@@ -20,8 +20,14 @@ func New_{{$e.StructName}}(db *gorm.DB) *{{$e.StructName}}_Entity {
 	}
 }
 
-// Executor new executor
+// Executor new executor suggest use only once
 func (x *{{$e.StructName}}_Entity) Executor() *assist.Executor[{{$e.StructName}}] {
 	return assist.NewExecutor[{{$e.StructName}}](x.db)
 }
+
+// X_Executor_{{$e.StructName}} executor suggest use only once
+func X_Executor_{{$e.StructName}}(db *gorm.DB) *assist.Executor[{{$e.StructName}}] {
+	return assist.NewExecutor[{{$e.StructName}}](db)
+}
+
 {{- end}}
