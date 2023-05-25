@@ -5,6 +5,7 @@ package {{.PackageName}}
 
 import (
     assist "github.com/things-go/gorm-assist"
+	"gorm.io/gorm"
 )
 
 {{- range $e := .Structs}}
