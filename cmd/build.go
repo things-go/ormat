@@ -24,7 +24,6 @@ type buildOpt struct {
 	Suffix        string
 	Template      string
 	HasAssist     bool // 是否提供辅助工具集
-	HasEntity     bool // 提供一般性查询
 }
 
 type buildCmd struct {
@@ -95,7 +94,6 @@ func newBuildCmd() *buildCmd {
 	cmd.PersistentFlags().StringVar(&root.Suffix, "suffix", "", "filename suffix")
 	cmd.PersistentFlags().StringVar(&root.Template, "template", "__in_go", "use custom template")
 	cmd.PersistentFlags().BoolVar(&root.HasAssist, "hasAssist", false, "是否提供辅助工具集")
-	cmd.PersistentFlags().BoolVar(&root.HasEntity, "hasEntity", false, "是否提供查询工具集")
 
 	cmd.MarkPersistentFlagRequired("input") // nolint
 	cmd.AddCommand(
