@@ -212,7 +212,7 @@ func (x *{{$e.StructName}}_Executor) LeftJoinsExpr(tableName string, conds ...as
 }
 
 func (x *{{$e.StructName}}_Executor) LeftJoinsXExpr(tableName, alias string, conds ...assist.Expr) *{{$e.StructName}}_Executor {
-	x.funcs = append(x.funcs, assist.LeftJoins(tableName, alias, conds...))
+	x.funcs = append(x.funcs, assist.LeftJoinsX(tableName, alias, conds...))
 	return x
 }
 
@@ -222,7 +222,7 @@ func (x *{{$e.StructName}}_Executor) RightJoinsExpr(tableName string, conds ...a
 }
 
 func (x *{{$e.StructName}}_Executor) RightJoinsXExpr(tableName, alias string, conds ...assist.Expr) *{{$e.StructName}}_Executor {
-	x.funcs = append(x.funcs, assist.RightJoins(tableName, alias, conds...))
+	x.funcs = append(x.funcs, assist.RightJoinsX(tableName, alias, conds...))
 	return x
 }
 
