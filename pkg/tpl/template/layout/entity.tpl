@@ -351,24 +351,29 @@ func (x *{{$e.StructName}}_Executor) Save(value any) error {
 	return x.db.Scopes(x.funcs...).Save(value).Error
 }
 
-func (x *{{$e.StructName}}_Executor) Updates(value *{{$e.StructName}}) error {
-	return x.chains().Updates(value).Error
+func (x *{{$e.StructName}}_Executor) Updates(value *{{$e.StructName}}) (rowsAffected int64, err error) {
+	result := x.chains().Updates(value)
+	return result.RowsAffected, result.Error
 }
 
-func (x *{{$e.StructName}}_Executor) Update(column string, value any) error {
-	return x.chains().Update(column, value).Error
+func (x *{{$e.StructName}}_Executor) Update(column string, value any) (rowsAffected int64, err error) {
+	result := x.chains().Update(column, value)
+	return result.RowsAffected, result.Error
 }
 
-func (x *{{$e.StructName}}_Executor) UpdateColumns(value *{{$e.StructName}}) error {
-	return x.chains().UpdateColumns(value).Error
+func (x *{{$e.StructName}}_Executor) UpdateColumns(value *{{$e.StructName}}) (rowsAffected int64, err error) {
+	result := x.chains().UpdateColumns(value)
+	return result.RowsAffected, result.Error
 }
 
-func (x *{{$e.StructName}}_Executor) UpdateColumn(column string, value any) error {
-	return x.chains().UpdateColumn(column, value).Error
+func (x *{{$e.StructName}}_Executor) UpdateColumn(column string, value any) (rowsAffected int64, err error) {
+	result :=  x.chains().UpdateColumn(column, value)
+	return result.RowsAffected, result.Error
 }
 
-func (x *{{$e.StructName}}_Executor) Delete() error {
-	return x.chains().Delete(&{{$e.StructName}}{}).Error
+func (x *{{$e.StructName}}_Executor) Delete() (rowsAffected int64, err error) {
+	result := x.chains().Delete(&{{$e.StructName}}{})
+	return result.RowsAffected, result.Error
 }
 
 {{- end}}
