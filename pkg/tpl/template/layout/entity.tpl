@@ -10,21 +10,6 @@ import (
 
 {{- range $e := .Structs}}
 
-type {{$e.StructName}}_Entity struct {
-	db *gorm.DB
-}
-
-func New_{{$e.StructName}}(db *gorm.DB) {{$e.StructName}}_Entity {
-	return {{$e.StructName}}_Entity{
-		db: db,
-	}
-}
-
-// Executor new executor suggest use only once
-func (x *{{$e.StructName}}_Entity) Executor() *assist.Executor[{{$e.StructName}}] {
-	return assist.NewExecutor[{{$e.StructName}}](x.db)
-}
-
 // X_{{$e.StructName}}_Executor executor suggest use only once
 func X_{{$e.StructName}}_Executor(db *gorm.DB) *assist.Executor[{{$e.StructName}}] {
 	return assist.NewExecutor[{{$e.StructName}}](db)
