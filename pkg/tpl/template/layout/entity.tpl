@@ -236,13 +236,18 @@ func (x *{{$e.StructName}}_Executor) LockingShare() *{{$e.StructName}}_Executor 
 	return x
 }
 
+func (x *{{$e.StructName}}_Executor) Pagination(page, perPage int64, maxPerPages ...int64) *{{$e.StructName}}_Executor {
+	x.funcs = append(x.funcs, assist.Pagination(page, perPage, maxPerPages...))
+	return x
+}
+
 func (x *{{$e.StructName}}_Executor) chains() (db *gorm.DB) {
 	if x.table == nil {
-		db = x.db.Model(&{{$e.StructName}}{}).Scopes(x.funcs...)
+		db = x.db.Model(&{{$e.StructName}}{})
 	} else {
-		db = x.db.Scopes(x.table).Scopes(x.funcs...)
+		db = x.db.Scopes(x.table)
 	}
-	return db
+	return db.Scopes(x.funcs...)
 }
 
 /********************************** finish api *********************************/
