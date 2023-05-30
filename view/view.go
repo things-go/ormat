@@ -97,6 +97,7 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 				StructFields:       structFields,
 				TableName:          tb.Name,
 				CreateTableSQL:     tb.CreateTableSQL,
+				SeaIndexes:         tb.IntoIndexDefinedSQL(),
 				ProtoMessageFields: protoMessageFields,
 			},
 		}
@@ -158,7 +159,6 @@ func (sf *View) intoColumnFields(tbName string, tables []*Table, cols []*Column,
 		if _, isSkipColumn = skipColumns[col.Name]; !isSkipColumn {
 			_, isSkipColumn = skipColumns[tbName+"."+col.Name]
 		}
-
 		field := ast.Field{
 			FieldName:    fieldName,
 			FieldType:    fieldType,
@@ -168,7 +168,7 @@ func (sf *View) intoColumnFields(tbName string, tables []*Table, cols []*Column,
 			IsTimestamp:  col.ColumnGoType == "time.Time",
 			ColumnGoType: col.ColumnGoType,
 			ColumnName:   col.Name,
-			Type:         col.IntoDefinedSQL(),
+			Type:         col.IntoColumnDefinedSQL(),
 			IsSkipColumn: isSkipColumn,
 			AssistType:   assistType,
 		}
@@ -227,7 +227,7 @@ func (*View) getColumnsKeyMulti(tables []*Table, tableName, col string) (isMulti
 					for _, idx := range column.Index {
 						switch idx.KeyType {
 						case ColumnKeyTypePrimary, ColumnKeyTypeUniqueKey:
-							if !idx.IsMulti { // 唯一索引
+							if !idx.IsComposite { // 唯一索引
 								return false, true, tb.Comment
 							}
 						case ColumnKeyTypeNormalIndex: // index key. 复合索引
@@ -294,7 +294,7 @@ func (sf *View) fixFieldTags(fieldTags *ast.FieldTags, field *ast.Field, ci *Col
 			if vv == "primaryKey" && ci.IsAutoIncrement {
 				filedTagValues.RemoveValue(columnType)
 			}
-			if index.IsMulti {
+			if index.IsComposite {
 				if vv == "primaryKey" {
 					vv += ";"
 				} else {

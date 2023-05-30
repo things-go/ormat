@@ -113,24 +113,24 @@ func (sf *SQL) Parse() error {
 					indexType = option.Using
 				}
 			}
-			isMulti := len(indexes.Columns) > 1
-			for i := 0; i < len(indexes.Columns); i++ {
-				col := indexes.Columns[i]
-				ci := columnFiledMapping[col.Column.String()]
+
+			isComposite := len(indexes.Columns) > 1 // 是否为复合索引
+			for i, col := range indexes.Columns {
+				index := &view.Index{
+					KeyType:     keyType,
+					KeyName:     indexes.Info.Name.String(),
+					IsComposite: isComposite,
+					SeqInIndex:  i + 1,
+					ColumnName:  col.Column.String(),
+					IndexType:   indexType,
+				}
+				tb.Indexes = append(tb.Indexes, index)
+
+				ci := columnFiledMapping[index.ColumnName]
 				if ci == nil {
-					break
+					continue
 				}
-				seqInIndex := 0
-				if isMulti {
-					seqInIndex = i + 1
-				}
-				ci.Index = append(ci.Index, view.Index{
-					KeyType:    keyType,
-					KeyName:    indexes.Info.Name.String(),
-					IsMulti:    isMulti,
-					SeqInIndex: seqInIndex,
-					IndexType:  indexType,
-				})
+				ci.Index = append(ci.Index, index)
 			}
 		}
 		sf.table = tb

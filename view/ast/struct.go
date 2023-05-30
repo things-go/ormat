@@ -9,11 +9,13 @@ import (
 
 // Struct define a struct
 type Struct struct {
-	StructName         string                 // struct name
-	StructComment      string                 // struct comment
-	StructFields       []Field                // struct field list
-	TableName          string                 // struct table name in database.
-	CreateTableSQL     string                 // create table SQL
+	StructName     string  // struct name
+	StructComment  string  // struct comment
+	StructFields   []Field // struct field list
+	TableName      string  // struct table name in database.
+	CreateTableSQL string  // create table SQL
+	// other used fields
+	SeaIndexes         []string               // seasql indexes
 	ProtoMessageFields []ProtobufMessageField // proto message field
 }
 

@@ -133,10 +133,9 @@ func (sf *MySQL) GetTableAttributes() ([]view.TableAttribute, error) {
 
 // GetTableColumns get table's column info.
 func (sf *MySQL) GetTables(tb view.TableAttribute) (*view.Table, error) {
-	var columnInfos []*view.Column
-	var columns []mysqlColumn
-	var keys []mysqlKey
-	var foreignKeys []mysqlForeignKey
+	var columns []mysqlColumn         // columns
+	var keys []mysqlKey               // key indexes
+	var foreignKeys []mysqlForeignKey // foreign key
 
 	// get table column list
 	err := sf.DB.Raw(`
@@ -151,17 +150,41 @@ AND TABLE_NAME = ?
 		return nil, err
 	}
 
-	// get index key list
+	// index key list
 	err = sf.DB.Raw("SHOW KEYS FROM `" + tb.Name + "`").Find(&keys).Error
 	if err != nil {
 		return nil, err
 	}
 
-	keyNameCount := make(map[string]int)            // key name count
-	ColumnNameMapKey := make(map[string][]mysqlKey) // column name map key
-	for _, v := range keys {
-		keyNameCount[v.KeyName]++
-		ColumnNameMapKey[v.ColumnName] = append(ColumnNameMapKey[v.ColumnName], v)
+	viewIndexes := make([]*view.Index, 0, len(keys))
+	keyNameCount := make(map[string]int)               // key name count
+	columnNameMapKey := make(map[string][]*view.Index) // column name map key
+	for _, k := range keys {
+		// non unique, normal index
+		kt := view.ColumnKeyTypeNormalIndex
+		// primary/unique
+		if !k.NonUnique {
+			if strings.EqualFold(k.KeyName, Primary) {
+				kt = view.ColumnKeyTypePrimary // primary key
+			} else {
+				kt = view.ColumnKeyTypeUniqueKey // unique index
+			}
+		}
+		index := &view.Index{
+			KeyType:     kt,
+			KeyName:     k.KeyName,
+			IsComposite: false,
+			SeqInIndex:  k.SeqInIndex,
+			ColumnName:  k.ColumnName,
+			IndexType:   k.IndexType,
+		}
+		keyNameCount[k.KeyName]++
+		columnNameMapKey[k.ColumnName] = append(columnNameMapKey[k.ColumnName], index)
+		viewIndexes = append(viewIndexes, index)
+	}
+	// check composite key
+	for _, k := range viewIndexes {
+		k.IsComposite = keyNameCount[k.KeyName] > 1
 	}
 
 	// get table column foreign keys
@@ -183,6 +206,7 @@ AND TABLE_NAME = ?
 		return nil, err
 	}
 
+	viewColumns := make([]*view.Column, 0, len(columns))
 	for _, v := range columns {
 		ci := &view.Column{
 			Name:            v.ColumnName,
@@ -196,38 +220,21 @@ AND TABLE_NAME = ?
 		}
 
 		// column keys
-		if columnKeys, ok := ColumnNameMapKey[v.ColumnName]; ok {
-			for _, vv := range columnKeys {
-				// non unique, normal index
-				kk := view.ColumnKeyTypeNormalIndex
-				// primary or unique
-				if !vv.NonUnique {
-					if strings.EqualFold(vv.KeyName, Primary) { // primary key
-						kk = view.ColumnKeyTypePrimary
-					} else {
-						kk = view.ColumnKeyTypeUniqueKey // unique index
-					}
-				}
-				ci.Index = append(ci.Index, view.Index{
-					KeyType:    kk,
-					IsMulti:    keyNameCount[vv.KeyName] > 1,
-					KeyName:    vv.KeyName,
-					SeqInIndex: vv.SeqInIndex,
-					IndexType:  vv.IndexType,
-				})
-			}
+		if columnKeys, ok := columnNameMapKey[v.ColumnName]; ok {
+			ci.Index = columnKeys
 		}
 
 		// foreignKey
 		ci.ForeignKeys = fixForeignKey(foreignKeys, ci.Name)
 
-		columnInfos = append(columnInfos, ci)
+		viewColumns = append(viewColumns, ci)
 	}
 
-	sort.Sort(view.ColumnSlice(columnInfos))
+	sort.Sort(view.ColumnSlice(viewColumns))
 	return &view.Table{
 		TableAttribute: tb,
-		Columns:        columnInfos,
+		Columns:        viewColumns,
+		Indexes:        viewIndexes,
 	}, nil
 }
 
@@ -318,4 +325,5 @@ var typeDictMatchList = []dictMatchKv{
 	{`^(decimal)\b[(]\d+,\d+[)]`, "string"},
 	{`^(binary)\b[(]\d+[)]`, "[]byte"},
 	{`^(varbinary)\b[(]\d+[)]`, "[]byte"},
+	{`geometry`, "string"},
 }

@@ -3,6 +3,7 @@ package view
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"golang.org/x/exp/slices"
@@ -36,13 +37,85 @@ type TableAttribute struct {
 type Table struct {
 	TableAttribute
 	Columns []*Column // column information
+	Indexes []*Index  // index information
 }
 
-type TableSlice []*Table
+// IntoColumnDefinedSQL 转换为定义的字段 SQL
+func (c *Table) IntoIndexDefinedSQL() []string {
+	m := make(map[string][]*Index)
+	for _, index := range c.Indexes {
+		m[index.KeyName] = append(m[index.KeyName], index)
+	}
 
-func (t TableSlice) Len() int           { return len(t) }
-func (t TableSlice) Less(i, j int) bool { return t[i].Name < t[j].Name }
-func (t TableSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+	pk := make([]string, 0, len(m))
+	ks := make([]string, 0, len(m))
+	for k, indexes := range m {
+		sort.Sort(IndexSlice(indexes))
+		b := strings.Builder{}
+		b.Grow(64)
+
+		index0 := indexes[0]
+		switch index0.KeyType {
+		case ColumnKeyTypePrimary:
+			b.WriteString("PRIMARY KEY")
+		case ColumnKeyTypeNormalIndex:
+			b.WriteString("KEY")
+		case ColumnKeyTypeUniqueKey:
+			b.WriteString("UNIQUE KEY")
+		case ColumnKeyTypeUnique:
+			b.WriteString("UNIQUE")
+		default:
+			continue
+		}
+		if index0.KeyType != ColumnKeyTypePrimary {
+			b.WriteString(" ")
+			b.WriteString("`")
+			b.WriteString(k)
+			b.WriteString("`")
+		}
+		b.WriteString(" ")
+		b.WriteString("(")
+		first := true
+		for _, v := range indexes {
+			if !first {
+				b.WriteString(", ")
+			}
+			first = false
+			b.WriteString("`")
+			b.WriteString(v.ColumnName)
+			b.WriteString("`")
+		}
+		b.WriteString(")")
+		if index0.IndexType != "" {
+			b.WriteString(" USING ")
+			b.WriteString(index0.IndexType)
+		}
+		if index0.KeyType == ColumnKeyTypePrimary {
+			pk = append(pk, b.String())
+		} else {
+			ks = append(ks, b.String())
+		}
+	}
+	sort.Strings(pk)
+	sort.Strings(ks)
+	return append(pk, ks...)
+}
+
+// Index database index/unique_index list
+type Index struct {
+	KeyType     ColumnKeyType // key type, 索引类型
+	KeyName     string        // index key name, 索引名称
+	IsComposite bool          // composite key, 是否为复合索引
+	SeqInIndex  int           // union index sequence in index, 复合索引中的序列
+	ColumnName  string        // column name, 列名
+	IndexType   string        // index type, 索引类型(比如: BTREE, HASH, FULLTEXT)
+}
+
+// ForeignKey Foreign key
+type ForeignKey struct {
+	TableName  string // Affected tables .
+	ColumnName string // Which column of the affected table
+}
 
 // Column column information
 type Column struct {
@@ -54,12 +127,12 @@ type Column struct {
 	IsAutoIncrement bool         // column auto increment or not
 	Default         *string      // default value
 	Comment         string       // column comment
-	Index           []Index      // index list
+	Index           []*Index     // index list
 	ForeignKeys     []ForeignKey // Foreign key list
 }
 
-// IntoDefinedSQL 转换为定义的字段 SQL
-func (c *Column) IntoDefinedSQL() string {
+// IntoColumnDefinedSQL 转换为定义的字段 SQL
+func (c *Column) IntoColumnDefinedSQL() string {
 	b := strings.Builder{}
 	b.Grow(64)
 
@@ -103,26 +176,23 @@ func (c *Column) IntoDefinedSQL() string {
 	return b.String()
 }
 
+type TableSlice []*Table
+
+func (t TableSlice) Len() int           { return len(t) }
+func (t TableSlice) Less(i, j int) bool { return t[i].Name < t[j].Name }
+func (t TableSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+
+type IndexSlice []*Index
+
+func (t IndexSlice) Len() int           { return len(t) }
+func (t IndexSlice) Less(i, j int) bool { return t[i].SeqInIndex < t[j].SeqInIndex }
+func (t IndexSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+
 type ColumnSlice []*Column
 
 func (t ColumnSlice) Len() int           { return len(t) }
 func (t ColumnSlice) Less(i, j int) bool { return t[i].OrdinalPosition < t[j].OrdinalPosition }
 func (t ColumnSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
-
-// Index database index/unique_index list
-type Index struct {
-	KeyType    ColumnKeyType // key type
-	KeyName    string        // index key name, 索引名称
-	IsMulti    bool          // Multiple key, 是否为复合索引
-	SeqInIndex int           // union index sequence in index, 复合索引中的序列
-	IndexType  string        // index type, 索引类型(比如: BTREE, HASH, FULLTEXT)
-}
-
-// ForeignKey Foreign key
-type ForeignKey struct {
-	TableName  string // Affected tables .
-	ColumnName string // Which column of the affected table
-}
 
 var nullToPointer = map[string]string{
 	"bool":      "*bool",

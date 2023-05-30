@@ -90,7 +90,7 @@ func genModelFile(filename string, t *template.Template, data any) {
 		_, _ = exec.Command("gofmt", "-l", "-w", filename).Output()
 		log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
 	} else {
-		log.Info("👉 "+filename, "\n")
+		log.Info("👉 " + filename)
 	}
 }
 

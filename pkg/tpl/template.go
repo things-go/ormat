@@ -14,6 +14,7 @@ var Static embed.FS
 var (
 	TemplateFuncs = template.FuncMap{
 		"add":            func(a, b int) int { return a + b },
+		"sub":            func(a, b int) int { return a - b },
 		"snakecase":      func(s string) string { return utils.SnakeCase(s) },
 		"kebabcase":      func(s string) string { return utils.Kebab(s) },
 		"camelcase":      func(s string) string { return utils.CamelCase(s) },
