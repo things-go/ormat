@@ -41,9 +41,8 @@ type Config struct {
 	SkipColumns        []string          `yaml:"skipColumns" json:"skipColumns"`             // 忽略输出字段, 格式 table.column
 	Package            string            `yaml:"package" json:"package"`                     // 包名
 	Options            map[string]string `yaml:"options" json:"options"`                     // 选项
-	HasHelper          bool              `yaml:"hasHelper" json:"hasHelper"`                 // 是否输出 proto 帮助
-	EnableGogo         bool              `yaml:"enableGogo" json:"enableGogo"`               // 使能用 gogo proto (仅 hasHelper = true 有效果)
-	EnableSea          bool              `yaml:"enableSea" json:"enableSea"`                 // 使能用 seaql(仅 hasHelper = true 有效果)
+	EnableGogo         bool              `yaml:"enableGogo" json:"enableGogo"`               // 使能用 gogo proto (仅输出 proto 有效)
+	EnableSea          bool              `yaml:"enableSea" json:"enableSea"`                 // 使能用 seaql(仅输出 proto 有效)
 }
 
 func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
@@ -60,9 +59,8 @@ func InitFlagSetForConfig(s *flag.FlagSet, cc *Config) {
 	s.StringVar(&cc.Package, "package", "", "package name")
 	s.StringToStringVar(&cc.Options, "options", nil, "options key value")
 
-	s.BoolVar(&cc.HasHelper, "hasHelper", false, "是否输出 proto 帮助")
-	s.BoolVar(&cc.EnableGogo, "enableGogo", false, "使能用 gogo proto (仅 hasHelper = true 有效)")
-	s.BoolVar(&cc.EnableSea, "enableSea", false, "使能用 seaql (仅 hasHelper = true 有效)")
+	s.BoolVar(&cc.EnableGogo, "enableGogo", false, "使能用 gogo proto (仅输出 proto 有效)")
+	s.BoolVar(&cc.EnableSea, "enableSea", false, "使能用 seaql (仅输出 proto 有效)")
 }
 
 // View information
@@ -112,7 +110,6 @@ func (sf *View) GetDbFile(pkgName string) ([]*ast.File, error) {
 			Package:     sf.Package,
 			Options:     sf.Options,
 			HasColumn:   sf.HasColumn,
-			HasHelper:   sf.HasHelper,
 		}
 	})
 	return files, nil

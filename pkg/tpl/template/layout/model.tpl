@@ -12,7 +12,6 @@ import (
 {{end}}
 
 {{- $hasColumn := .HasColumn}}
-{{- $hasHelper := .HasHelper}}
 
 {{- range $e := .Structs}}
 // {{$e.StructName}} {{$e.StructComment}}
@@ -43,20 +42,6 @@ var Select{{$e.StructName}} = []string {
 	{{- end}}
 {{- end}}
 }
-{{- end}}
-
-{{- if $hasHelper}}
-/* protobuf field helper
-// {{$e.StructName}} {{.StructComment}}
-message {{$e.StructName}} {
-{{- range $index, $field := $e.ProtoMessageFields}}
-  {{- if $field.FieldComment}}
-  // {{$field.FieldComment}}
-  {{- end}}
-  {{$field.FieldDataType}} {{$field.FieldName}} = {{add $index 1}} {{- if $field.FieldAnnotation}} {{$field.FieldAnnotation}} {{- end}};
-{{- end}}
-}
-*/
 {{- end}}
 {{- end}}
 

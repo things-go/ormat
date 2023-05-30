@@ -38,11 +38,9 @@ func (g *generateFile) runGen() {
 		Package:     g.Package,
 		Options:     g.Options,
 		HasColumn:   false,
-		HasHelper:   false,
 	}
 	for _, v := range g.Files {
 		if g.Merge {
-			mergeFile.HasHelper = v.HasHelper
 			mergeFile.HasColumn = v.HasColumn
 			for k := range v.Imports {
 				mergeFile.Imports[k] = struct{}{}
@@ -87,9 +85,13 @@ func (g *generateFile) runGen() {
 func genModelFile(filename string, t *template.Template, data any) {
 	_ = utils.WriteFileWithTemplate(filename, t, data)
 
-	cmd, _ := exec.Command("goimports", "-l", "-w", filename).Output()
-	_, _ = exec.Command("gofmt", "-l", "-w", filename).Output()
-	log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
+	if strings.HasSuffix(filename, ".go") {
+		cmd, _ := exec.Command("goimports", "-l", "-w", filename).Output()
+		_, _ = exec.Command("gofmt", "-l", "-w", filename).Output()
+		log.Info("👉 " + strings.TrimSuffix(string(cmd), "\n"))
+	} else {
+		log.Info("👉 "+filename, "\n")
+	}
 }
 
 func showInformation(filename string, t *template.Template, data any) {
