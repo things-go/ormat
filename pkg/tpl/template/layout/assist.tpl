@@ -25,6 +25,11 @@ const (
 
 var xxx_{{$e.StructName}}_Native_Model = new_X_{{$e.StructName}}("")
 var xxx_{{$e.StructName}}_Model = new_X_{{$e.StructName}}(xx_{{$e.StructName}}_TableName)
+var xxx_{{$e.StructName}}_Columns = []string {
+{{- range $field := $e.StructFields}}
+	"`{{$e.TableName}}`.`{{$field.ColumnName}}`",
+{{- end}}
+}
 
 type {{$e.StructName}}_Active struct {
 	// private fields
@@ -106,6 +111,10 @@ func (*{{$e.StructName}}_Active) Field_{{$field.FieldName}}(prefixes ...string) 
 	return prefixes[0] + "_" + xx_{{$e.StructName}}_{{$field.FieldName}}
 }
 {{- end}}
+
+func SelectNative{{$e.StructName}}() []string {
+	return xxx_{{$e.StructName}}_Columns
+}
 
 func x_Select{{$e.StructName}}(x *{{$e.StructName}}_Active, prefixes ...string) []assist.Expr {
 	if len(prefixes) > 0 {
