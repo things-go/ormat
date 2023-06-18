@@ -25,11 +25,6 @@ const (
 
 var xxx_{{$e.StructName}}_Native_Model = new_X_{{$e.StructName}}("")
 var xxx_{{$e.StructName}}_Model = new_X_{{$e.StructName}}(xx_{{$e.StructName}}_TableName)
-var xxx_{{$e.StructName}}_Columns = []string {
-{{- range $field := $e.StructFields}}
-	"`{{$e.TableName}}`.`{{$field.ColumnName}}`",
-{{- end}}
-}
 
 type {{$e.StructName}}_Active struct {
 	// private fields
@@ -112,26 +107,31 @@ func (*{{$e.StructName}}_Active) Field_{{$field.FieldName}}(prefixes ...string) 
 }
 {{- end}}
 
-func SelectNative{{$e.StructName}}() []string {
-	return xxx_{{$e.StructName}}_Columns
+func SelectNative{{$e.StructName}}() []assist.Expr {
+	x := &xxx_{{$e.StructName}}_Native_Model
+	return []assist.Expr{
+{{- range $field := $e.StructFields}}
+		x.{{$field.FieldName}},
+{{- end}}
+	}
 }
 
 func x_Select{{$e.StructName}}(x *{{$e.StructName}}_Active, prefixes ...string) []assist.Expr {
 	if len(prefixes) > 0 {
 		return []assist.Expr{
-	{{- range $field := $e.StructFields}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(x.Field_{{$field.FieldName}}(prefixes...)),
-	{{- end}}
+		{{- range $field := $e.StructFields}}
+			{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(x.Field_{{$field.FieldName}}(prefixes...)),
+		{{- end}}
 		}
 	} else {
 		return []assist.Expr{
-	{{- range $field := $e.StructFields}}
-		{{- if $field.IsTimestamp}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_{{$field.FieldName}}),
-		{{- else}}
-		{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
+		{{- range $field := $e.StructFields}}
+			{{- if $field.IsTimestamp}}
+			{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_{{$field.FieldName}}),
+			{{- else}}
+			{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
+			{{- end}}
 		{{- end}}
-	{{- end}}
 		}
 	}
 }
