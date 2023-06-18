@@ -6,5 +6,5 @@ ormat build \
    --enableSea \
    --merge true \
    --package testdata \
-   --options go_package=github.com/things-go/ormat/testdata \
-   --hasAssist
+   --options go_package=github.com/things-go/ormat/testdata
+# --hasAssist
