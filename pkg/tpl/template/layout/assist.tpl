@@ -139,17 +139,4 @@ func (*{{$e.StructName}}_Active) Field_{{$field.FieldName}}(prefixes ...string) 
 }
 {{- end}}
 
-
-// X_Native_Select{{$e.StructName}} select field use use X_Native_{{$e.StructName}}().
-// Deprecated: use {{$e.StructName}}.X_Variant_SelectExpr() instead.
-func X_Native_Select{{$e.StructName}}() []assist.Expr {
-	return xxx_{{$e.StructName}}_Native_Model.X_Variant_SelectExpr()
-}
-
-// X_Select{{$e.StructName}} select fields use X_{{$e.StructName}}().
-// Deprecated: use {{$e.StructName}}.X_Variant_SelectExpr() instead.
-func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
-	return xxx_{{$e.StructName}}_Model.X_Variant_SelectExpr(prefixes...)
-}
-
 {{- end}}
