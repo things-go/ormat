@@ -89,10 +89,42 @@ func (*{{$e.StructName}}_Active) X_Executor(db *gorm.DB) *assist.Executor[{{$e.S
 	return assist.NewExecutor[{{$e.StructName}}](db)
 }
 
+// X_SelectExpr select model fields
+func (x *{{$e.StructName}}_Active) X_SelectExpr() []assist.Expr {
+	return []assist.Expr{
+{{- range $field := $e.StructFields}}
+		x.{{$field.FieldName}},
+{{- end}}
+	}
+}
+
+
+// X_Variant_SelectExpr select model fields, but time.Time field convert to timestamp(int64).
+func (x *{{$e.StructName}}_Active) X_Variant_SelectExpr(prefixes ...string) []assist.Expr {
+	if len(prefixes) > 0 {
+		return []assist.Expr{
+		{{- range $field := $e.StructFields}}
+			x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(x.Field_{{$field.FieldName}}(prefixes...)),
+		{{- end}}
+		}
+	} else {
+		return []assist.Expr{
+		{{- range $field := $e.StructFields}}
+			{{- if $field.IsTimestamp}}
+			x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_{{$field.FieldName}}),
+			{{- else}}
+			x.{{$field.FieldName}},
+			{{- end}}
+		{{- end}}
+		}
+	}
+}
+
 // TableName hold model `{{$e.StructName}}` table name returns `{{$e.TableName}}`.
 func (*{{$e.StructName}}_Active) TableName() string {
 	return xx_{{$e.StructName}}_TableName
 }
+
 {{- range $field := $e.StructFields}}
 // Field_{{$field.FieldName}} hold model `{{$e.StructName}}` column name.
 // if prefixes not exist returns `{{$field.ColumnName}}`, others `{prefixes[0]}_{{$field.ColumnName}}`
@@ -107,43 +139,17 @@ func (*{{$e.StructName}}_Active) Field_{{$field.FieldName}}(prefixes ...string) 
 }
 {{- end}}
 
-func SelectNative{{$e.StructName}}() []assist.Expr {
-	x := &xxx_{{$e.StructName}}_Native_Model
-	return []assist.Expr{
-{{- range $field := $e.StructFields}}
-		x.{{$field.FieldName}},
-{{- end}}
-	}
-}
-
-func x_Select{{$e.StructName}}(x *{{$e.StructName}}_Active, prefixes ...string) []assist.Expr {
-	if len(prefixes) > 0 {
-		return []assist.Expr{
-		{{- range $field := $e.StructFields}}
-			{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}{{- if $field.IsTimestamp}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}{{- end}}.As(x.Field_{{$field.FieldName}}(prefixes...)),
-		{{- end}}
-		}
-	} else {
-		return []assist.Expr{
-		{{- range $field := $e.StructFields}}
-			{{- if $field.IsTimestamp}}
-			{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}}.UnixTimestamp(){{- if $field.IsNullable}}.IfNull(0){{- end}}.As(xx_{{$e.StructName}}_{{$field.FieldName}}),
-			{{- else}}
-			{{if $field.IsSkipColumn}}// {{end}}x.{{$field.FieldName}},
-			{{- end}}
-		{{- end}}
-		}
-	}
-}
 
 // X_Native_Select{{$e.StructName}} select field use use X_Native_{{$e.StructName}}().
+// Deprecated: use {{$e.StructName}}.X_Variant_SelectExpr() instead.
 func X_Native_Select{{$e.StructName}}() []assist.Expr {
-	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Native_Model)
+	return xxx_{{$e.StructName}}_Native_Model.X_Variant_SelectExpr()
 }
 
 // X_Select{{$e.StructName}} select fields use X_{{$e.StructName}}().
+// Deprecated: use {{$e.StructName}}.X_Variant_SelectExpr() instead.
 func X_Select{{$e.StructName}}(prefixes ...string) []assist.Expr {
-	return x_Select{{$e.StructName}}(&xxx_{{$e.StructName}}_Model, prefixes...)
+	return xxx_{{$e.StructName}}_Model.X_Variant_SelectExpr(prefixes...)
 }
 
 {{- end}}
