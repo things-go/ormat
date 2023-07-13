@@ -256,19 +256,22 @@ func (sf *View) fixFieldTags(fieldTags *ast.FieldTags, field *ast.Field, ci *Col
 		AddValue("column:" + ci.Name).
 		AddValue(columnType)
 
-	if ci.IsAutoIncrement {
-		filedTagValues.AddValue("autoIncrement:true")
-	}
 	if !ci.IsNullable {
 		filedTagValues.AddValue("not null")
 	}
-	// default tag
-	if ci.Default != nil {
-		dflt := "default:''"
-		if *ci.Default != "" {
-			dflt = "default:" + *ci.Default
+	if ci.IsAutoIncrement {
+		filedTagValues.AddValue("autoIncrement:true")
+	} else {
+		// default tag
+		if ci.Default != nil {
+			dflt := "default:''"
+			if *ci.Default != "" {
+				dflt = "default:" + *ci.Default
+			}
+			filedTagValues.AddValue(dflt)
+		} else if ci.IsNullable {
+			filedTagValues.AddValue("default:null")
 		}
-		filedTagValues.AddValue(dflt)
 	}
 
 	for _, index := range ci.Index {

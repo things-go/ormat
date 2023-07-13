@@ -15,7 +15,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 import "protosaber/seaql/seaql.proto";
 
 {{- range $e := .Structs}}
-// {{$e.StructName}} {{.StructComment}} field
+// {{$e.StructName}} {{.StructComment}}
 message {{$e.StructName}} {
   option (things_go.seaql.options) = {
     index: [
