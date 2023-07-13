@@ -1,4 +1,4 @@
-package cmd
+package command
 
 import (
 	"context"
@@ -9,15 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v48/github"
+	"github.com/google/go-github/v53/github"
 	"github.com/kierdavis/ansi"
 	"github.com/spf13/cobra"
-	"github.com/things-go/log"
 	"github.com/tj/go-update"
 	"github.com/tj/go-update/progress"
+	"golang.org/x/exp/slog"
 	"golang.org/x/oauth2"
-
-	"github.com/things-go/ormat/pkg/consts"
 )
 
 type upgradeCmd struct {
@@ -41,7 +39,7 @@ func newUpgradeCmd() *upgradeCmd {
 					Store: &githubStore{
 						Owner:   "things-go",
 						Repo:    "ormat",
-						Version: consts.Version,
+						Version: version,
 						Client:  NewGithubClient(os.Getenv("GITHUB_TOKEN")),
 					},
 				},
@@ -55,7 +53,7 @@ func newUpgradeCmd() *upgradeCmd {
 				return err
 			}
 			if r == nil {
-				log.Info("No upgrades")
+				slog.Info("No upgrades")
 				return nil
 			}
 			// find the tarball for this system
@@ -69,21 +67,21 @@ func newUpgradeCmd() *upgradeCmd {
 				a = r.FindTarball(runtime.GOOS, arch)
 			}
 			if a == nil {
-				log.Info("No upgrade for your system")
+				slog.Info("No upgrade for your system")
 				return nil
 			}
-			log.Infof("Downloading release: %v", r.Version)
+			slog.Info("Downloading release: %v", r.Version)
 			tmpPath, err := a.DownloadProxy(progress.Reader)
 			if err != nil {
 				return fmt.Errorf("Download failed: %s", err)
 			}
-			log.Infof("Downloaded release to %s", tmpPath)
+			slog.Info("Downloaded release to %s", tmpPath)
 
 			// install it
 			if err := m.Install(tmpPath); err != nil {
 				return fmt.Errorf("install failed, %s", err)
 			}
-			log.Infof("Upgraded to %s", r.Version)
+			slog.Info("Upgraded to %s", r.Version)
 			return nil
 		},
 	}
@@ -107,7 +105,7 @@ func (m *manager) GetNewerReleases(version ...string) (*update.Release, error) {
 	}
 	// no updates
 	if len(releases) == 0 {
-		log.Debug("No upgrades")
+		slog.Debug("No upgrades")
 		return nil, nil
 	}
 

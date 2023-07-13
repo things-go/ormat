@@ -73,28 +73,20 @@ Usage:
 Available Commands:
   build       Generate model from sql
   completion  Generate the autocompletion script for the specified shell
-  config      Show/Generate config file
-  gen         Generate model/proto from database
+  gen         Generate model from database
   help        Help about any command
-  sql         Generate create table sql
+  sql         Generate sql file
+  upgrade     Upgrade ormat
 
 Flags:
-  -c, --config string   config file
-  -h, --help            help for ormat
-  -v, --version         version for ormat
+  -h, --help           help for ormat
+  -l, --level string   log level(debug,info,warn,error) (default "info")
+  -v, --version        version for ormat
 
 Use "ormat [command] --help" for more information about a command.
 ```
 
 ### Build
-
-```shell
-make linux
-make windows
-make mac
-```
-
-or
 
 ```bash
 goreleaser release --snapshot  --rm-dist

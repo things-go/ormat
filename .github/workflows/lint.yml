@@ -3,11 +3,11 @@ name: Lint
 on:
   push:
     paths-ignore:
-      - '**.md'
+      - "**.md"
 
 jobs:
-  golangci:
-    name: Golangci-Lint
+  golang-ci:
+    name: GolangCi-Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

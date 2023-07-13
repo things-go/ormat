@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	"github.com/things-go/ormat/cmd"
+	"github.com/things-go/ormat/internal/command"
 )
 
 func main() {
-	err := cmd.NewRootCmd().Execute()
+	err := command.NewRootCmd().Execute()
 	if err != nil {
 		os.Exit(1)
 	}

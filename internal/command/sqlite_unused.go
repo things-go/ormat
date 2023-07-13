@@ -1,7 +1,7 @@
 //go:build !sqlite3
 // +build !sqlite3
 
-package database
+package command
 
 import "gorm.io/gorm"
 
