@@ -8,9 +8,9 @@ require (
 	github.com/kierdavis/ansi v0.0.0-20180105022324-90d93b0fcae2
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/things-go/ens v0.0.0-20230713133054-40680ae0cc8c
+	github.com/things-go/ens v0.0.0-20230714022646-fb9ec57e192f
 	github.com/tj/go-update v2.2.5-0.20200519121640-62b4b798fd68+incompatible
-	golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
+	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 	golang.org/x/oauth2 v0.10.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/driver/postgres v1.5.2
