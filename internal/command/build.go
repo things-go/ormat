@@ -84,7 +84,7 @@ func newBuildCmd() *buildCmd {
 	cmd.PersistentFlags().StringSliceVarP(&root.InputFile, "input", "i", nil, "input file")
 	cmd.PersistentFlags().StringVarP(&root.OutputDir, "out", "o", "./model", "out directory")
 
-	InitFlagSetForConfig(cmd.Flags(), &root.View)
+	InitFlagSetForConfig(cmd.PersistentFlags(), &root.View)
 
 	cmd.PersistentFlags().BoolVar(&root.Merge, "merge", false, "merge in a file or not")
 	cmd.PersistentFlags().StringVar(&root.MergeFilename, "filename", "", "merge filename")
