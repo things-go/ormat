@@ -8,7 +8,7 @@ require (
 	github.com/kierdavis/ansi v0.0.0-20180105022324-90d93b0fcae2
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/things-go/ens v0.0.0-20230714095336-be0f6af1ad7f
+	github.com/things-go/ens v0.0.0-20230715045927-1df851d689a0
 	github.com/tj/go-update v2.2.5-0.20200519121640-62b4b798fd68+incompatible
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 	golang.org/x/oauth2 v0.10.0
@@ -45,9 +45,11 @@ require (
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
+	golang.org/x/tools v0.11.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gorm.io/datatypes v1.2.0 // indirect

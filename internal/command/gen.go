@@ -92,7 +92,7 @@ func newGenCmd() *genCmd {
 
 	cmd.MarkPersistentFlagRequired("dsn") // nolint
 
-	cmdAssist.Flags().StringVarP(&root.ModelPackage, "model_package", "M", "", "model package")
+	cmdAssist.Flags().StringVarP(&root.ModelImportPath, "model_import_path", "M", "", "model import path")
 
 	cmd.AddCommand(
 		cmdAssist,

@@ -1,6 +1,8 @@
 package command
 
 import (
+	"fmt"
+
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/codegen"
 	"github.com/things-go/ens/utils"
@@ -13,8 +15,8 @@ type genFileOpt struct {
 	Merge         bool
 	MergeFilename string
 	Template      string
-	// assist命令 模型包名
-	ModelPackage string
+	// assist命令  model 导入路径
+	ModelImportPath string
 }
 
 func (self *genFileOpt) build(mixin ens.Schemaer) *ens.Schema {
@@ -51,13 +53,12 @@ func (self *genFileOpt) GenModel(mixin ens.Schemaer) error {
 		for _, entity := range sc.Entities {
 			data, err := codegen.New([]*ens.Entity{entity}, codegenOption...).GenModel().FormatSource()
 			if err != nil {
-				slog.Error(err.Error(), entity.Name)
-				return err
+				return fmt.Errorf("%v: %v", entity.Name, err)
 			}
 			filename := joinFilename(self.OutputDir, entity.Name, ".go")
 			err = WriteFile(filename, data)
 			if err != nil {
-				return err
+				return fmt.Errorf("%v: %v", entity.Name, err)
 			}
 			slog.Info("👉 " + filename)
 		}
@@ -81,17 +82,18 @@ func (self *genFileOpt) GenAssist(mixin ens.Schemaer) error {
 		codegen.WithHasColumn(self.View.HasColumn),
 	}
 	sc := self.build(mixin)
+
 	for _, entity := range sc.Entities {
 		data, err := codegen.New([]*ens.Entity{entity}, codegenOption...).
-			GenAssist(self.ModelPackage).
+			GenAssist(self.ModelImportPath).
 			FormatSource()
 		if err != nil {
-			return err
+			return fmt.Errorf("%v: %v", entity.Name, err)
 		}
 		filename := joinFilename(self.OutputDir, entity.Name, ".assist.go")
 		err = WriteFile(filename, data)
 		if err != nil {
-			return err
+			return fmt.Errorf("%v: %v", entity.Name, err)
 		}
 		slog.Info("👉 " + filename)
 	}
@@ -120,7 +122,7 @@ func (self *genFileOpt) GenMapper(mixin ens.Schemaer) error {
 		filename := joinFilename(self.OutputDir, entity.Name, ".proto")
 		err := WriteFile(filename, data)
 		if err != nil {
-			return err
+			return fmt.Errorf("%v: %v", entity.Name, err)
 		}
 		slog.Info("👉 " + filename)
 	}

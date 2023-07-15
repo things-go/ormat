@@ -90,7 +90,7 @@ func newBuildCmd() *buildCmd {
 	cmd.PersistentFlags().StringVar(&root.MergeFilename, "filename", "", "merge filename")
 	cmd.PersistentFlags().StringVar(&root.Template, "template", "__in_go", "use custom template")
 
-	cmdAssist.Flags().StringVarP(&root.ModelPackage, "model_package", "M", "", "model package")
+	cmdAssist.Flags().StringVarP(&root.ModelImportPath, "model_import_path", "M", "", "model import path")
 
 	cmd.MarkPersistentFlagRequired("input") // nolint
 	cmd.AddCommand(
