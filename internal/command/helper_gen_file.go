@@ -5,7 +5,6 @@ import (
 	"github.com/things-go/ens/codegen"
 	"github.com/things-go/ens/utils"
 	"golang.org/x/exp/slog"
-	"golang.org/x/tools/imports"
 )
 
 type genFileOpt struct {
@@ -56,10 +55,6 @@ func (self *genFileOpt) GenModel(mixin ens.Schemaer) error {
 				return err
 			}
 			filename := joinFilename(self.OutputDir, entity.Name, ".go")
-			data, err = imports.Process(filename, data, nil)
-			if err != nil {
-				return err
-			}
 			err = WriteFile(filename, data)
 			if err != nil {
 				return err
@@ -94,10 +89,6 @@ func (self *genFileOpt) GenAssist(mixin ens.Schemaer) error {
 			return err
 		}
 		filename := joinFilename(self.OutputDir, entity.Name, ".assist.go")
-		data, err = imports.Process(filename, data, nil)
-		if err != nil {
-			return err
-		}
 		err = WriteFile(filename, data)
 		if err != nil {
 			return err
