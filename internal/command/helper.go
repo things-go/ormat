@@ -13,11 +13,10 @@ import (
 )
 
 type DriverConfig struct {
-	DB                *gorm.DB
-	Dialect           string
-	DbName            string
-	TableNames        []string
-	DisableCommentTag bool
+	DB         *gorm.DB
+	Dialect    string
+	DbName     string
+	TableNames []string
 }
 
 func NewDriver(c *DriverConfig) (driver.Driver, error) {
@@ -26,10 +25,9 @@ func NewDriver(c *DriverConfig) (driver.Driver, error) {
 	switch c.Dialect {
 	case "mysql":
 		m = &driverMysql.MySQL{
-			DB:                c.DB,
-			DbName:            c.DbName,
-			TableNames:        c.TableNames,
-			DisableCommentTag: c.DisableCommentTag,
+			DB:         c.DB,
+			DbName:     c.DbName,
+			TableNames: c.TableNames,
 		}
 	// case "sqlite3":
 	// 	m = &driver.SQLite{

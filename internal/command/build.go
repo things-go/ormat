@@ -30,8 +30,7 @@ func newBuildCmd() *buildCmd {
 				return nil, err
 			}
 			d := &driverMysql.SQL{
-				CreateTableSQL:    string(content),
-				DisableCommentTag: false,
+				CreateTableSQL: string(content),
 			}
 			return d.GetSchema()
 		}
