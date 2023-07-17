@@ -90,7 +90,7 @@ func (self *genFileOpt) GenAssist(mixin ens.Schemaer) error {
 		if err != nil {
 			return fmt.Errorf("%v: %v", entity.Name, err)
 		}
-		filename := joinFilename(self.OutputDir, entity.Name, ".assist.go")
+		filename := joinFilename(self.OutputDir, entity.Name, ".assist.gen.go")
 		err = WriteFile(filename, data)
 		if err != nil {
 			return fmt.Errorf("%v: %v", entity.Name, err)
