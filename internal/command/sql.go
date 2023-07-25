@@ -81,7 +81,8 @@ func newSqlCmd() *sqlCmd {
 	cmd.Flags().StringVar(&root.DbConfig.DSN, "dsn", "", "database dsn(root:123456@tcp(127.0.0.1:3306)/test)")
 	cmd.Flags().StringVar(&root.DbConfig.Options, "option", "", "database option(dsn?option)")
 	cmd.Flags().StringVarP(&root.OutputDir, "out", "o", "./model/migration", "out directory")
-	cmd.Flags().StringVar(&root.Filename, "filename", "migration", "filename")
+	cmd.Flags().StringVar(&root.Filename, "filename", "migration", "filename when merge enabled")
+	cmd.Flags().BoolVar(&root.Merge, "merge", false, "merge in a file")
 
 	cmd.MarkFlagRequired("dsn")
 
