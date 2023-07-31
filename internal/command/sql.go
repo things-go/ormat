@@ -1,6 +1,9 @@
 package command
 
 import (
+	"context"
+
+	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/codegen"
@@ -12,7 +15,9 @@ type sqlOpt struct {
 	OutputDir string
 	Merge     bool
 	Filename  string
-	DbConfig
+	URL       string
+	Tables    []string
+	Exclude   []string
 }
 
 type sqlCmd struct {
@@ -27,21 +32,15 @@ func newSqlCmd() *sqlCmd {
 		Short:   "Generate sql file",
 		Example: "ormat sql",
 		RunE: func(*cobra.Command, []string) error {
-			db, dbName, err := NewDB(root.DbConfig)
+			d, err := NewDriver(root.URL)
 			if err != nil {
 				return err
 			}
-			defer CloseDB(db)
-			d, err := NewDriver(&DriverConfig{
-				DB:         db,
-				Dialect:    root.Dialect,
-				DbName:     dbName,
-				TableNames: nil,
+			mixin, err := d.InspectSchema(context.Background(), &schema.InspectOptions{
+				Mode:    schema.InspectTables,
+				Tables:  root.Tables,
+				Exclude: root.Exclude,
 			})
-			if err != nil {
-				return err
-			}
-			mixin, err := d.GetSchema()
 			if err != nil {
 				return err
 			}
@@ -63,7 +62,7 @@ func newSqlCmd() *sqlCmd {
 				slog.Info("👉 " + filename)
 			} else {
 				for _, entity := range sc.Entities {
-					data := codegen.New([]*ens.Entity{entity}, codegenOption...).
+					data := codegen.New([]*ens.EntityDescriptor{entity}, codegenOption...).
 						GenDDL().
 						Bytes()
 					filename := joinFilename(root.OutputDir, entity.Name, ".sql")
@@ -77,14 +76,14 @@ func newSqlCmd() *sqlCmd {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&root.DbConfig.Dialect, "dialect", "mysql", "database dialect, one of [mysql,sqlite3]")
-	cmd.Flags().StringVar(&root.DbConfig.DSN, "dsn", "", "database dsn(root:123456@tcp(127.0.0.1:3306)/test)")
-	cmd.Flags().StringVar(&root.DbConfig.Options, "option", "", "database option(dsn?option)")
+	cmd.Flags().StringVar(&root.URL, "url", "", "mysql://root:123456@127.0.0.1:3306/test)")
+	cmd.PersistentFlags().StringSliceVarP(&root.Tables, "table", "t", nil, "only out custom table")
+	cmd.PersistentFlags().StringSliceVar(&root.Exclude, "exclude", nil, "exclude table pattern")
 	cmd.Flags().StringVarP(&root.OutputDir, "out", "o", "./model/migration", "out directory")
 	cmd.Flags().StringVar(&root.Filename, "filename", "migration", "filename when merge enabled")
 	cmd.Flags().BoolVar(&root.Merge, "merge", false, "merge in a file")
 
-	cmd.MarkFlagRequired("dsn")
+	cmd.MarkFlagRequired("url")
 
 	root.cmd = cmd
 	return root

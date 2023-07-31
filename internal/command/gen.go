@@ -1,13 +1,17 @@
 package command
 
 import (
+	"context"
+
+	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens"
 )
 
 type genOpt struct {
-	DbConfig
-	TableNames []string
+	URL     string
+	Tables  []string
+	Exclude []string
 
 	genFileOpt
 }
@@ -21,22 +25,15 @@ func newGenCmd() *genCmd {
 	root := &genCmd{}
 
 	getSchema := func() (ens.Schemaer, error) {
-		db, dbName, err := NewDB(root.DbConfig)
+		d, err := NewDriver(root.URL)
 		if err != nil {
 			return nil, err
 		}
-		defer CloseDB(db)
-
-		d, err := NewDriver(&DriverConfig{
-			DB:         db,
-			Dialect:    root.Dialect,
-			DbName:     dbName,
-			TableNames: root.TableNames,
+		return d.InspectSchema(context.Background(), &schema.InspectOptions{
+			Mode:    schema.InspectTables,
+			Tables:  root.Tables,
+			Exclude: root.Exclude,
 		})
-		if err != nil {
-			return nil, err
-		}
-		return d.GetSchema()
 	}
 
 	cmd := &cobra.Command{
@@ -78,11 +75,10 @@ func newGenCmd() *genCmd {
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(&root.DbConfig.Dialect, "dialect", "mysql", "database dialect, one of [mysql,sqlite3]")
-	cmd.PersistentFlags().StringVar(&root.DbConfig.DSN, "dsn", "", "database dsn(root:123456@tcp(127.0.0.1:3306)/test)")
-	cmd.PersistentFlags().StringVar(&root.DbConfig.Options, "option", "", "database option(dsn?option)")
+	cmd.PersistentFlags().StringVar(&root.URL, "url", "", "mysql://root:123456@127.0.0.1:3306/test")
+	cmd.PersistentFlags().StringSliceVarP(&root.Tables, "table", "t", nil, "only out custom table")
+	cmd.PersistentFlags().StringSliceVar(&root.Exclude, "exclude", nil, "exclude table pattern")
 	cmd.PersistentFlags().StringVarP(&root.OutputDir, "out", "o", "./model", "out directory")
-	cmd.PersistentFlags().StringSliceVarP(&root.TableNames, "table", "t", nil, "only out custom table")
 
 	InitFlagSetForConfig(cmd.PersistentFlags(), &root.View)
 
@@ -90,7 +86,7 @@ func newGenCmd() *genCmd {
 	cmd.PersistentFlags().StringVar(&root.MergeFilename, "model", "", "merge filename")
 	cmd.PersistentFlags().StringVar(&root.Template, "template", "", "use template")
 
-	cmd.MarkPersistentFlagRequired("dsn") // nolint
+	cmd.MarkPersistentFlagRequired("url") // nolint
 
 	cmdAssist.Flags().StringVarP(&root.ModelImportPath, "model_import_path", "M", "", "model import path")
 

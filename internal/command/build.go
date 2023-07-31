@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -32,7 +33,7 @@ func newBuildCmd() *buildCmd {
 			d := &driverMysql.SQL{
 				CreateTableSQL: string(content),
 			}
-			return d.GetSchema()
+			return d.InspectSchema(context.Background(), nil)
 		}
 
 		mixin := &ens.MixinSchema{

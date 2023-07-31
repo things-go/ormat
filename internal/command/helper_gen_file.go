@@ -51,7 +51,7 @@ func (self *genFileOpt) GenModel(mixin ens.Schemaer) error {
 		slog.Info("👉 " + filename)
 	} else {
 		for _, entity := range sc.Entities {
-			data, err := codegen.New([]*ens.Entity{entity}, codegenOption...).GenModel().FormatSource()
+			data, err := codegen.New([]*ens.EntityDescriptor{entity}, codegenOption...).GenModel().FormatSource()
 			if err != nil {
 				return fmt.Errorf("%v: %v", entity.Name, err)
 			}
@@ -84,7 +84,7 @@ func (self *genFileOpt) GenAssist(mixin ens.Schemaer) error {
 	sc := self.build(mixin)
 
 	for _, entity := range sc.Entities {
-		data, err := codegen.New([]*ens.Entity{entity}, codegenOption...).
+		data, err := codegen.New([]*ens.EntityDescriptor{entity}, codegenOption...).
 			GenAssist(self.ModelImportPath).
 			FormatSource()
 		if err != nil {
@@ -116,7 +116,7 @@ func (self *genFileOpt) GenMapper(mixin ens.Schemaer) error {
 	}
 	sc := self.build(mixin)
 	for _, entity := range sc.Entities {
-		data := codegen.New([]*ens.Entity{entity}, codegenOption...).
+		data := codegen.New([]*ens.EntityDescriptor{entity}, codegenOption...).
 			GenMapper().
 			Bytes()
 		filename := joinFilename(self.OutputDir, entity.Name, ".proto")

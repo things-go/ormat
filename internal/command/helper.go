@@ -2,6 +2,7 @@ package command
 
 import (
 	"errors"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -9,26 +10,22 @@ import (
 
 	"github.com/things-go/ens/driver"
 	driverMysql "github.com/things-go/ens/driver/mysql"
-	"gorm.io/gorm"
 )
 
-type DriverConfig struct {
-	DB         *gorm.DB
-	Dialect    string
-	DbName     string
-	TableNames []string
-}
-
-func NewDriver(c *DriverConfig) (driver.Driver, error) {
+func NewDriver(URL string) (driver.Driver, error) {
 	var m driver.Driver
 
-	switch c.Dialect {
+	u, err := url.Parse(URL)
+	if err != nil {
+		return nil, err
+	}
+
+	switch u.Scheme {
 	case "mysql":
 		m = &driverMysql.MySQL{
-			DB:         c.DB,
-			DbName:     c.DbName,
-			TableNames: c.TableNames,
+			URL: URL,
 		}
+
 	// case "sqlite3":
 	// 	m = &driver.SQLite{
 	// 		DB:               c.DB,
