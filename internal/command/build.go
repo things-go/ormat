@@ -2,11 +2,14 @@ package command
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
 
+	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens"
-	driverMysql "github.com/things-go/ens/driver/mysql"
+	"github.com/things-go/ens/driver"
 	"golang.org/x/exp/slog"
 )
 
@@ -17,7 +20,8 @@ type buildOpt struct {
 }
 
 type buildCmd struct {
-	cmd *cobra.Command
+	cmd    *cobra.Command
+	Schema string
 	buildOpt
 }
 
@@ -26,14 +30,21 @@ func newBuildCmd() *buildCmd {
 
 	getSchema := func() ens.Schemaer {
 		innerParseFromFile := func(filename string) (ens.Schemaer, error) {
+			var d driver.Driver
+
 			content, err := os.ReadFile(filename)
 			if err != nil {
 				return nil, err
 			}
-			d := &driverMysql.SQL{
-				CreateTableSQL: string(content),
+			d, ok := driver.LoadDriver(root.Schema)
+			if !ok {
+				return nil, fmt.Errorf("unsupported schema, only support [%v]", strings.Join(driver.DriverNames(), ", "))
 			}
-			return d.InspectSchema(context.Background(), nil)
+			return d.InspectSchema(context.Background(), &driver.InspectOption{
+				URL:            "",
+				SQL:            string(content),
+				InspectOptions: schema.InspectOptions{},
+			})
 		}
 
 		mixin := &ens.MixinSchema{
@@ -43,7 +54,7 @@ func newBuildCmd() *buildCmd {
 		for _, filename := range root.InputFile {
 			sc, err := innerParseFromFile(filename)
 			if err != nil {
-				slog.Warn("🧐 parse from SQL file(%s) failed !!!", filename)
+				slog.Warn("🧐 parse failed !!!", slog.String("file", filename), slog.Any("error", err))
 				continue
 			}
 			mixin.Entities = append(mixin.Entities, sc.(*ens.MixinSchema).Entities...)
@@ -82,6 +93,7 @@ func newBuildCmd() *buildCmd {
 	}
 
 	cmd.PersistentFlags().StringSliceVarP(&root.InputFile, "input", "i", nil, "input file")
+	cmd.PersistentFlags().StringVarP(&root.Schema, "schema", "s", "file+mysql", "parser driver, [file+mysql,file+tidb]")
 	cmd.PersistentFlags().StringVarP(&root.OutputDir, "out", "o", "./model", "out directory")
 
 	InitFlagSetForConfig(cmd.PersistentFlags(), &root.View)

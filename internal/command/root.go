@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slog"
+
+	_ "github.com/things-go/ens/driver/mysql"
 )
 
 type RootCmd struct {

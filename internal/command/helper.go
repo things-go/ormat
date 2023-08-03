@@ -1,7 +1,7 @@
 package command
 
 import (
-	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -9,33 +9,18 @@ import (
 	"strings"
 
 	"github.com/things-go/ens/driver"
-	driverMysql "github.com/things-go/ens/driver/mysql"
 )
 
-func NewDriver(URL string) (driver.Driver, error) {
-	var m driver.Driver
-
+func LoadDriver(URL string) (driver.Driver, error) {
 	u, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
 	}
-
-	switch u.Scheme {
-	case "mysql":
-		m = &driverMysql.MySQL{
-			URL: URL,
-		}
-
-	// case "sqlite3":
-	// 	m = &driver.SQLite{
-	// 		DB:               c.DB,
-	// 		DbName:           c.DbName,
-	// 		TableNames:       c.TableNames,
-	// 	}
-	default:
-		return nil, errors.New("database not found, please check database.dialect (mysql, sqlite3, mssql)")
+	d, ok := driver.LoadDriver(u.Scheme)
+	if !ok {
+		return nil, fmt.Errorf("unsupported schema, only support [%v]", strings.Join(driver.DriverNames(), ", "))
 	}
-	return m, nil
+	return d, nil
 }
 
 func joinFilename(dir, filename, suffix string) string {

@@ -6,6 +6,7 @@ import (
 	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens"
+	"github.com/things-go/ens/driver"
 )
 
 type genOpt struct {
@@ -25,14 +26,17 @@ func newGenCmd() *genCmd {
 	root := &genCmd{}
 
 	getSchema := func() (ens.Schemaer, error) {
-		d, err := NewDriver(root.URL)
+		d, err := LoadDriver(root.URL)
 		if err != nil {
 			return nil, err
 		}
-		return d.InspectSchema(context.Background(), &schema.InspectOptions{
-			Mode:    schema.InspectTables,
-			Tables:  root.Tables,
-			Exclude: root.Exclude,
+		return d.InspectSchema(context.Background(), &driver.InspectOption{
+			URL: root.URL,
+			InspectOptions: schema.InspectOptions{
+				Mode:    schema.InspectTables,
+				Tables:  root.Tables,
+				Exclude: root.Exclude,
+			},
 		})
 	}
 

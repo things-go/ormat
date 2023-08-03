@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/codegen"
+	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/utils"
 	"golang.org/x/exp/slog"
 )
@@ -32,14 +33,18 @@ func newSqlCmd() *sqlCmd {
 		Short:   "Generate sql file",
 		Example: "ormat sql",
 		RunE: func(*cobra.Command, []string) error {
-			d, err := NewDriver(root.URL)
+			d, err := LoadDriver(root.URL)
 			if err != nil {
 				return err
 			}
-			mixin, err := d.InspectSchema(context.Background(), &schema.InspectOptions{
-				Mode:    schema.InspectTables,
-				Tables:  root.Tables,
-				Exclude: root.Exclude,
+			mixin, err := d.InspectSchema(context.Background(), &driver.InspectOption{
+				URL: root.URL,
+				SQL: "",
+				InspectOptions: schema.InspectOptions{
+					Mode:    schema.InspectTables,
+					Tables:  root.Tables,
+					Exclude: root.Exclude,
+				},
 			})
 			if err != nil {
 				return err
