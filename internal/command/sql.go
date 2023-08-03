@@ -38,8 +38,8 @@ func newSqlCmd() *sqlCmd {
 				return err
 			}
 			mixin, err := d.InspectSchema(context.Background(), &driver.InspectOption{
-				URL: root.URL,
-				SQL: "",
+				URL:  root.URL,
+				Data: "",
 				InspectOptions: schema.InspectOptions{
 					Mode:    schema.InspectTables,
 					Tables:  root.Tables,

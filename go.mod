@@ -8,7 +8,7 @@ require (
 	github.com/kierdavis/ansi v0.0.0-20180105022324-90d93b0fcae2
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/things-go/ens v0.0.1-rc3
+	github.com/things-go/ens v0.0.1-rc4
 	github.com/tj/go-update v2.2.5-0.20200519121640-62b4b798fd68+incompatible
 	golang.org/x/exp v0.0.0-20230711005742-c3f37128e5a4
 	golang.org/x/oauth2 v0.10.0

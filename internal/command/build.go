@@ -42,7 +42,7 @@ func newBuildCmd() *buildCmd {
 			}
 			return d.InspectSchema(context.Background(), &driver.InspectOption{
 				URL:            "",
-				SQL:            string(content),
+				Data:           string(content),
 				InspectOptions: schema.InspectOptions{},
 			})
 		}
