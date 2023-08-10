@@ -13,7 +13,7 @@ require (
 	golang.org/x/exp v0.0.0-20230711005742-c3f37128e5a4
 	golang.org/x/oauth2 v0.11.0
 	gorm.io/driver/sqlite v1.5.2
-	gorm.io/gorm v1.25.2
+	gorm.io/gorm v1.25.3
 )
 
 require (
