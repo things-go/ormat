@@ -25,12 +25,12 @@ builds:
       - windows
       - darwin
     goarch:
-      - "386"
       - amd64
-      - arm
       - arm64
-    goarm:
-      - "7"
+    #   - "386"
+    #   - arm
+    # goarm:
+    #   - "7"
     mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
