@@ -2,11 +2,11 @@ package command
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/codegen"
 	"github.com/things-go/ens/utils"
-	"golang.org/x/exp/slog"
 )
 
 type genFileOpt struct {

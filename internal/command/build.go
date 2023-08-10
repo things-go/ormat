@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
-	"golang.org/x/exp/slog"
 )
 
 type buildOpt struct {

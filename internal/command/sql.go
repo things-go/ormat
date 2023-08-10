@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"log/slog"
 
 	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
@@ -9,7 +10,6 @@ import (
 	"github.com/things-go/ens/codegen"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/utils"
-	"golang.org/x/exp/slog"
 )
 
 type sqlOpt struct {

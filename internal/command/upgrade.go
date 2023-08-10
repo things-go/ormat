@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"runtime"
@@ -14,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tj/go-update"
 	"github.com/tj/go-update/progress"
-	"golang.org/x/exp/slog"
 	"golang.org/x/oauth2"
 )
 
@@ -70,7 +70,7 @@ func newUpgradeCmd() *upgradeCmd {
 				slog.Info("No upgrade for your system")
 				return nil
 			}
-			slog.Info("Downloading release: %v", r.Version)
+			slog.Info("Downloading release: " + r.Version)
 			tmpPath, err := a.DownloadProxy(progress.Reader)
 			if err != nil {
 				return fmt.Errorf("Download failed: %s", err)
@@ -81,7 +81,7 @@ func newUpgradeCmd() *upgradeCmd {
 			if err := m.Install(tmpPath); err != nil {
 				return fmt.Errorf("install failed, %s", err)
 			}
-			slog.Info("Upgraded to %s", r.Version)
+			slog.Info("Upgraded to " + r.Version)
 			return nil
 		},
 	}
