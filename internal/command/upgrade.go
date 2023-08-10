@@ -75,7 +75,7 @@ func newUpgradeCmd() *upgradeCmd {
 			if err != nil {
 				return fmt.Errorf("Download failed: %s", err)
 			}
-			slog.Info("Downloaded release to %s", tmpPath)
+			slog.Info("Downloaded release to " + tmpPath)
 
 			// install it
 			if err := m.Install(tmpPath); err != nil {
