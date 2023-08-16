@@ -38,7 +38,7 @@ NOTE:
 ```go
 // SysUser 用户表
 type SysUser struct {
-	ID        int64     `gorm:"column:id;type:bigint;autoIncrement;not null;primaryKey,priority:1" json:"id,omitempty"`
+	Id        int64     `gorm:"column:id;type:bigint;autoIncrement;not null;primaryKey,priority:1" json:"id,omitempty"`
 	Username  string    `gorm:"column:username;type:varchar(64);not null;primaryKey,priority:2;uniqueIndex:uk_username" json:"username,omitempty"`
 	Password  string    `gorm:"column:password;type:varchar(255);not null" json:"password,omitempty"`
 	Nickname  string    `gorm:"column:nickname;type:varchar(64);not null" json:"nickname,omitempty"`
