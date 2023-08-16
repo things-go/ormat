@@ -36,7 +36,6 @@ func (self *genFileOpt) GenModel(mixin ens.Schemaer) error {
 		codegen.WithOptions(self.View.Options),
 		codegen.WithSkipColumns(skipColumns),
 		codegen.WithHasColumn(self.View.HasColumn),
-		codegen.WithDisableField(self.View.DisableField),
 	}
 	sc := self.build(mixin)
 	if self.Merge {
@@ -81,7 +80,6 @@ func (self *genFileOpt) GenAssist(mixin ens.Schemaer) error {
 		codegen.WithOptions(self.View.Options),
 		codegen.WithSkipColumns(skipColumns),
 		codegen.WithHasColumn(self.View.HasColumn),
-		codegen.WithDisableField(self.View.DisableField),
 	}
 	sc := self.build(mixin)
 
@@ -115,7 +113,6 @@ func (self *genFileOpt) GenMapper(mixin ens.Schemaer) error {
 		codegen.WithOptions(self.View.Options),
 		codegen.WithSkipColumns(skipColumns),
 		codegen.WithHasColumn(self.View.HasColumn),
-		codegen.WithDisableField(self.View.DisableField),
 	}
 	sc := self.build(mixin)
 	for _, entity := range sc.Entities {
