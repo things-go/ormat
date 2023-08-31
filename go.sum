@@ -1,5 +1,5 @@
-ariga.io/atlas v0.13.1 h1:oSkEYgI3qUnQZ6b6+teAEiIuizjBvkZ4YDbz0XWfCdQ=
-ariga.io/atlas v0.13.1/go.mod h1:+TR129FJZ5Lvzms6dvCeGWh1yR6hMvmXBhug4hrNIGk=
+ariga.io/atlas v0.13.3 h1:L6Zz/0/yo86flQclZwIqJEKrHoJxQOkj3Z2JPvzZEHE=
+ariga.io/atlas v0.13.3/go.mod h1:+TR129FJZ5Lvzms6dvCeGWh1yR6hMvmXBhug4hrNIGk=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
@@ -161,8 +161,8 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
-github.com/things-go/ens v0.0.1-rc8 h1:8pPFeH+z1UD806+MG7D1LL+D9V9zIz7xGWmmBk6VClQ=
-github.com/things-go/ens v0.0.1-rc8/go.mod h1:rh8GEH+m51uHgMOIN3fPnwUC9k5VKZ0s/LXQOT5WrJA=
+github.com/things-go/ens v0.0.1 h1:GEOsx188wYYq8BRDs3OsFMy5mXM7tsRTmY4xvjAZRgE=
+github.com/things-go/ens v0.0.1/go.mod h1:xYuWieRLIDedFW35mgS1SRn6+CmlhBTNG9daTgmwObQ=
 github.com/tj/assert v0.0.0-20171129193455-018094318fb0/go.mod h1:mZ9/Rh9oLWpLLDRpvE+3b7gP/C2YyLFYxNmcLnPTMe0=
 github.com/tj/assert v0.0.3 h1:Df/BlaZ20mq6kuai7f5z2TvPFiwC3xaWJSDQNiIS3Rk=
 github.com/tj/assert v0.0.3/go.mod h1:Ne6X72Q+TB1AteidzQncjw9PabbMp4PBMZ1k+vd1Pvk=
