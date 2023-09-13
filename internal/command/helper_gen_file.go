@@ -101,6 +101,40 @@ func (self *genFileOpt) GenAssist(mixin ens.Schemaer) error {
 	return nil
 }
 
+func (self *genFileOpt) GenRapier(mixin ens.Schemaer) error {
+	skipColumns := make(map[string]struct{})
+	for _, v := range self.View.SkipColumns {
+		skipColumns[v] = struct{}{}
+	}
+
+	codegenOption := []codegen.Option{
+		codegen.WithByName("ormat"),
+		codegen.WithVersion(version),
+		codegen.WithPackageName(utils.GetPkgName(self.OutputDir)),
+		codegen.WithOptions(self.View.Options),
+		codegen.WithSkipColumns(skipColumns),
+		codegen.WithHasColumn(self.View.HasColumn),
+	}
+	sc := self.build(mixin)
+
+	for _, entity := range sc.Entities {
+		data, err := codegen.New([]*ens.EntityDescriptor{entity}, codegenOption...).
+			GenRapier(self.ModelImportPath).
+			FormatSource()
+		if err != nil {
+			return fmt.Errorf("%v: %v", entity.Name, err)
+		}
+		filename := joinFilename(self.OutputDir, entity.Name, ".rapier.gen.go")
+		err = WriteFile(filename, data)
+		if err != nil {
+			return fmt.Errorf("%v: %v", entity.Name, err)
+		}
+		slog.Info("👉 " + filename)
+	}
+	slog.Info("😄 generate success !!!")
+	return nil
+}
+
 func (self *genFileOpt) GenMapper(mixin ens.Schemaer) error {
 	skipColumns := make(map[string]struct{})
 	for _, v := range self.View.SkipColumns {

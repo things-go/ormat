@@ -54,15 +54,29 @@ func newGenCmd() *genCmd {
 	}
 
 	cmdAssist := &cobra.Command{
-		Use:     "assist",
-		Short:   "model assist from database",
-		Example: "ormat gen assist",
+		Use:        "assist",
+		Short:      "model assist from database",
+		Example:    "ormat gen assist",
+		Deprecated: "use `ormat gen rapier` instead",
 		RunE: func(*cobra.Command, []string) error {
 			sc, err := getSchema()
 			if err != nil {
 				return err
 			}
 			return root.genFileOpt.GenAssist(sc)
+		},
+	}
+
+	cmdRapier := &cobra.Command{
+		Use:     "rapier",
+		Short:   "model rapier from database",
+		Example: "ormat gen rapier",
+		RunE: func(*cobra.Command, []string) error {
+			sc, err := getSchema()
+			if err != nil {
+				return err
+			}
+			return root.genFileOpt.GenRapier(sc)
 		},
 	}
 
@@ -93,9 +107,11 @@ func newGenCmd() *genCmd {
 	cmd.MarkPersistentFlagRequired("url") // nolint
 
 	cmdAssist.Flags().StringVarP(&root.ModelImportPath, "model_import_path", "M", "", "model import path")
+	cmdRapier.Flags().StringVarP(&root.ModelImportPath, "model_import_path", "M", "", "model import path")
 
 	cmd.AddCommand(
 		cmdAssist,
+		cmdRapier,
 		cmdMapper,
 	)
 	root.cmd = cmd

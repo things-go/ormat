@@ -73,12 +73,23 @@ func newBuildCmd() *buildCmd {
 	}
 
 	cmdAssist := &cobra.Command{
-		Use:     "assist",
-		Short:   "model assist from sql",
-		Example: "ormat build assist",
+		Use:        "assist",
+		Short:      "model assist from sql",
+		Example:    "ormat build assist",
+		Deprecated: "use `ormat build rapier` instead",
 		RunE: func(*cobra.Command, []string) error {
 			sc := getSchema()
 			return root.genFileOpt.GenAssist(sc)
+		},
+	}
+
+	cmdRapier := &cobra.Command{
+		Use:     "rapier",
+		Short:   "model rapier from sql",
+		Example: "ormat build rapier",
+		RunE: func(*cobra.Command, []string) error {
+			sc := getSchema()
+			return root.genFileOpt.GenRapier(sc)
 		},
 	}
 
@@ -100,13 +111,15 @@ func newBuildCmd() *buildCmd {
 
 	cmd.PersistentFlags().BoolVar(&root.Merge, "merge", false, "merge in a file or not")
 	cmd.PersistentFlags().StringVar(&root.MergeFilename, "filename", "", "merge filename")
-	cmd.PersistentFlags().StringVar(&root.Template, "template", "__in_go", "use custom template")
+	cmd.PersistentFlags().StringVar(&root.Template, "template", "", "use custom template")
 
 	cmdAssist.Flags().StringVarP(&root.ModelImportPath, "model_import_path", "M", "", "model import path")
+	cmdRapier.Flags().StringVarP(&root.ModelImportPath, "model_import_path", "M", "", "model import path")
 
 	cmd.MarkPersistentFlagRequired("input") // nolint
 	cmd.AddCommand(
 		cmdAssist,
+		cmdRapier,
 		cmdMapper,
 	)
 	root.cmd = cmd
