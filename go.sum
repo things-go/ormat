@@ -155,8 +155,8 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
-github.com/things-go/ens v0.0.5 h1:IEphYlEmUyZxjpQYyIrA+Sp/oCfYC+g93rDbBMFw1qc=
-github.com/things-go/ens v0.0.5/go.mod h1:rJI6kGTyNfBK95w7qATQWjlTkCJ4OpEdZ99lTVldnKY=
+github.com/things-go/ens v0.1.0 h1:QFUozaPBspsz8v1I/oDak7o+OiMcPDPUXgnwHsfYf2g=
+github.com/things-go/ens v0.1.0/go.mod h1:rJI6kGTyNfBK95w7qATQWjlTkCJ4OpEdZ99lTVldnKY=
 github.com/tj/assert v0.0.0-20171129193455-018094318fb0/go.mod h1:mZ9/Rh9oLWpLLDRpvE+3b7gP/C2YyLFYxNmcLnPTMe0=
 github.com/tj/assert v0.0.3 h1:Df/BlaZ20mq6kuai7f5z2TvPFiwC3xaWJSDQNiIS3Rk=
 github.com/tj/assert v0.0.3/go.mod h1:Ne6X72Q+TB1AteidzQncjw9PabbMp4PBMZ1k+vd1Pvk=
