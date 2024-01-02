@@ -3,7 +3,7 @@ module github.com/things-go/ormat
 go 1.21
 
 require (
-	ariga.io/atlas v0.16.0
+	ariga.io/atlas v0.17.0
 	github.com/google/go-github/v57 v57.0.0
 	github.com/kierdavis/ansi v0.0.0-20180105022324-90d93b0fcae2
 	github.com/spf13/cobra v1.8.0
