@@ -10,7 +10,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/things-go/ens v0.1.0
 	github.com/tj/go-update v2.2.5-0.20200519121640-62b4b798fd68+incompatible
-	golang.org/x/oauth2 v0.15.0
+	golang.org/x/oauth2 v0.16.0
 	gorm.io/driver/sqlite v1.5.4
 	gorm.io/gorm v1.25.5
 )
