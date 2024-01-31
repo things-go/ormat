@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/google/go-github/v58/github"
 	"github.com/kierdavis/ansi"
 	"github.com/spf13/cobra"
 	"github.com/tj/go-update"
