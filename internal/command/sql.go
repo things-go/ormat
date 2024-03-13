@@ -13,12 +13,13 @@ import (
 )
 
 type sqlOpt struct {
-	OutputDir string
-	Merge     bool
-	Filename  string
-	URL       string
-	Tables    []string
-	Exclude   []string
+	OutputDir         string
+	Merge             bool
+	Filename          string
+	URL               string
+	Tables            []string
+	Exclude           []string
+	DisableDocComment bool
 }
 
 type sqlCmd struct {
@@ -54,6 +55,7 @@ func newSqlCmd() *sqlCmd {
 				codegen.WithByName("ormat"),
 				codegen.WithVersion(version),
 				codegen.WithPackageName(utils.GetPkgName(root.OutputDir)),
+				codegen.WithDisableDocComment(root.DisableDocComment),
 			}
 			if root.Merge {
 				data := codegen.New(sc.Entities, codegenOption...).
@@ -87,6 +89,7 @@ func newSqlCmd() *sqlCmd {
 	cmd.Flags().StringVarP(&root.OutputDir, "out", "o", "./model/migration", "out directory")
 	cmd.Flags().StringVar(&root.Filename, "filename", "migration", "filename when merge enabled")
 	cmd.Flags().BoolVar(&root.Merge, "merge", false, "merge in a file")
+	cmd.Flags().BoolVarP(&root.DisableDocComment, "disableDocComment", "d", false, "禁用文档注释")
 
 	cmd.MarkFlagRequired("url")
 
